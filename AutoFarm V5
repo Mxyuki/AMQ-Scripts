@@ -1,0 +1,61 @@
+// ==UserScript==
+// @name         AutoFarm
+// @namespace    https://github.com/Mxyuki
+// @version      0.5
+// @description  Auto Farm respond and then press ↑ so everyone get the answer !
+// @author       Mxyuki
+// @match        https://animemusicquiz.com/*
+// ==/UserScript==
+
+
+// don't load on login page
+if (document.getElementById("startPage")) return;
+
+// Wait until the LOADING... screen is hidden and load script
+let loadInterval = setInterval(() => {
+    if (document.getElementById("loadingScreen").classList.contains("hidden")) {
+        clearInterval(loadInterval);
+    }
+}, 500);
+
+let command = "/ar";
+var x='';
+var ar='';
+
+function sendChatMessage(message) {
+    gameChat.$chatInputField.val(message);
+    gameChat.sendMessage();
+}
+window.addEventListener("keydown", checkKeyPress, false)
+function checkKeyPress(key) {
+	if(key.keyCode=='38') {
+
+ x = document.getElementById("qpAnswerInput").value;
+                        sendChatMessage('/// ' + x);
+    }
+}
+
+    new Listener("Game Chat Message", (payload) => {
+	processChatCommand(payload);
+}).bindListener();
+new Listener("game chat update", (payload) => {
+	payload.messages.forEach(message => {
+		processChatCommand(message);
+	});
+}).bindListener();
+
+    function processChatCommand(payload) {
+if(payload.message.startsWith("///")) {
+		var index=payload.message.indexOf(' ');
+		if(index>0) ar=payload.message.substr(index+1);
+		else ar='';
+	if(quiz.isSpectator) return;
+			if(ar.length>0) {
+			quiz.skipClicked();
+			$("#qpAnswerInput").val(ar);
+			quiz.answerInput.submitAnswer(true);
+        }
+    }
+}
+
+    commandListener.bindListener();
