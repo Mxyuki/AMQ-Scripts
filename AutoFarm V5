@@ -18,7 +18,6 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let command = "/ar";
 var x='';
 var ar='';
 
