@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm
-// @namespace    https://github.com/Mxyuki
-// @version      0.5
+// @namespace    http://tampermonkey.net/
+// @version      0.6
 // @description  Auto Farm respond and then press ↑ so everyone get the answer !
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -20,6 +20,7 @@ let loadInterval = setInterval(() => {
 
 var x='';
 var ar='';
+var on='1';
 
 function sendChatMessage(message) {
     gameChat.$chatInputField.val(message);
@@ -27,10 +28,20 @@ function sendChatMessage(message) {
 }
 window.addEventListener("keydown", checkKeyPress, false)
 function checkKeyPress(key) {
-	if(key.keyCode=='38') {
+	if(key.keyCode=='38' && quiz.gameMode !== "Ranked") {
 
  x = document.getElementById("qpAnswerInput").value;
                         sendChatMessage('/// ' + x);
+    }
+    if(key.keyCode=='37') {
+    if(on == 1){
+    on = 0;
+        gameChat.systemMessage("Disabled Auto Answer");
+    }
+        else{
+        on = 1;
+            gameChat.systemMessage("Enabled Auto Answer");
+        }
     }
 }
 
@@ -44,7 +55,7 @@ new Listener("game chat update", (payload) => {
 }).bindListener();
 
     function processChatCommand(payload) {
-if(payload.message.startsWith("///")) {
+if(payload.message.startsWith("///") && on == 1 && quiz.gameMode !== "Ranked") {
 		var index=payload.message.indexOf(' ');
 		if(index>0) ar=payload.message.substr(index+1);
 		else ar='';
