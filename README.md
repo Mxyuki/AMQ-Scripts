@@ -1,4 +1,4 @@
-# AutoFarm_AMQ
+# AMQ Co-op Farm
 
 AutoFarm is a script made for AMQ.
 
