@@ -28,7 +28,7 @@ function sendChatMessage(message) {
 }
 window.addEventListener("keydown", checkKeyPress, false)
 function checkKeyPress(key) {
-	if(key.keyCode=='38' && quiz.gameMode !== "Ranked") {
+	if(key.keyCode=='38' && quiz.gameMode !== "Ranked" && on == 1) {
 
  x = document.getElementById("qpAnswerInput").value;
                         sendChatMessage('/// ' + x);
