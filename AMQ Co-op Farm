@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/Mxyuki/AMQ-Co-op-Farm
 // @version      0.8
 // @description  Auto Farm respond and then press ↑ so everyone get the answer !
 // @author       Mxyuki
