@@ -23,3 +23,13 @@ Send Answer Only    - Only send your answer and don't receive answer.
 Receive Only        - Only receive the answer and can't send answer.
 
 Co-op Farm Disabled - Receive answer and Send answer are Disabled.
+
+# AMQ LowerToUpper
+
+AMQ LowerToUpper is a script made to change all your answer by Uppercase answer.
+
+(Not really helpful just for fun)
+
+**--- Buttons ---**
+
+insert : When you answered something press insert to change it to UpperCase
