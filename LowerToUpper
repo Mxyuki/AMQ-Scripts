@@ -1,0 +1,36 @@
+// ==UserScript==
+// @name         LowerToUpper
+// @namespace    https://github.com/Mxyuki/
+// @version      0.1
+// @description  Change LowerCase to UpperCase
+// @author       Mxyuki
+// @match        https://animemusicquiz.com/*
+// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// ==/UserScript==
+
+var a = '';
+
+(function() {
+
+    window.addEventListener("keydown", checkKeyPress, false)
+function checkKeyPress(key) {
+
+    if(key.keyCode == '45'){
+    a = document.getElementById("qpAnswerInput").value;
+                  if (a.length > 0) {
+      quiz.skipClicked();
+      $("#qpAnswerInput").val(a.toUpperCase());
+      quiz.answerInput.submitAnswer(true);
+    }
+    }
+}
+})();
+
+    AMQ_addScriptData({
+        name: "Co-op Farn",
+        author: "Mxyuki",
+        description: `
+
+            <p>Change lowercase to uppercase.</p>
+        `
+    });
