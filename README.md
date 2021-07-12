@@ -33,3 +33,5 @@ AMQ LowerToUpper is a script made to change all your answer by Uppercase answer.
 **--- Buttons ---**
 
 insert : When you answered something press insert to change it to UpperCase
+
+Delete : When you answered something press delete to change it to LowerCase
