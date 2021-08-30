@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm V2
 // @namespace    https://github.com/Mxyuki/
-// @version      0.1
+// @version      0.2
 // @description  Auto Farm respond and then press ↑ so everyone get the answer !
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -95,8 +95,8 @@ $("#farmStatus").text('Receive Only');
 function setup() {
     farmWindow = new AMQWindow({
         title: "Coop Farm",
-        width: 500,
-        height: 270,
+        width: 350,
+        height: 200,
         zIndex: 1054,
         draggable: true
     });
@@ -109,7 +109,7 @@ function setup() {
 
     farmWindow.addPanel({
         width: 1.0,
-        height: 135,
+        height: 50,
         position: {
             x: 0,
             y: 50
@@ -118,7 +118,7 @@ function setup() {
     });
 
    farmWindow.panels[0].panel.append(
-        $(`<div id="farmWindowControlsContainer"></div>`)
+        $(`<div id="farmWindowButton"></div>`)
         .append(
             $(`<button id="farmWindowEnable" class="btn btn-primary">Enable</button>`).click(function () {
                 Enable();
@@ -130,23 +130,23 @@ function setup() {
             })
         )
         .append(
-            $(`<button id="farmWindowSend" class="btn btn-primary">Send Only</button>`).click(function () {
+            $(`<button id="farmWindowSend" class="btn btn-primary">Send</button>`).click(function () {
                 Send();
             })
         )
         .append(
-            $(`<button id="farmWindowReceive" class="btn btn-primary">Receive Only</button>`).click(function () {
+            $(`<button id="farmWindowReceive" class="btn btn-primary">Receive</button>`).click(function () {
                 Receive();
             })
         )
     );
 
    farmWindow.panels[1].panel.append(
-        $(`<div id="farmerWindowResultsContainer"></div>`)
+        $(`<div id="farmerWindowStatus"></div>`)
         .append(
             $(
-                `<div id="farmerWindowResultsLeft">
-                    <H2 id="farmStatus">Disable</H2>
+                `<div id="farmerWindowStatusText">
+                    <H3 id="farmStatus">Disable</H3>
                 </div>`
             )
         )
@@ -194,4 +194,26 @@ function setup() {
 
             <p>Co-op Farm Disabled - Receive answer and Send answer are Disabled.</p>
         `
+
     });
+
+    AMQ_addStyle(`
+        #qpFarmCoop {
+            width: 27px;
+            margin-right: 5px;
+        }
+        #farmerWindowStatus {
+            width: 100%;
+            float: center;
+            text-align: center;
+            padding-left: 5px;
+        }
+        #farmerWindowStatusText > p {
+            margin-bottom: 0;
+        }
+        #farmWindowButton > button {
+            width: 70px;
+            margin: 7px;
+        }
+    `);
+
