@@ -1,14 +1,13 @@
 // ==UserScript==
-// @name         Coop Farm
-// @namespace    http://tampermonkey.net/
+// @name         AMQ Co-op Farm V2
+// @namespace    https://github.com/Mxyuki/
 // @version      0.1
-// @description  try to take over the world!
+// @description  Auto Farm respond and then press ↑ so everyone get the answer !
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
-// @grant        none
 // ==/UserScript==
 
 // don't load on login page
