@@ -43,3 +43,9 @@ AMQ DAYT WHY is a script made so we can reuse shorten name of anime and not have
 **--- Example ---**
 
 If you write Denyuden when you will press Enter it will automaticaly change your answer to Densetsu no Yuusha no Densetsu.
+
+**--- Add shortened name ---**
+
+        if (x == 'shortened name'){ **Must be in lowercase**
+          $("#qpAnswerInput").val('Full name that work for AMQ');
+        }
