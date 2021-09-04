@@ -30,7 +30,6 @@ function checkKeyPress(key) {
         //MahoYome
         if (x == 'mahoyome'){
           $("#qpAnswerInput").val('Mahoutsukai no Yome');
-          quiz.answerInput.submitAnswer(true);
         }
 
 
