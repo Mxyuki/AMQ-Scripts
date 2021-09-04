@@ -12,7 +12,7 @@ This script is made to make your game in Farm co-op easier.
 
 ↑ : Send your answer in chat, if someone as the script and activated auto answer it will answer for him.
 
-← : Toggle Co-op Mod.
+At the top right Coop Fram button : Allow you to change how the script will work with differents Mods.
 
 **--- Mods ---**
 
@@ -26,12 +26,20 @@ Co-op Farm Disabled - Receive answer and Send answer are Disabled.
 
 # AMQ LowerToUpper
 
-AMQ LowerToUpper is a script made to change all your answer by Uppercase answer.
+AMQ LowerToUpper is a script made to change all your answer by Uppercase answer or Lowercase answer.
 
 (Not really helpful just for fun)
 
 **--- Buttons ---**
 
-insert : When you answered something press insert to change it to UpperCase
+insert : When you answered something press insert to change it to UpperCase.
 
-Delete : When you answered something press delete to change it to LowerCase
+Delete : When you answered something press delete to change it to LowerCase.
+
+# AMQ DAYT WHY
+
+AMQ DAYT WHY is a script made so we can reuse shorten name of anime and not have to write all the long name.
+
+**--- Exemple ---**
+
+If you write Denyuden when you will press Enter it will automaticaly change your answer to Densetsu no Yuusha no Densetsu.
