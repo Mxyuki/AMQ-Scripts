@@ -24,7 +24,6 @@ function checkKeyPress(key) {
         //Denyuden
         if (x == 'denyuden'){
           $("#qpAnswerInput").val('Densetsu no Yuusha no Densetsu');
-          quiz.answerInput.submitAnswer(true);
         }
 
         //MahoYome
