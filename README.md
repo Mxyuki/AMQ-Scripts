@@ -40,6 +40,6 @@ Delete : When you answered something press delete to change it to LowerCase.
 
 AMQ DAYT WHY is a script made so we can reuse shorten name of anime and not have to write all the long name.
 
-**--- Exemple ---**
+**--- Example ---**
 
 If you write Denyuden when you will press Enter it will automaticaly change your answer to Densetsu no Yuusha no Densetsu.
