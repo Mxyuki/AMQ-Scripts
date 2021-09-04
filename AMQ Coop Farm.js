@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AMQ Co-op Farm V2
+// @name         AMQ Co-op Farm 
 // @namespace    https://github.com/Mxyuki/
-// @version      0.2
-// @description  Auto Farm respond and then press ↑ so everyone get the answer !
+// @version      2.0
+// @description  Coop Farm respond and then press ↑ to send your answer to everyone !
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
