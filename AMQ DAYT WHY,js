@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Dayt WHY
 // @namespace    https://github.com/Mxyuki
-// @version      0.1
+// @version      0.2
 // @description  To add back short name, because WHY DAYT.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -28,11 +28,46 @@ function checkKeyPress(key) {
 
         //MahoYome
         if (x == 'mahoyome'){
-          $("#qpAnswerInput").val('Mahoutsukai no Yome');
+          $("#qpAnswerInput").val('Mahōtsukai no Yome');
         }
 
+        //Cardcaptor Sakura
+        if (x == 'sakura'){
+          $("#qpAnswerInput").val('Cardcaptor Sakura');
+        }
+
+        //Meitantei Conan
+        if (x == 'conan'){
+          $("#qpAnswerInput").val('Meitantei Conan');
+        }
+
+        //Kimisen
+        if (x == 'kimisen'){
+          $("#qpAnswerInput").val('Kimi to Boku no Saigo no Senjō, Arui wa Sekai ga Hajimaru Seisen');
+        }
+
+        //Inari konkon
+        if (x == 'inari'){
+          $("#qpAnswerInput").val('Inari, Konkon, Koi Iroha.');
+        }
+
+        //Noucome
+        if (x == 'noucome'){
+          $("#qpAnswerInput").val('Ore no Nōnai Sentakushi ga, Gakuen Love Come o Zenryoku de Jama Shiteiru');
+        }
+
+        //UBW
+        if (x == 'ubw'){
+          $("#qpAnswerInput").val('Fate/stay night: Unlimited Blade Works');
+        }
+
+        //oreshura
+        if (x == 'oreshura'){
+          $("#qpAnswerInput").val('Ore no Kanojo to Osananajimi ga Shuraba Sugiru');
+        }
 
 
 
   }
 }
+
