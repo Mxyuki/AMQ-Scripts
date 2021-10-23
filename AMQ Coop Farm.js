@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AMQ Co-op Farm 
+// @name         AMQ Co-op Farm V2
 // @namespace    https://github.com/Mxyuki/
-// @version      2.0
-// @description  Coop Farm respond and then press ↑ to send your answer to everyone !
+// @version      0.2
+// @description  Auto Farm respond and then press ↑ so everyone get the answer !
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
@@ -69,6 +69,9 @@ function processChatCommand(payload) {
       quiz.answerInput.submitAnswer(true);
     }
   }
+    else if(payload.message.startsWith("!CF")){
+    farmWindow.open();
+    }
 }
 
 //Change Status
@@ -146,7 +149,7 @@ function setup() {
         .append(
             $(
                 `<div id="farmerWindowStatusText">
-                    <H3 id="farmStatus">Disabled</H3>
+                    <H3 id="farmStatus">Disable</H3>
                 </div>`
             )
         )
@@ -176,22 +179,14 @@ function setup() {
         name: "Co-op Farn",
         author: "Mxyuki",
         description: `
-
             <p>This script is made to make your game in Farm co-op easier.</p>
-
             <p>--- Buttons ---</p>
-
             <p>↑ : Send your answer in chat, if someone as the script and activated auto answer it will answer for him.</p>
             <p>Top right "Coop Farm" button : Change Co-op Mode.</p>
-
             <p>--- Mods ---</p>
-
             <p>Co-op Farm enabled - Receive answer and Send answer Enabled.</p>
-
             <p>Send Answer Only - Only send your answer and don't receive answer.</p>
-
             <p>Receive Only - Only receive the answer and can't send answer.</p>
-
             <p>Co-op Farm Disabled - Receive answer and Send answer are Disabled.</p>
         `
 
@@ -216,4 +211,3 @@ function setup() {
             margin: 7px;
         }
     `);
-
