@@ -67,8 +67,9 @@ function processChatCommand(payload) {
     }
   }
     else if(payload.message.startsWith("!CF")){
+        if (message.sender == selfName){
     farmWindow.open();
-    }
+    }}
 }
 
 	new Listener("answer results", (data) => {
