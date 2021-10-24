@@ -2,7 +2,7 @@
 // @name         AMQ Co-op Farm
 // @namespace    https://github.com/Mxyuki/
 // @version      0.3
-// @description  Auto Farm respond and then press ↑ so everyone get the answer !
+// @description  Auto Farm for AMQ. Answer and it will send it in the chatm everyone with the script will have it writen automaticaly.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
