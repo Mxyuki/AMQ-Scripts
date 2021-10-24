@@ -10,7 +10,7 @@ This script is made to make your game in Farm co-op easier.
 
 **--- Buttons ---**
 
-↑ : Send your answer in chat, if someone as the script and activated auto answer it will answer for him.
+Enter : Pressing enter will send your answer.
 
 At the top right Coop Fram button : Allow you to change how the script will work with differents Mods.
 
