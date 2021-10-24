@@ -71,7 +71,7 @@ function processChatCommand(payload) {
 		lastAnswer = "";
         sendChatMessage(lastAnswer);
 	}).bindListener();
-
+}
 function Enable(){
 $("#farmStatus").text('Enabled');
     mode = 1;
@@ -125,7 +125,7 @@ function setup() {
             })
         )
         .append(
-            $(`<button id="farmWindowDisable" class="btn btn-primary">Disabled</button>`).click(function () {
+            $(`<button id="farmWindowDisabled" class="btn btn-primary">Disabled</button>`).click(function () {
                 Disabled();
             })
         )
