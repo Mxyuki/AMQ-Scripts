@@ -151,7 +151,7 @@ function setup() {
         .append(
             $(
                 `<div id="farmerWindowStatusText">
-                    <H3 id="farmStatus">Disable</H3>
+                    <H3 id="farmStatus">Disabled</H3>
                 </div>`
             )
         )
