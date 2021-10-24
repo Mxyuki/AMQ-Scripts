@@ -26,6 +26,7 @@ var lastAnswer= '';
 var x = '';
 var ar = '';
 var prefix = '/// ';
+var chat;
 
 if (quiz.gameMode == "Ranked") return;
 
@@ -39,8 +40,9 @@ function checkKeyPress(key) {
   if (key.keyCode == '13' && mode == 1|| key.keyCode == '13' && mode == 3) {
 
     x = document.getElementById("qpAnswerInput").value;
+    chat = document.getElementById("gcInput").value;
 
-      if(x != '' && x != lastAnswer){
+      if(x != '' && x != lastAnswer && chat == ''){
     sendChatMessage(prefix + x);
           lastAnswer = x;
       }
