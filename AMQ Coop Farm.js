@@ -61,16 +61,11 @@ function processChatCommand(payload) {
     if (quiz.isSpectator) return;
     if (ar.length > 0) {
       quiz.skipClicked();
-        //lastAnswer = ar;
+        lastAnswer = ar;
       $("#qpAnswerInput").val(ar);
       quiz.answerInput.submitAnswer(true);
     }
   }
-    else if(payload.message.startsWith("!CF")){
-        if (message.sender == selfName){
-    farmWindow.open();
-    }}
-}
 
 	new Listener("answer results", (data) => {
 		lastAnswer = "";
@@ -82,7 +77,7 @@ $("#farmStatus").text('Enabled');
     mode = 1;
 }
 
-function Disable(){
+function Disabled(){
 $("#farmStatus").text('Disabled');
     mode = 2;
 }
@@ -130,8 +125,8 @@ function setup() {
             })
         )
         .append(
-            $(`<button id="farmWindowDisable" class="btn btn-primary">Disable</button>`).click(function () {
-                Disable();
+            $(`<button id="farmWindowDisable" class="btn btn-primary">Disabled</button>`).click(function () {
+                Disabled();
             })
         )
         .append(
