@@ -166,7 +166,7 @@ function setup() {
             }
         })
         .popover({
-            content: "Coop Fram",
+            content: "Coop Farm",
             trigger: "hover",
             placement: "bottom"
         })
@@ -175,7 +175,7 @@ function setup() {
 }
 
     AMQ_addScriptData({
-        name: "Co-op Farn",
+        name: "Co-op Farm",
         author: "Mxyuki",
         description: `
             <p>This script is made to make your game in Farm co-op easier.</p>
