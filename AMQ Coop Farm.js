@@ -71,7 +71,6 @@ function processChatCommand(payload) {
 
 	new Listener("answer results", (data) => {
 		lastAnswer = "";
-        sendChatMessage(lastAnswer);
 	}).bindListener();
 }
 function Enable(){
