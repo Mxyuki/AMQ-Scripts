@@ -1,15 +1,19 @@
 // ==UserScript==
-// @name         AMQ Artist/Song Script
+// @name         A/S Script
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  Find the Artist with /aa <ArtistName> and the Song with /as <SongName>
-// @author       Mxyuki
+// @description  try to take over the world!
+// @author       You
 // @match        https://animemusicquiz.com/
+// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @grant        none
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // ==/UserScript==
 
+// don't load on login page
 if (document.getElementById("startPage")) return;
 
+// Wait until the LOADING... screen is hidden and load script
 let loadInterval = setInterval(() => {
     if (document.getElementById("loadingScreen").classList.contains("hidden")) {
         setup();
@@ -52,9 +56,6 @@ function setup() {
     });
 
     commandListener.bindListener();
-
-
-document.addEventListener('keyup', dockeyup, false);
 
     new Listener("Game Starting", (payload) =>{
         songPoint = 0;
