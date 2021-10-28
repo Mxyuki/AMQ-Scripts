@@ -1,12 +1,10 @@
 // ==UserScript==
-// @name         A/S Script
-// @namespace    http://tampermonkey.net/
+// @name         AMQ Artist/Song
+// @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      0.1
-// @description  try to take over the world!
-// @author       You
+// @description  
+// @author       Mxyuki
 // @match        https://animemusicquiz.com/
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
-// @grant        none
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // ==/UserScript==
 
