@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Artist / Song / Type
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
+// @version      0.2
 // @description  Try to find the artist, the song and the type of music with your friends.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -93,6 +93,7 @@ function setup() {
     new Listener("Game Starting", (payload) =>{
         songPoint = 0;
         artistPoint = 0;
+        opedinsPoint = 0;
         songAnswer = '';
         artistAnswer = '';
         opedinsAnswer = '';
