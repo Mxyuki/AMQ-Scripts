@@ -49,44 +49,44 @@ function sendChatMessage(message) {
 }
 
 function similarity(s1, s2) {
-  var longer = s1;
+    var longer = s1;
   var shorter = s2;
-  if (s1.length < s2.length) {
+    if (s1.length < s2.length) {
     longer = s2;
-    shorter = s1;
+      shorter = s1;
   }
   var longerLength = longer.length;
-  if (longerLength == 0) {
-    return 1.0;
+    if (longerLength == 0) {
+      return 1.0;
   }
-  return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
 }
 
 function editDistance(s1, s2) {
-  s1 = s1.toLowerCase();
-  s2 = s2.toLowerCase();
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
 
-  var costs = new Array();
-  for (var i = 0; i <= s1.length; i++) {
-    var lastValue = i;
+    var costs = new Array();
+    for (var i = 0; i <= s1.length; i++) {
+      var lastValue = i;
     for (var j = 0; j <= s2.length; j++) {
-      if (i == 0)
-        costs[j] = j;
-      else {
-        if (j > 0) {
-          var newValue = costs[j - 1];
-          if (s1.charAt(i - 1) != s2.charAt(j - 1))
-            newValue = Math.min(Math.min(newValue, lastValue),
-              costs[j]) + 1;
-          costs[j - 1] = lastValue;
-          lastValue = newValue;
+        if (i == 0)
+          costs[j] = j;
+        else {
+          if (j > 0) {
+            var newValue = costs[j - 1];
+            if (s1.charAt(i - 1) != s2.charAt(j - 1))
+              newValue = Math.min(Math.min(newValue, lastValue),
+                                costs[j]) + 1;
+            costs[j - 1] = lastValue;
+            lastValue = newValue;
         }
       }
     }
-    if (i > 0)
-      costs[s2.length] = lastValue;
+      if (i > 0)
+        costs[s2.length] = lastValue;
   }
-  return costs[s2.length];
+    return costs[s2.length];
 }
 
 function setup() {
@@ -106,7 +106,7 @@ function setup() {
 
         //Player Answers
                 song = document.getElementById("asSongText").value;
-                artist = document.getElementById("asArtistText").value;
+        artist = document.getElementById("asArtistText").value;
                 opedins = document.getElementById("asOpEdInsText").value;
         if(artist != '' && toggle == 1){
             sendChatMessage("Artist : " + artist);
@@ -119,17 +119,17 @@ function setup() {
         }
 
         setTimeout(function() {
-                //AMQ Answers
-                songAnswer = document.getElementById("qpSongName").innerText;
-                artistAnswer = document.getElementById("qpSongArtist").innerText;
-                opedinsAnswer = document.getElementById("qpSongType").innerText;
-                //Player Answers
-                song = document.getElementById("asSongText").value;
-                artist = document.getElementById("asArtistText").value;
-                opedins = document.getElementById("asOpEdInsText").value;
-                //How many song in game
-                countSong = document.getElementById("qpCurrentSongCount").innerText;
-                totalSong = document.getElementById("qpTotalSongCount").innerText;
+            //AMQ Answers
+            songAnswer = document.getElementById("qpSongName").innerText;
+            artistAnswer = document.getElementById("qpSongArtist").innerText;
+            opedinsAnswer = document.getElementById("qpSongType").innerText;
+            //Player Answers
+            song = document.getElementById("asSongText").value;
+            artist = document.getElementById("asArtistText").value;
+            opedins = document.getElementById("asOpEdInsText").value;
+            //How many song in game
+            countSong = document.getElementById("qpCurrentSongCount").innerText;
+            totalSong = document.getElementById("qpTotalSongCount").innerText;
 
             songAnswer = (songAnswer.toLowerCase());
             artistAnswer = (artistAnswer.toLowerCase());
@@ -141,17 +141,17 @@ function setup() {
             var songSim = similarity(song,songAnswer)
             var artistSim = similarity(artist,artistAnswer)
 
-                if(songAnswer == song && toggle == 1 || songSim >= 0.80 && toggle == 1){
+            if(songAnswer == song && toggle == 1 || songSim >= 0.80 && toggle == 1){
                     songPoint++;
                     sendChatMessage("Song Point +1, Total :" + songPoint + "/" + countSong );
                 }
 
-                if(artistAnswer == artist && toggle == 1 || artistSim >= 0.80 && toggle == 1 ){
+            if(artistAnswer == artist && toggle == 1 || artistSim >= 0.80 && toggle == 1 ){
                     artistPoint++;
                     sendChatMessage("Artist Point +1, Total :" + artistPoint + "/" + countSong);
                 }
 
-                if(opedinsAnswer == opedins && toggle == 1){
+            if(opedinsAnswer == opedins && toggle == 1){
                     opedinsPoint++;
                     sendChatMessage("Type Point +1, Total :" + opedinsPoint + "/" + countSong );
                 }
@@ -165,9 +165,9 @@ function setup() {
                 $("#asSongText").val("");
                 $("#asArtistText").val("");
                 $("#asOpEdInsText").val("");
-                }, 4000);
+            }, 4000);
 
-                if(countSong == totalSong && toggle == 1){
+            if(countSong == totalSong && toggle == 1){
                     sendChatMessage("------------Result------------");
                     sendChatMessage("Song : " + songPoint + " / " + totalSong);
                     sendChatMessage("Artist : " + artistPoint + " / " + totalSong);
@@ -183,8 +183,8 @@ function setup() {
                     artist = '';
                     opedins = '';
                 }
-            }, 1500);
-        }).bindListener();
+        }, 1500);
+    }).bindListener();
 }
 
 function Enable(){
@@ -279,13 +279,13 @@ function window() {
             $(`<button id="farmWindowEnable" class="btn btn-primary">Enable</button>`).click(function () {
                 Enable();
             })
-            )
-         .append(
-            $(`<button id="farmWindowDisable" class="btn btn-primary">Disable</button>`).click(function () {
+        )
+        .append(
+             $(`<button id="farmWindowDisable" class="btn btn-primary">Disable</button>`).click(function () {
                 Disable();
             })
+         )
     )
-)
     asWindow.panels[4].panel.append(
         $(`<div id="asStatusText"></div>`)
         .append(
@@ -297,9 +297,9 @@ function window() {
         )
     )
 }
-    let oldWidth = $("#qpOptionContainer").width();
-    $("#qpOptionContainer").width(oldWidth + 35);
-    $("#qpOptionContainer > div").append($(`<div id="qpasScript" class="clickAble qpOption"><i aria-hidden="true" class="fa fa-bars qpMenuItem"></i></div>`)
+let oldWidth = $("#qpOptionContainer").width();
+$("#qpOptionContainer").width(oldWidth + 35);
+$("#qpOptionContainer > div").append($(`<div id="qpasScript" class="clickAble qpOption"><i aria-hidden="true" class="fa fa-bars qpMenuItem"></i></div>`)
                                          .click(() => {
         if (asWindow.isVisible()) {
             asWindow.close();
@@ -308,12 +308,12 @@ function window() {
             asWindow.open();
         }
     })
-        .popover({
+                                         .popover({
         content: "Artist/Song",
         trigger: "hover",
         placement: "bottom"
     })
-       );
+                                        );
 
 
 
