@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Artist / Song / Type
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  Try to find the artist, the song and the type of music with your friends.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -61,6 +61,21 @@ function setup() {
     }).bindListener();
 
     new Listener("answer results", (data) => {
+
+        //Player Answers
+                song = document.getElementById("asSongText").value;
+                artist = document.getElementById("asArtistText").value;
+                opedins = document.getElementById("asOpEdInsText").value;
+        if(artist != '' && toggle == 1){
+            sendChatMessage("Artist : " + artist);
+        }
+        if(song != '' && toggle == 1){
+            sendChatMessage("Song : " + song);
+        }
+        if(opedins != '' && toggle == 1){
+            sendChatMessage("Type : " + opedins);
+        }
+
         setTimeout(function() {
                 //AMQ Answers
                 songAnswer = document.getElementById("qpSongName").innerText;
@@ -92,6 +107,7 @@ function setup() {
                     opedinsPoint++;
                     sendChatMessage("Type Point +1, Total :" + opedinsPoint + "/" + countSong );
                 }
+            setTimeout(function() {
                 song = '';
                 artist = '';
                 opedins = '';
@@ -101,6 +117,7 @@ function setup() {
                 $("#asSongText").val("");
                 $("#asArtistText").val("");
                 $("#asOpEdInsText").val("");
+                }, 4000);
 
                 if(countSong == totalSong && toggle == 1){
                     sendChatMessage("------------Result------------");
@@ -110,6 +127,7 @@ function setup() {
                     sendChatMessage("--------------End-------------");
                     songPoint = 0;
                     artistPoint = 0;
+                    opedins = 0;
                     songAnswer = '';
                     artistAnswer = '';
                     opedinsAnswer = '';
