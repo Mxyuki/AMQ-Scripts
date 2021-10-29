@@ -155,7 +155,7 @@ function window() {
     asWindow = new AMQWindow({
         title: "Artist/Song Script",
         width: 300,
-        height: 325,
+        height: 350,
         zIndex: 1054,
         draggable: true
     });
@@ -163,6 +163,10 @@ function window() {
     asWindow.addPanel({
         width: 1.0,
         height: 50,
+        position: {
+            x: 0,
+            y: 25
+        },
         id: "asArtist"
     });
 
@@ -171,7 +175,7 @@ function window() {
         height: 50,
         position: {
             x: 0,
-            y: 50
+            y: 75,
         },
         id: "asSong"
     });
@@ -181,7 +185,7 @@ function window() {
         height: 50,
         position: {
             x: 0,
-            y: 100
+            y: 125,
         },
         id: "asOpEdIns"
     });
@@ -191,7 +195,7 @@ function window() {
         height: 50,
         position: {
             x: 0,
-            y: 135
+            y: 160,
         },
         id: "asToggle"
     });
@@ -201,7 +205,7 @@ function window() {
         height: 50,
         position: {
             x: 0,
-            y: 200
+            y: 225,
         },
         id: "asStatusText"
     });
