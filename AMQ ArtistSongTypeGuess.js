@@ -141,12 +141,12 @@ function setup() {
             var songSim = similarity(song,songAnswer)
             var artistSim = similarity(artist,artistAnswer)
 
-                if(songAnswer == song && toggle == 1 || songSim >= 0.75 && toggle == 1){
+                if(songAnswer == song && toggle == 1 || songSim >= 0.80 && toggle == 1){
                     songPoint++;
                     sendChatMessage("Song Point +1, Total :" + songPoint + "/" + countSong );
                 }
 
-                if(artistAnswer == artist && toggle == 1 || artistSim >= 0.75 && toggle == 1 ){
+                if(artistAnswer == artist && toggle == 1 || artistSim >= 0.80 && toggle == 1 ){
                     artistPoint++;
                     sendChatMessage("Artist Point +1, Total :" + artistPoint + "/" + countSong);
                 }
