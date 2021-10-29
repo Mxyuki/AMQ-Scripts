@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Artist / Song / Type
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3
+// @version      0.2
 // @description  Try to find the artist, the song and the type of music with your friends.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -89,9 +89,12 @@ function setup() {
                 countSong = document.getElementById("qpCurrentSongCount").innerText;
                 totalSong = document.getElementById("qpTotalSongCount").innerText;
 
-                songAnswer = (songAnswer.toLowerCase());
-                artistAnswer = (artistAnswer.toLowerCase());
-                opedinsAnswer = (opedinsAnswer.toLowerCase());
+            songAnswer = (songAnswer.toLowerCase());
+            artistAnswer = (artistAnswer.toLowerCase());
+            opedinsAnswer = (opedinsAnswer.toLowerCase());
+            song = (song.toLowerCase());
+            artist = (artist.toLowerCase());
+            opedins = (opedins.toLowerCase());
 
                 if(songAnswer == song && toggle == 1){
                     songPoint++;
@@ -206,13 +209,13 @@ function window() {
     asWindow.panels[0].panel.append(
         $(`<div id="asSongTextBox"></div>`)
 
-        .append($(`<input id="asArtistText" type="text" placeholder="Artist Name">`))
+        .append($(`<input id="asSongText" type="text" placeholder="Song Name">`))
     );
 
     asWindow.panels[1].panel.append(
         $(`<div id="asArtistTextBox"></div>`)
 
-        .append($(`<input id="asSongText" type="text" placeholder="Song Name">`))
+        .append($(`<input id="asArtistText" type="text" placeholder="Artist Name">`))
     )
 
     asWindow.panels[2].panel.append(
