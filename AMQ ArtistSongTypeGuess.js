@@ -106,7 +106,7 @@ function setup() {
                     sendChatMessage("------------Result------------");
                     sendChatMessage("Song : " + songPoint + " / " + totalSong);
                     sendChatMessage("Artist : " + artistPoint + " / " + totalSong);
-                    sendChatMessage("Artist : " + opedinsPoint + " / " + totalSong);
+                    sendChatMessage("Type : " + opedinsPoint + " / " + totalSong);
                     sendChatMessage("--------------End-------------");
                     songPoint = 0;
                     artistPoint = 0;
@@ -117,7 +117,7 @@ function setup() {
                     artist = '';
                     opedins = '';
                 }
-            }, 1300);
+            }, 1500);
         }).bindListener();
 }
 
