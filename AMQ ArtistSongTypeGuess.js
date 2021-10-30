@@ -105,14 +105,14 @@ function setup() {
     new Listener("answer results", (data) => {
 
         //Player Answers
-                song = document.getElementById("asSongText").value;
+        song = document.getElementById("asSongText").value;
         artist = document.getElementById("asArtistText").value;
-                opedins = document.getElementById("asOpEdInsText").value;
-        if(artist != '' && toggle == 1){
-            sendChatMessage("Artist : " + artist);
-        }
+        opedins = document.getElementById("asOpEdInsText").value;
         if(song != '' && toggle == 1){
             sendChatMessage("Song : " + song);
+        }
+        if(artist != '' && toggle == 1){
+            sendChatMessage("Artist : " + artist);
         }
         if(opedins != '' && toggle == 1){
             sendChatMessage("Type : " + opedins);
