@@ -198,6 +198,7 @@ function Disable(){
 
 function window() {
     asWindow = new AMQWindow({
+        id: "asScriptWindow",
         title: "Artist/Song Script",
         width: 300,
         height: 350,
@@ -207,7 +208,8 @@ function window() {
 
     asWindow.addPanel({
         width: 1.0,
-        height: 50,
+        height: 30,
+        zIndex: 1055,
         position: {
             x: 0,
             y: 25
@@ -217,7 +219,8 @@ function window() {
 
     asWindow.addPanel({
         width: 1.0,
-        height: 50,
+        height: 30,
+        zIndex: 1056,
         position: {
             x: 0,
             y: 75,
@@ -227,7 +230,8 @@ function window() {
 
     asWindow.addPanel({
         width: 1.0,
-        height: 50,
+        height: 30,
+        zIndex: 1057,
         position: {
             x: 0,
             y: 125,
@@ -318,24 +322,33 @@ $("#qpOptionContainer > div").append($(`<div id="qpasScript" class="clickAble qp
 
 
 AMQ_addStyle(`
+
+        #asScriptWindow{
+        background-color: #625D60; //Window color
+        color : #D9D9D9; //Text color
+        }
+
         #qpasScript {
             width: 27px;
             margin-right: 5px;
         }
         #asSongTextBox {
             width: 100%;
+            margin-top: 5px;
             float: center;
             text-align: center;
 
         }
         #asArtistTextBox {
             width: 100%;
+            margin-top: 5px;
             float: center;
             text-align: center;
 
         }
         #asOpEdInsTextBox {
             width: 100%;
+            margin-top: 5px;
             float: center;
             text-align: center;
 
@@ -344,18 +357,24 @@ AMQ_addStyle(`
             width: 275px;
             float: center;
             text-align: center;
+            background-color: #2E2E2E;
+            border: #2E2E2E;
 
         }
         #asSongText {
             width: 275px;
             float: center;
             text-align: center;
+            background-color: #2E2E2E;
+            border: #2E2E2E;
 
         }
         #asArtistText {
             width: 275px;
             float: center;
             text-align: center;
+            background-color: #2E2E2E;
+            border: #2E2E2E;
 
         }
 
@@ -370,7 +389,8 @@ AMQ_addStyle(`
             text-align: center;
             float: center;
             width: 70px;
-            margin: 13px;
+            margin: 15px;
+            background-color: #70AAE5; //Button color
         }
 
         #asStatus > p {
@@ -379,6 +399,7 @@ AMQ_addStyle(`
         }
 
         #asStatusText {
+        font-size: 30px;
             width: 100%;
             float: center;
             text-align: center;
