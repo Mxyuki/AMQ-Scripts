@@ -104,10 +104,10 @@ function setup() {
 
     new Listener("answer results", (data) => {
 
-        //Player Answers
         song = document.getElementById("asSongText").value;
         artist = document.getElementById("asArtistText").value;
         opedins = document.getElementById("asOpEdInsText").value;
+
         if(song != '' && toggle == 1){
             sendChatMessage("Song : " + song);
         }
@@ -118,15 +118,12 @@ function setup() {
             sendChatMessage("Type : " + opedins);
         }
 
+
         setTimeout(function() {
             //AMQ Answers
             songAnswer = document.getElementById("qpSongName").innerText;
             artistAnswer = document.getElementById("qpSongArtist").innerText;
             opedinsAnswer = document.getElementById("qpSongType").innerText;
-            //Player Answers
-            song = document.getElementById("asSongText").value;
-            artist = document.getElementById("asArtistText").value;
-            opedins = document.getElementById("asOpEdInsText").value;
             //How many song in game
             countSong = document.getElementById("qpCurrentSongCount").innerText;
             totalSong = document.getElementById("qpTotalSongCount").innerText;
@@ -137,6 +134,21 @@ function setup() {
             song = (song.toLowerCase());
             artist = (artist.toLowerCase());
             opedins = (opedins.toLowerCase());
+
+            if(opedins.startsWith("op ")){
+                opedins = opedins.substr(opedins.indexOf(' ') + 1);
+                opedins = "opening " + opedins;
+            }
+
+            if(opedins.startsWith("ed ")){
+                opedins = opedins.substr(opedins.indexOf(' ') + 1);
+                opedins = "ending " + opedins;
+            }
+
+            if(opedins.startsWith("ins") || opedins.startsWith("ost")){
+                opedins = opedins.substr(opedins.indexOf(' ') + 1);
+                opedins = "insert song";
+            }
 
             var songSim = similarity(song,songAnswer)
             var artistSim = similarity(artist,artistAnswer)
