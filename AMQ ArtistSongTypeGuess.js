@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Artist / Song / Type
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  Try to find the artist, the song and the type of music with your friends.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
