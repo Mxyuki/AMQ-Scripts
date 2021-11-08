@@ -36,7 +36,7 @@ function checkKeyPress(key) {
 })();
 
     AMQ_addScriptData({
-        name: "Co-op Farn",
+        name: "Lower To Upper",
         author: "Miyuki",
         description: `
 
