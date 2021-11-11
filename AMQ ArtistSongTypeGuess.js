@@ -5,6 +5,7 @@
 // @description  Try to find the artist, the song and the type of music with your friends.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/blob/main/AMQ%20ArtistSongTypeGuess.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
 // ==/UserScript==
