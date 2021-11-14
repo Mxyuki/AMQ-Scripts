@@ -27,7 +27,7 @@ function doKeyPressed(event) {
     if(event.keyCode >= 0 && isAutoSend == true){
         quiz.answerInput.submitAnswer(true);
         answer = document.getElementById("qpAnswerInput").value;
-        if(answer == ""){
+        if(answer == "" && event.keyCode == 8){
             $("#qpAnswerInput").val(" ");
             quiz.answerInput.submitAnswer(true);
             $("#qpAnswerInput").val("");
