@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ AutoSendAnswer
 // @namespace    https://github.com/Mxyuki
-// @version      0.2
+// @version      0.3
 // @description  Press [Alt + T] to activate. Will send your answer at each letter you write when you are in team.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -13,6 +13,7 @@ if (document.getElementById('startPage')) {
 
 var isAutoSend=false;
 var answer
+var x = ' ';
 
 function doAltT(event) {
     if(event.altKey && event.keyCode=='84') {
@@ -25,6 +26,12 @@ document.addEventListener('keyup', doAltT, false);
 function doKeyPressed(event) {
     if(event.keyCode >= 0 && isAutoSend == true){
         quiz.answerInput.submitAnswer(true);
+        answer = document.getElementById("qpAnswerInput").value;
+        if(answer == ""){
+            $("#qpAnswerInput").val(" ");
+            quiz.answerInput.submitAnswer(true);
+            $("#qpAnswerInput").val("");
+        }
     }
 }
 document.addEventListener('keydown', doKeyPressed, false);
