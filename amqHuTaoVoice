@@ -124,8 +124,3 @@ function setup() {
     Popout.bindListener();
 
 }
-// DELETE JUST FOR TEST
-function chatSystemMessage(msg) {
-    if(!gameChat.isShown()) return;
-    gameChat.systemMessage(msg);
-}
