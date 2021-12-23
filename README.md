@@ -1,3 +1,5 @@
+# There is a lot of useless script in here but i made them for fun.
+
 # How to use it
 
 You must add the extension **Tampermonkey** to your browser, and then click on **Create a new script**, after that just put the script in it and Load https://animemusicquiz.com/
