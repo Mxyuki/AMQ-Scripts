@@ -72,3 +72,15 @@ When you will write your answer it will send it automaticaly at each letter and 
 **--- Buttons ---**
 
 Alt + T : Pressing it will enable or disable the script and send a message in chat to know in which state you are.
+
+# AMQ No Host
+
+A script that give instantly Host to the last player who joined the game when someone give you Host.
+
+Plus a mode that put the last settings you saved before giving host to the last player who joined the game.
+
+**--- Buttons ---**
+
+Alt + I : Auto give Host to someone else
+
+Alt + O : Auto put last saved settings plus give Host to someone else
