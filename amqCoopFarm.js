@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm
 // @namespace    https://github.com/Mxyuki/
-// @version      0.4
+// @version      0.5
 // @description  Auto Farm for AMQ. Answer and it will send it in the chatm everyone with the script will have it writen automaticaly.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -58,7 +58,7 @@ new Listener("game chat update", (payload) => {
 function processChatCommand(payload) {
   if (payload.message.startsWith(prefix) && mode == 1 || payload.message.startsWith(prefix) && mode == 4 ) {
     var index = payload.message.indexOf(' ');
-    if (index > 0) ar = payload.message.substr(index + 1);
+    if (index > 0) ar = payload.message.replace(prefix, "");
     else ar = '';
     if (quiz.isSpectator) return;
     if (ar.length > 0) {
