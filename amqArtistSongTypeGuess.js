@@ -211,6 +211,8 @@ function setup() {
             <p>Send Answer Only - Only send your answer and don't receive answer.</p>
             <p>Receive Only - Only receive the answer and can't send answer.</p>
             <p>Co-op Farm Disabled - Receive answer and Send answer are Disabled.</p>
+            <p>--- Prefix ---</p>
+            <p>Write the Prefix you want in the Textbox, and then clic on change. (Each reload it will come back to /// )</p>
         `
 
     });
