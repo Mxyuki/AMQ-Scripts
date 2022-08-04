@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm
 // @namespace    https://github.com/Mxyuki/
-// @version      0.7
+// @version      0.6
 // @description  Auto Farm for AMQ. Answer and it will send it in the chatm everyone with the script will have it writen automaticaly.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
