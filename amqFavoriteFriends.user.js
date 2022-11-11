@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -13,6 +13,8 @@ if (document.getElementById('startPage')) {
 
 let favoriteFriends = 0;
 let favoriteList = [];
+
+// Add Favorite Button and page
 
 $("#gameContainer").append($(`
             <div class="modal fade" id="friendFavorite" tabindex="-1" role="dialog">
@@ -31,7 +33,7 @@ $("#gameContainer").append($(`
                             <button id="favoriteRemove" class="btn btn-primary">Remove</button>
                                 Ceci est un test de text
 
-                                <ul id="wowTest"></ul>
+                                <ul id="listOfFavorite"></ul>
                             </div>
                         </div>
                     </div>
@@ -44,7 +46,7 @@ $("#optionsContainer > ul").prepend($(`
             <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
         `));
 
-//loadSettings();
+// Load saved Favorite Friends list
 
 let saveFavoriteFriends = localStorage.getItem("favoriteFriends");
 
@@ -54,7 +56,13 @@ favoriteFriends = saveFavoriteFriends;
 
 favoriteList = saveFavoriteList;
 
-const ul = document.getElementById('wowTest');
+if(favoriteFriends==undefined) favoriteFriends = 0;
+if(favoriteList==undefined) favoriteList = [];
+
+
+// List all Favorite Friends
+
+const ul = document.getElementById('listOfFavorite');
 
     ul.innerHTML = "";
 
@@ -63,6 +71,9 @@ const ul = document.getElementById('wowTest');
         li.innerHTML = favoriteList[i];
         ul.appendChild(li);
     }
+
+
+// When Add button pressed Add the new Favorite Friend
 
 document.getElementById('favoriteAdd').addEventListener('click', function handleClick() {
     var textBoxValue = document.getElementById("favoriteTextBox").value;
@@ -73,7 +84,7 @@ document.getElementById('favoriteAdd').addEventListener('click', function handle
         saveSettings();
     }
 
-    const ul = document.getElementById('wowTest');
+    const ul = document.getElementById('listOfFavorite');
 
     ul.innerHTML = "";
 
@@ -86,14 +97,37 @@ document.getElementById('favoriteAdd').addEventListener('click', function handle
 });
 
 
+// When Remove button pressed remove friend from Favorite
+
+document.getElementById('favoriteRemove').addEventListener('click', function handleClick() {
+    var textBoxValue = document.getElementById("favoriteTextBox").value;
+    if(textBoxValue != ""){
+
+        for (var j = 1; j+1 <= favoriteList.length; j++) {
+
+            if(favoriteList[j] == textBoxValue) favoriteList[j] = "";
+            console.log(j);
+
+        }
+        saveSettings();
+    }
+
+    const ul = document.getElementById('listOfFavorite');
+
+    ul.innerHTML = "";
+
+    for (var i = 1; i+1 <= favoriteList.length; i++) {
+        const li = document.createElement("li");
+        li.innerHTML = favoriteList[i];
+        ul.appendChild(li);
+    }
+
+});
+
+
+// Save Favorite Friends list
+
 function saveSettings() {
 	localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
     localStorage.setItem("favoriteFriends", JSON.stringify(favoriteFriends));
 }
-
-/*function loadSettings() {
-// load settings, if nothing is loaded, use default settings
-	let saveFavoriteFriends = localStorage.getItem("favoriteFriends");
-
-    let saveFavoriteList = localStorage.getItem("favoriteList");
-}*/
