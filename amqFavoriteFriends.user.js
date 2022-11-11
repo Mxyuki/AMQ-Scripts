@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -50,7 +50,7 @@ $("#optionsContainer > ul").prepend($(`
 
 let saveFavoriteFriends = localStorage.getItem("favoriteFriends");
 
-let saveFavoriteList = JSON.parse(localStorage.getItem('favoriteList')); //localStorage.getItem("favoriteList");
+let saveFavoriteList = JSON.parse(localStorage.getItem('favoriteList'));
 
 favoriteFriends = saveFavoriteFriends;
 
@@ -123,6 +123,21 @@ document.getElementById('favoriteRemove').addEventListener('click', function han
     }
 
 });
+
+
+// When favorite friend join
+
+let commandListener = new Listener("friend state change", (friend) => {
+    if (friend.online && favoriteList.includes(friend.name)) {
+        popoutMessages.displayStandardMessage("",friend.name+" is online");
+    }
+
+    else if (favoriteList.includes(friend.name)) {
+        console.log(friend.online);
+        popoutMessages.displayStandardMessage("",friend.name+" is offline");
+    }
+});
+commandListener.bindListener();
 
 
 // Save Favorite Friends list
