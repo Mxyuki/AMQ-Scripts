@@ -13,8 +13,7 @@ if (document.getElementById('startPage')) {
     return;
 }
 
-let favoriteFriends = 0;
-let favoriteList = [];
+let favoriteList = JSON.parse(localStorage.getItem("favoriteList")) || [];
 
 
 // Add Favorite Button and page
@@ -52,9 +51,9 @@ $("#optionsContainer > ul").prepend($(`
 // Add the info about the script
 
 AMQ_addScriptData({
-        name: "Favorite Friends",
-        author: "Mxyuki & kempanator",
-        description: `
+    name: "Favorite Friends",
+    author: "Mxyuki & kempanator",
+    description: `
             <p>This script is made to put your favorite friends at the top of the friend list and highlight them</p>
             <p>--- How to use ---</p>
             <p>Click at the gear at the bottom right of your screen</p>
@@ -67,33 +66,20 @@ AMQ_addScriptData({
             <img src="https://i.imgur.com/YhrzSjN.png" />
         `
 
-    });
+});
 
 
-// Load saved Favorite Friends list
 
-let saveFavoriteFriends = localStorage.getItem("favoriteFriends");
-
-let saveFavoriteList = JSON.parse(localStorage.getItem('favoriteList'));
-
-favoriteFriends = saveFavoriteFriends;
-
-favoriteList = saveFavoriteList;
-
-if(favoriteFriends==undefined) favoriteFriends = 0;
-if(favoriteList==undefined) favoriteList = [];
-
-
-// Put color ro Favorite Friends
+// Put color to Favorite Friends
 
 let update = new Listener("online player count change", (payload) => {
 
-        for (let li of document.querySelectorAll("#friendOnlineList li")) {
-            let name = li.querySelector("h4").innerText;
-            if (favoriteList.includes(name)) {
-                li.querySelector("h4").style.color = "#fad681";
+    for (let li of document.querySelectorAll("#friendOnlineList li")) {
+        let name = li.querySelector("h4").innerText;
+        if (favoriteList.includes(name)) {
+            li.querySelector("h4").style.color = "#fad681";
+        }
     }
-}
 });
 update.bindListener();
 
@@ -102,23 +88,21 @@ update.bindListener();
 
 const ul = document.getElementById('listOfFavorite');
 
-    ul.innerText = "";
+ul.innerText = "";
 
-    for (let friend of favoriteList) {
+for (let friend of favoriteList) {
     const li = document.createElement("li");
-        li.innerText = friend;
-        ul.appendChild(li);
-    }
+    li.innerText = friend;
+    ul.appendChild(li);
+}
 
 
 // When Add button pressed Add the new Favorite Friend
 
 document.getElementById('favoriteAdd').addEventListener('click', function handleClick() {
     var textBoxValue = document.getElementById("favoriteTextBox").value;
-    console.log("test");
-    if(textBoxValue != ""){
-        favoriteList[favoriteFriends] = textBoxValue;
-        favoriteFriends++;
+    if(textBoxValue != "" && !favoriteList.includes(textBoxValue)){
+        favoriteList.push(textBoxValue)
 
         saveSettings();
     }
@@ -128,7 +112,7 @@ document.getElementById('favoriteAdd').addEventListener('click', function handle
     ul.innerText = "";
 
     for (let friend of favoriteList) {
-    const li = document.createElement("li");
+        const li = document.createElement("li");
         li.innerText = friend;
         ul.appendChild(li);
     }
@@ -142,12 +126,7 @@ document.getElementById('favoriteRemove').addEventListener('click', function han
     var textBoxValue = document.getElementById("favoriteTextBox").value;
     if(textBoxValue != ""){
 
-        for (var j = 1; j <= favoriteList.length; j++) {
-
-            if(favoriteList[j] == textBoxValue) favoriteList[j] = "";
-            console.log(j);
-
-        }
+        favoriteList.pop(textBoxValue);
         saveSettings();
     }
 
@@ -217,6 +196,5 @@ commandListener.bindListener();
 // Save Favorite Friends list
 
 function saveSettings() {
-	localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
-    localStorage.setItem("favoriteFriends", JSON.stringify(favoriteFriends));
+    localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
 }
