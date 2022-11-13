@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
+// @namespace    https://github.com/kempanator/amq-scripts
 // @version      0.4
 // @description  If you want to add favorite friend to get notified about what they do on amq
-// @author       Mxyuki
+// @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
 // ==/UserScript==
 
