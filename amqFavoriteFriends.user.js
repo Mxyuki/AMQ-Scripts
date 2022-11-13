@@ -2,10 +2,11 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      0.6
+// @version      0.7
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
+// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // ==/UserScript==
 
 if (document.getElementById('startPage')) {
@@ -14,6 +15,7 @@ if (document.getElementById('startPage')) {
 
 let favoriteFriends = 0;
 let favoriteList = [];
+
 
 // Add Favorite Button and page
 
@@ -32,7 +34,7 @@ $("#gameContainer").append($(`
                             <input id="favoriteTextBox" type="text" placeholder="Add Favorite">
                             <button id="favoriteAdd" class="btn btn-primary">Add</button>
                             <button id="favoriteRemove" class="btn btn-primary">Remove</button>
-                                Ceci est un test de text
+                                <p>(The name must contain the LowerCase and upperCase at the same place in the name)</p>
                                 <ul id="listOfFavorite"></ul>
                             </div>
                         </div>
@@ -45,6 +47,28 @@ $("#gameContainer").append($(`
 $("#optionsContainer > ul").prepend($(`
             <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
         `));
+
+
+// Add the info about the script
+
+AMQ_addScriptData({
+        name: "Favorite Friends",
+        author: "Mxyuki & kempanator",
+        description: `
+            <p>This script is made to put your favorite friends at the top of the friend list and highlight them</p>
+            <p>--- How to use ---</p>
+            <p>Click at the gear at the bottom right of your screen</p>
+            <img src="https://i.imgur.com/MdrC5Pu.png" />
+            <p>Then Click the Favorite button</p>
+            <p>Now just write the name of your friend in the text box and click Add to add him or Remove to remove him</p>
+            <p>the player must already be in your friends otherwise it won't show him</p>
+            <br>
+            <p>When adding a friend that is already online just refresh the page to update him then your friendlist will look like this</p>
+            <img src="https://i.imgur.com/YhrzSjN.png" />
+        `
+
+    });
+
 
 // Load saved Favorite Friends list
 
