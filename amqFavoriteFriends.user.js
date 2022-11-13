@@ -80,8 +80,6 @@ favoriteFriends = saveFavoriteFriends;
 
 favoriteList = saveFavoriteList;
 
-favoriteList[0] = "";
-
 if(favoriteFriends==undefined) favoriteFriends = 0;
 if(favoriteList==undefined) favoriteList = [];
 
@@ -117,9 +115,10 @@ const ul = document.getElementById('listOfFavorite');
 
 document.getElementById('favoriteAdd').addEventListener('click', function handleClick() {
     var textBoxValue = document.getElementById("favoriteTextBox").value;
+    console.log("test");
     if(textBoxValue != ""){
-        favoriteFriends++;
         favoriteList[favoriteFriends] = textBoxValue;
+        favoriteFriends++;
 
         saveSettings();
     }
@@ -143,7 +142,7 @@ document.getElementById('favoriteRemove').addEventListener('click', function han
     var textBoxValue = document.getElementById("favoriteTextBox").value;
     if(textBoxValue != ""){
 
-        for (var j = 1; j+1 <= favoriteList.length; j++) {
+        for (var j = 1; j <= favoriteList.length; j++) {
 
             if(favoriteList[j] == textBoxValue) favoriteList[j] = "";
             console.log(j);
