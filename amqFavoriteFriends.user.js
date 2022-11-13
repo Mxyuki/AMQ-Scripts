@@ -2,16 +2,19 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      1.0
+// @version      1.1
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // ==/UserScript==
 
-if (document.getElementById('startPage')) {
-    return;
-}
+let loadInterval = setInterval(() => {
+    if (document.getElementById("loadingScreen").classList.contains("hidden")) {
+        setup();
+        clearInterval(loadInterval);
+    }
+}, 500);
 
 let favoriteList = JSON.parse(localStorage.getItem("favoriteList")) || [];
 
@@ -68,20 +71,26 @@ AMQ_addScriptData({
 
 });
 
+AMQ_addStyle(`
+    #friendOnlineList li.favoriteFriend h4 {
+        color: #fad681;
+    }
+    #friendOfflineList li.favoriteFriend h4 {
+        color: #ccad63;
+    }
+`);
+
 
 
 // Put color to Favorite Friends
 
-let update = new Listener("online player count change", (payload) => {
-
-    for (let li of document.querySelectorAll("#friendOnlineList li")) {
-        let name = li.querySelector("h4").innerText;
-        if (favoriteList.includes(name)) {
-            li.querySelector("h4").style.color = "#fad681";
+function setup() {
+    for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
+        if (favoriteList.includes(li.querySelector("h4").innerText)) {
+            li.classList.add("favoriteFriend");
         }
     }
-});
-update.bindListener();
+}
 
 
 // List all Favorite Friends
@@ -97,13 +106,14 @@ $("#favoriteAdd").click(() => {
     if (name !== "" && !favoriteList.includes(name) && getAllFriends().includes(name)) {
         favoriteList.push(name);
         updateList();
+        setup();
     }
 });
 
 $("#favoriteRemove").click(() => {
     let name = $("#favoriteTextBox").val();
     if (name !== "") {
-        favoriteList.pop(name);
+        favoriteList = favoriteList.filter((item) => item !== name);
         updateList();
     }
 });
@@ -114,17 +124,26 @@ function updateList() {
     $("#listOfFavorite").empty();
     favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
     localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
+    for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
+        if (favoriteList.includes(li.querySelector("h4").innerText)) {
+            li.classList.add("favoriteFriend");
+        }
+        else {
+            li.classList.remove("favoriteFriend");
+        }
+    }
 }
 
 function getAllFriends() {
     return Object.keys(socialTab.onlineFriends).concat(Object.keys(socialTab.offlineFriends));
 }
 
+
 // Put favorite friends to the top of your Friend List
 
 SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
     let sortedFriends = Object.values(friendMap).sort((a, b) => a.name.localeCompare(b.name));
-    if (type === "online") {
+    if (type === "online" || type === "offline") {
         let tempFriends = [];
         let tempFavoriteFriends = [];
         sortedFriends.forEach((entry) => {
@@ -156,18 +175,11 @@ SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
 
 // When favorite friend join
 
-let commandListener = new Listener("friend state change", (friend) => {
-    if (friend.online && favoriteList.includes(friend.name)) {
-        popoutMessages.displayStandardMessage("",friend.name+" is online");
-
+new Listener("friend state change", (payload) => {
+    if (favoriteList.includes(payload.name)) {
+        popoutMessages.displayStandardMessage("", `${payload.name} is ${payload.online ? "online" : "offline"}`);
     }
-
-    else if (favoriteList.includes(friend.name)) {
-        console.log(friend.online);
-        popoutMessages.displayStandardMessage("",friend.name+" is offline");
-    }
-});
-commandListener.bindListener();
+}).bindListener();
 
 
 // Save Favorite Friends list
