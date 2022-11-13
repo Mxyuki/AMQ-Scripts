@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3
+// @version      0.4
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -32,7 +32,6 @@ $("#gameContainer").append($(`
                             <button id="favoriteAdd" class="btn btn-primary">Add</button>
                             <button id="favoriteRemove" class="btn btn-primary">Remove</button>
                                 Ceci est un test de text
-
                                 <ul id="listOfFavorite"></ul>
                             </div>
                         </div>
@@ -46,10 +45,6 @@ $("#optionsContainer > ul").prepend($(`
             <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
         `));
 
-$("#friendlist").prepend($(`
-            <ul id="friendFavoriteList" class="friendList"><uli>
-        `));
-
 // Load saved Favorite Friends list
 
 let saveFavoriteFriends = localStorage.getItem("favoriteFriends");
@@ -60,6 +55,8 @@ favoriteFriends = saveFavoriteFriends;
 
 favoriteList = saveFavoriteList;
 
+favoriteList[0] = "";
+
 if(favoriteFriends==undefined) favoriteFriends = 0;
 if(favoriteList==undefined) favoriteList = [];
 
@@ -67,21 +64,15 @@ if(favoriteList==undefined) favoriteList = [];
 // List all Favorite Friends
 
 const ul = document.getElementById('listOfFavorite');
-const ul2 = document.getElementById('friendFavoriteList');
 
+    ul.innerText = "";
 
-ul.innerHTML = "";
-ul2.innerHTML = "";
-
-for (var i = 1; i+1 <= favoriteList.length; i++) {
+    for (let friend of favoriteList) {
     const li = document.createElement("li");
-    const li2 = document.createElement("li");
-    //li2.className = "stPlayerName";
-    li.innerHTML = favoriteList[i];
-    li2.innerHTML = favoriteList[i];
-    ul.appendChild(li);
-    ul2.appendChild(li2);
-}
+        li.innerText = friend;
+        ul.appendChild(li);
+    }
+
 
 // When Add button pressed Add the new Favorite Friend
 
@@ -96,11 +87,11 @@ document.getElementById('favoriteAdd').addEventListener('click', function handle
 
     const ul = document.getElementById('listOfFavorite');
 
-    ul.innerHTML = "";
+    ul.innerText = "";
 
-    for (var i = 1; i+1 <= favoriteList.length; i++) {
+    for (let friend of favoriteList) {
     const li = document.createElement("li");
-        li.innerHTML = favoriteList[i];
+        li.innerText = friend;
         ul.appendChild(li);
     }
 
@@ -124,11 +115,11 @@ document.getElementById('favoriteRemove').addEventListener('click', function han
 
     const ul = document.getElementById('listOfFavorite');
 
-    ul.innerHTML = "";
+    ul.innerText = "";
 
-    for (var i = 1; i+1 <= favoriteList.length; i++) {
+    for (let friend of favoriteList) {
         const li = document.createElement("li");
-        li.innerHTML = favoriteList[i];
+        li.innerText = friend;
         ul.appendChild(li);
     }
 
