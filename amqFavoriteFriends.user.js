@@ -2,7 +2,7 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      0.5
+// @version      0.6
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
@@ -60,6 +60,20 @@ favoriteList[0] = "";
 
 if(favoriteFriends==undefined) favoriteFriends = 0;
 if(favoriteList==undefined) favoriteList = [];
+
+
+// Put color ro Favorite Friends
+
+let update = new Listener("online player count change", (payload) => {
+
+        for (let li of document.querySelectorAll("#friendOnlineList li")) {
+            let name = li.querySelector("h4").innerText;
+            if (favoriteList.includes(name)) {
+                li.querySelector("h4").style.color = "#fad681";
+    }
+}
+});
+update.bindListener();
 
 
 // List all Favorite Friends
@@ -159,6 +173,7 @@ SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
 let commandListener = new Listener("friend state change", (friend) => {
     if (friend.online && favoriteList.includes(friend.name)) {
         popoutMessages.displayStandardMessage("",friend.name+" is online");
+
     }
 
     else if (favoriteList.includes(friend.name)) {
