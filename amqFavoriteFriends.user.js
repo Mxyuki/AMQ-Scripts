@@ -2,7 +2,7 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      0.7
+// @version      0.8
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
@@ -168,12 +168,19 @@ document.getElementById('favoriteRemove').addEventListener('click', function han
 
 SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
     let sortedFriends = Object.values(friendMap).sort((a, b) => a.name.localeCompare(b.name));
-    sortedFriends.forEach((entry, index) => {
-        if (type === "online" && favoriteList.includes(entry.name)) {
-            sortedFriends.splice(index, 1);
-            sortedFriends.unshift(entry);
-        }
-    });
+    if (type === "online") {
+        let tempFriends = [];
+        let tempFavoriteFriends = [];
+        sortedFriends.forEach((entry) => {
+            if (favoriteList.includes(entry.name)) {
+                tempFavoriteFriends.push(entry);
+            }
+            else {
+                tempFriends.push(entry);
+            }
+        });
+        sortedFriends = tempFavoriteFriends.concat(tempFriends);
+    }
     sortedFriends.forEach((entry, index) => {
         if (entry.inList !== type) {
             entry.inList = type;
