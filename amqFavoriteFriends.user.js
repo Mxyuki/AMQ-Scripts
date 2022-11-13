@@ -2,7 +2,7 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      0.8
+// @version      1.0
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
@@ -33,7 +33,7 @@ $("#gameContainer").append($(`
                             <input id="favoriteTextBox" type="text" placeholder="Add Favorite">
                             <button id="favoriteAdd" class="btn btn-primary">Add</button>
                             <button id="favoriteRemove" class="btn btn-primary">Remove</button>
-                                <p>(The name must contain the LowerCase and upperCase at the same place in the name)</p>
+                                <p>(The name must contain the LowerCase and UpperCase at the same place in the name)</p>
                                 <ul id="listOfFavorite"></ul>
                             </div>
                         </div>
@@ -86,62 +86,39 @@ update.bindListener();
 
 // List all Favorite Friends
 
-const ul = document.getElementById('listOfFavorite');
+$("#listOfFavorite").empty();
+favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
 
-ul.innerText = "";
 
-for (let friend of favoriteList) {
-    const li = document.createElement("li");
-    li.innerText = friend;
-    ul.appendChild(li);
+// When Add/Remove button pressed
+
+$("#favoriteAdd").click(() => {
+    let name = $("#favoriteTextBox").val();
+    if (name !== "" && !favoriteList.includes(name) && getAllFriends().includes(name)) {
+        favoriteList.push(name);
+        updateList();
+    }
+});
+
+$("#favoriteRemove").click(() => {
+    let name = $("#favoriteTextBox").val();
+    if (name !== "") {
+        favoriteList.pop(name);
+        updateList();
+    }
+});
+
+
+function updateList() {
+    favoriteList.sort((a, b) => a.localeCompare(b));
+    $("#listOfFavorite").empty();
+    favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
+    localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
 }
 
-
-// When Add button pressed Add the new Favorite Friend
-
-document.getElementById('favoriteAdd').addEventListener('click', function handleClick() {
-    var textBoxValue = document.getElementById("favoriteTextBox").value;
-    if(textBoxValue != "" && !favoriteList.includes(textBoxValue)){
-        favoriteList.push(textBoxValue)
-
-        saveSettings();
-    }
-
-    const ul = document.getElementById('listOfFavorite');
-
-    ul.innerText = "";
-
-    for (let friend of favoriteList) {
-        const li = document.createElement("li");
-        li.innerText = friend;
-        ul.appendChild(li);
-    }
-
-});
-
-
-// When Remove button pressed remove friend from Favorite
-
-document.getElementById('favoriteRemove').addEventListener('click', function handleClick() {
-    var textBoxValue = document.getElementById("favoriteTextBox").value;
-    if(textBoxValue != ""){
-
-        favoriteList.pop(textBoxValue);
-        saveSettings();
-    }
-
-    const ul = document.getElementById('listOfFavorite');
-
-    ul.innerText = "";
-
-    for (let friend of favoriteList) {
-        const li = document.createElement("li");
-        li.innerText = friend;
-        ul.appendChild(li);
-    }
-
-});
-
+function getAllFriends() {
+    return Object.keys(socialTab.onlineFriends).concat(Object.keys(socialTab.offlineFriends));
+}
 
 // Put favorite friends to the top of your Friend List
 
