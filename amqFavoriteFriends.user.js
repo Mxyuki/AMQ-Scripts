@@ -26,33 +26,33 @@ let favoriteList = JSON.parse(localStorage.getItem("favoriteList")) || [];
 // Add Favorite Button and page
 
 $("#gameContainer").append($(`
-            <div class="modal fade" id="friendFavorite" tabindex="-1" role="dialog">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">×</span>
-                            </button>
-                            <h2 class="modal-title">Favorite Friends</h2>
-                        </div>
-                        <div class="modal-body" style="overflow-y: auto;max-height: calc(100vh - 150px);">
-                            <div id="addFavorite">
-                            <input id="favoriteTextBox" type="text" placeholder="Add Favorite">
-                            <button id="favoriteAdd" class="btn btn-primary">Add</button>
-                            <button id="favoriteRemove" class="btn btn-primary">Remove</button>
-                                <p>(The name must contain the LowerCase and UpperCase at the same place in the name)</p>
-                                <ul id="listOfFavorite"></ul>
-                            </div>
-                        </div>
+    <div class="modal fade" id="friendFavorite" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                    <h2 class="modal-title">Favorite Friends</h2>
+                </div>
+                <div class="modal-body" style="overflow-y: auto;max-height: calc(100vh - 150px);">
+                    <div id="addFavorite">
+                    <input id="favoriteTextBox" type="text" placeholder="Add Favorite">
+                    <button id="favoriteAdd" class="btn btn-primary">Add</button>
+                    <button id="favoriteRemove" class="btn btn-primary">Remove</button>
+                        <p>(The name must contain the LowerCase and UpperCase at the same place in the name)</p>
+                        <ul id="listOfFavorite"></ul>
                     </div>
                 </div>
             </div>
-        `));
+        </div>
+    </div>
+`));
 
 
 $("#optionsContainer > ul").prepend($(`
-            <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
-        `));
+    <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
+`));
 
 
 // Add the info about the script
@@ -61,18 +61,15 @@ AMQ_addScriptData({
     name: "Favorite Friends",
     author: "Mxyuki & kempanator",
     description: `
-            <p>This script is made to put your favorite friends at the top of the friend list and highlight them</p>
-            <p>--- How to use ---</p>
-            <p>Click at the gear at the bottom right of your screen</p>
-            <img src="https://i.imgur.com/MdrC5Pu.png" />
-            <p>Then Click the Favorite button</p>
-            <p>Now just write the name of your friend in the text box and click Add to add him or Remove to remove him</p>
-            <p>the player must already be in your friends otherwise it won't show him</p>
-            <br>
-            <p>When adding a friend that is already online just refresh the page to update him then your friendlist will look like this</p>
-            <img src="https://i.imgur.com/YhrzSjN.png" />
-        `
-
+        <p>This script is made to put your favorite friends at the top of the friend list and highlight them</p>
+        <p>--- How to use ---</p>
+        <p>Click at the gear at the bottom right of your screen</p>
+        <img src="https://i.imgur.com/MdrC5Pu.png">
+        <p>Then click the favorite button</p>
+        <p>Now just write the name of your friend in the text box and click Add to add him or Remove to remove him</p>
+        <p>the player must already be in your friends otherwise it won't show him</p>
+        <img src="https://i.imgur.com/YhrzSjN.png">
+    `
 });
 
 AMQ_addStyle(`
