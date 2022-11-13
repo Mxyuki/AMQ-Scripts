@@ -8,7 +8,7 @@ You must add the extension **Tampermonkey** to your browser, and then click on *
 
 AMQ Favorite Friend is a script that will let you add favorite friends and then show them at the top of your Friend List
 
-it will also show yo uwhen they log in and log out
+it will also show you when they log in and log out
 
 **--- Add/Remove Favorite ---**
 
