@@ -2,11 +2,13 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      1.2
+// @version      1.3
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js
 // ==/UserScript==
 
 if (document.getElementById("startPage")) return;
@@ -114,7 +116,7 @@ $("#favoriteAdd").click(() => {
 $("#favoriteRemove").click(() => {
     let name = $("#favoriteTextBox").val();
     if (name !== "") {
-        favoriteList.pop(name);
+        favoriteList = favoriteList.filter((item) => item !== name);
         updateList();
     }
 });
@@ -125,6 +127,16 @@ function updateList() {
     $("#listOfFavorite").empty();
     favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
     localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
+    for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
+        if (favoriteList.includes(li.querySelector("h4").innerText)) {
+            li.classList.add("favoriteFriend");
+        }
+        else {
+            li.classList.remove("favoriteFriend");
+        }
+    }
+    socialTab.updateFriendList(socialTab.onlineFriends, "online", socialTab.$onlineFriendList);
+    socialTab.updateFriendList(socialTab.offlineFriends, "offline", socialTab.$offlineFriendList);
 }
 
 function getAllFriends() {
@@ -150,15 +162,13 @@ SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
         sortedFriends = tempFavoriteFriends.concat(tempFriends);
     }
     sortedFriends.forEach((entry, index) => {
-        if (entry.inList !== type) {
-            entry.inList = type;
-            if (index === 0) {
-                $list.prepend(entry.$html);
-            } else {
-                entry.$html.insertAfter(sortedFriends[index - 1].$html);
-            }
-            entry.updateTextSize();
+        entry.inList = type;
+        if (index === 0) {
+            $list.prepend(entry.$html);
+        } else {
+            entry.$html.insertAfter(sortedFriends[index - 1].$html);
         }
+        entry.updateTextSize();
     });
     sortedFriends.forEach(entry => {
         entry.checkLazyLoad();
