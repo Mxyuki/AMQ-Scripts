@@ -1,0 +1,158 @@
+// ==UserScript==
+// @name         AMQ Favorite Friends
+// @namespace    https://github.com/Mxyuki/AMQ-Scripts
+// @version      0.3
+// @description  If you want to add favorite friend to get notified about what they do on amq
+// @author       Mxyuki
+// @match        https://animemusicquiz.com/
+// ==/UserScript==
+
+if (document.getElementById('startPage')) {
+    return;
+}
+
+let favoriteFriends = 0;
+let favoriteList = [];
+
+// Add Favorite Button and page
+
+$("#gameContainer").append($(`
+            <div class="modal fade" id="friendFavorite" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                            <h2 class="modal-title">Favorite Friends</h2>
+                        </div>
+                        <div class="modal-body" style="overflow-y: auto;max-height: calc(100vh - 150px);">
+                            <div id="addFavorite">
+                            <input id="favoriteTextBox" type="text" placeholder="Add Favorite">
+                            <button id="favoriteAdd" class="btn btn-primary">Add</button>
+                            <button id="favoriteRemove" class="btn btn-primary">Remove</button>
+                                Ceci est un test de text
+
+                                <ul id="listOfFavorite"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `));
+
+
+$("#optionsContainer > ul").prepend($(`
+            <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
+        `));
+
+$("#friendlist").prepend($(`
+            <ul id="friendFavoriteList" class="friendList"><uli>
+        `));
+
+// Load saved Favorite Friends list
+
+let saveFavoriteFriends = localStorage.getItem("favoriteFriends");
+
+let saveFavoriteList = JSON.parse(localStorage.getItem('favoriteList'));
+
+favoriteFriends = saveFavoriteFriends;
+
+favoriteList = saveFavoriteList;
+
+if(favoriteFriends==undefined) favoriteFriends = 0;
+if(favoriteList==undefined) favoriteList = [];
+
+
+// List all Favorite Friends
+
+const ul = document.getElementById('listOfFavorite');
+const ul2 = document.getElementById('friendFavoriteList');
+
+
+ul.innerHTML = "";
+ul2.innerHTML = "";
+
+for (var i = 1; i+1 <= favoriteList.length; i++) {
+    const li = document.createElement("li");
+    const li2 = document.createElement("li");
+    //li2.className = "stPlayerName";
+    li.innerHTML = favoriteList[i];
+    li2.innerHTML = favoriteList[i];
+    ul.appendChild(li);
+    ul2.appendChild(li2);
+}
+
+// When Add button pressed Add the new Favorite Friend
+
+document.getElementById('favoriteAdd').addEventListener('click', function handleClick() {
+    var textBoxValue = document.getElementById("favoriteTextBox").value;
+    if(textBoxValue != ""){
+        favoriteFriends++;
+        favoriteList[favoriteFriends] = textBoxValue;
+
+        saveSettings();
+    }
+
+    const ul = document.getElementById('listOfFavorite');
+
+    ul.innerHTML = "";
+
+    for (var i = 1; i+1 <= favoriteList.length; i++) {
+    const li = document.createElement("li");
+        li.innerHTML = favoriteList[i];
+        ul.appendChild(li);
+    }
+
+});
+
+
+// When Remove button pressed remove friend from Favorite
+
+document.getElementById('favoriteRemove').addEventListener('click', function handleClick() {
+    var textBoxValue = document.getElementById("favoriteTextBox").value;
+    if(textBoxValue != ""){
+
+        for (var j = 1; j+1 <= favoriteList.length; j++) {
+
+            if(favoriteList[j] == textBoxValue) favoriteList[j] = "";
+            console.log(j);
+
+        }
+        saveSettings();
+    }
+
+    const ul = document.getElementById('listOfFavorite');
+
+    ul.innerHTML = "";
+
+    for (var i = 1; i+1 <= favoriteList.length; i++) {
+        const li = document.createElement("li");
+        li.innerHTML = favoriteList[i];
+        ul.appendChild(li);
+    }
+
+});
+
+
+// When favorite friend join
+
+let commandListener = new Listener("friend state change", (friend) => {
+    if (friend.online && favoriteList.includes(friend.name)) {
+        popoutMessages.displayStandardMessage("",friend.name+" is online");
+    }
+
+    else if (favoriteList.includes(friend.name)) {
+        console.log(friend.online);
+        popoutMessages.displayStandardMessage("",friend.name+" is offline");
+    }
+});
+commandListener.bindListener();
+
+
+// Save Favorite Friends list
+
+function saveSettings() {
+	localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
+    localStorage.setItem("favoriteFriends", JSON.stringify(favoriteFriends));
+}
