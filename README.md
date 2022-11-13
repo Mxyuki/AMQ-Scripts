@@ -102,3 +102,7 @@ Plus a mode that put the last settings you saved before giving host to the last 
 Alt + I : Auto give Host to someone else
 
 Alt + O : Auto put last saved settings plus give Host to someone else
+
+# AMQ HuTao Voice
+
+AMQ HuTao Voice is just a script that will use voice line of HuTao from genshin while doing various action in AMQ
