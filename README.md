@@ -4,6 +4,22 @@
 
 You must add the extension **Tampermonkey** to your browser, and then click on **Create a new script**, after that just put the script in it and Load https://animemusicquiz.com/
 
+# AMQ Favorite Friends
+
+AMQ Favorite Friend is a script that will let you add favorite friends and then show them at the top of your Friend List
+
+it will also show yo uwhen they log in and log out
+
+**--- Add/Remove Favorite ---**
+
+To add or remove a friend from Favorite you just need to click the gear button at the bottom right and then click the Favorite button.
+
+it will open a window where you can enter the name of your friend in a textbox and click add or remove.
+
+then their name will be displayed under to know every favorite friends you have.
+
+If one of your friends that you are adding is already online just refresh the page to make him appear at the top.
+
 # AMQ Co-op Farm
 
 AMQ Co-op Farm is a that make your games in Farm co-op easier.
