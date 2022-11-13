@@ -2,7 +2,11 @@
 
 # How to use it
 
-You must add the extension **Tampermonkey** to your browser, and then click on **Create a new script**, after that just put the script in it and Load https://animemusicquiz.com/
+You must add the extension **Tampermonkey** to your browser. 
+
+Then 1. click on the script you want to add and then clic on the **Raw** button at the top right of the lines of code
+
+Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and Load or Reload https://animemusicquiz.com/
 
 # AMQ Favorite Friends
 
