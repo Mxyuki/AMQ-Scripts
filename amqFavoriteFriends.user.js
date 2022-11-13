@@ -9,12 +9,7 @@
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // ==/UserScript==
 
-let loadInterval = setInterval(() => {
-    if (document.getElementById("loadingScreen").classList.contains("hidden")) {
-        setup();
-        clearInterval(loadInterval);
-    }
-}, 500);
+if (document.getElementById("startPage")) return;
 
 let favoriteList = JSON.parse(localStorage.getItem("favoriteList")) || [];
 
