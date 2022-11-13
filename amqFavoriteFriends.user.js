@@ -2,7 +2,7 @@
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @namespace    https://github.com/kempanator/amq-scripts
-// @version      1.1
+// @version      1.2
 // @description  If you want to add favorite friend to get notified about what they do on amq
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/
@@ -10,6 +10,13 @@
 // ==/UserScript==
 
 if (document.getElementById("startPage")) return;
+
+let loadInterval = setInterval(() => {
+    if (document.getElementById("loadingScreen").classList.contains("hidden")) {
+        setup();
+        clearInterval(loadInterval);
+    }
+}, 500);
 
 let favoriteList = JSON.parse(localStorage.getItem("favoriteList")) || [];
 
@@ -90,7 +97,6 @@ function setup() {
 
 // List all Favorite Friends
 
-$("#listOfFavorite").empty();
 favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
 
 
@@ -108,7 +114,7 @@ $("#favoriteAdd").click(() => {
 $("#favoriteRemove").click(() => {
     let name = $("#favoriteTextBox").val();
     if (name !== "") {
-        favoriteList = favoriteList.filter((item) => item !== name);
+        favoriteList.pop(name);
         updateList();
     }
 });
@@ -119,14 +125,6 @@ function updateList() {
     $("#listOfFavorite").empty();
     favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
     localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
-    for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
-        if (favoriteList.includes(li.querySelector("h4").innerText)) {
-            li.classList.add("favoriteFriend");
-        }
-        else {
-            li.classList.remove("favoriteFriend");
-        }
-    }
 }
 
 function getAllFriends() {
@@ -175,10 +173,3 @@ new Listener("friend state change", (payload) => {
         popoutMessages.displayStandardMessage("", `${payload.name} is ${payload.online ? "online" : "offline"}`);
     }
 }).bindListener();
-
-
-// Save Favorite Friends list
-
-function saveSettings() {
-    localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
-}
