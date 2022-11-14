@@ -1,18 +1,17 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @namespace    https://github.com/kempanator/amq-scripts
-// @version      1.3
-// @description  If you want to add favorite friend to get notified about what they do on amq
+// @version      1.4
+// @description  Move your favorite friends to the top of your list and get notified when they log in/out
 // @author       Mxyuki & kempanator
-// @match        https://animemusicquiz.com/
+// @match        https://animemusicquiz.com/*
+// @grant        none
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js
 // ==/UserScript==
 
 if (document.getElementById("startPage")) return;
-
 let loadInterval = setInterval(() => {
     if (document.getElementById("loadingScreen").classList.contains("hidden")) {
         setup();
@@ -20,11 +19,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let favoriteList = JSON.parse(localStorage.getItem("favoriteList")) || [];
-
-
-// Add Favorite Button and page
-
+// Create modal window
 $("#gameContainer").append($(`
     <div class="modal fade" id="friendFavorite" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
@@ -36,27 +31,30 @@ $("#gameContainer").append($(`
                     <h2 class="modal-title">Favorite Friends</h2>
                 </div>
                 <div class="modal-body" style="overflow-y: auto;max-height: calc(100vh - 150px);">
-                    <div id="addFavorite">
-                    <input id="favoriteTextBox" type="text" placeholder="Add Favorite">
+                    <p>
+                        Notify when your favorite friends
+                        <input id="alertFavoriteLogIn" type="checkbox">
+                        <label for="alertFavoriteLogIn">Log In</label>
+                        <input id="alertFavoriteLogOut" type="checkbox">
+                        <label for="alertFavoriteLogOut">Log Out</label>
+                    </p>
+                    <p>Input name (case sensitive)</p>
+                    <input id="favoriteTextBox" type="text">
                     <button id="favoriteAdd" class="btn btn-primary">Add</button>
                     <button id="favoriteRemove" class="btn btn-primary">Remove</button>
-                        <p>(The name must contain the LowerCase and UpperCase at the same place in the name)</p>
-                        <ul id="listOfFavorite"></ul>
-                    </div>
+                    <p><ul id="listOfFavorite"></ul></p>
                 </div>
             </div>
         </div>
     </div>
 `));
 
-
+// Add favorite button to settings
 $("#optionsContainer > ul").prepend($(`
     <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
 `));
 
-
 // Add the info about the script
-
 AMQ_addScriptData({
     name: "Favorite Friends",
     author: "Mxyuki & kempanator",
@@ -72,6 +70,7 @@ AMQ_addScriptData({
     `
 });
 
+// Add styles
 AMQ_addStyle(`
     #friendOnlineList li.favoriteFriend h4 {
         color: #fad681;
@@ -79,37 +78,40 @@ AMQ_addStyle(`
     #friendOfflineList li.favoriteFriend h4 {
         color: #ccad63;
     }
+    #friendFavorite .modal-body{
+        min-height: 400px;
+    }
+    #alertFavoriteLogIn, #alertFavoriteLogOut {
+        width: 15px;
+        height: 15px;
+        margin-left: 10px;
+    }
+    #friendFavorite label {
+        margin-left: 2px;
+    }
+    #favoriteTextBox {
+        color: black;
+    }
 `);
 
-
-
-// Put color to Favorite Friends
-
-function setup() {
-    for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
-        if (favoriteList.includes(li.querySelector("h4").innerText)) {
-            li.classList.add("favoriteFriend");
-        }
-    }
-}
-
-
-// List all Favorite Friends
-
+// Create favorite friend list
+let savedData = JSON.parse(localStorage.getItem("favoriteFriends")) || {list: [], alertLogIn: false, alertLogOut: false};
+let favoriteList = savedData.list || [];
+let alertLogIn = savedData.alertLogIn || false;
+let alertLogOut = savedData.alertLogOut || false;
+let favoriteInput;
+if (alertLogIn) document.querySelector("#alertFavoriteLogIn").checked = true;
+if (alertLogOut) document.querySelector("#alertFavoriteLogOut").checked = true;
 favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
 
-
-// When Add/Remove button pressed
-
+// Add click functions to buttons
 $("#favoriteAdd").click(() => {
     let name = $("#favoriteTextBox").val();
     if (name !== "" && !favoriteList.includes(name) && getAllFriends().includes(name)) {
         favoriteList.push(name);
         updateList();
-        setup();
     }
 });
-
 $("#favoriteRemove").click(() => {
     let name = $("#favoriteTextBox").val();
     if (name !== "") {
@@ -117,13 +119,31 @@ $("#favoriteRemove").click(() => {
         updateList();
     }
 });
+$("#alertFavoriteLogIn").click(() => {
+    alertLogIn = !alertLogIn;
+    saveSettings();
+});
+$("#alertFavoriteLogOut").click(() => {
+    alertLogOut = !alertLogOut;
+    saveSettings();
+});
 
+// Set up stuff on initial log in
+function setup() {
+    favoriteInput = new AmqAwesomeplete(document.querySelector("#favoriteTextBox"), {list: getAllFriends(), minChars: 1, maxItems: 10});
+    for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
+        if (favoriteList.includes(li.querySelector("h4").innerText)) {
+            li.classList.add("favoriteFriend");
+        }
+    }
+}
 
+// Update the list and reload friends list
 function updateList() {
     favoriteList.sort((a, b) => a.localeCompare(b));
+    saveSettings();
     $("#listOfFavorite").empty();
     favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
-    localStorage.setItem("favoriteList", JSON.stringify(favoriteList));
     for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
         if (favoriteList.includes(li.querySelector("h4").innerText)) {
             li.classList.add("favoriteFriend");
@@ -136,28 +156,29 @@ function updateList() {
     socialTab.updateFriendList(socialTab.offlineFriends, "offline", socialTab.$offlineFriendList);
 }
 
+function saveSettings() {
+    localStorage.setItem("favoriteFriends", JSON.stringify({list: favoriteList, alertLogIn: alertLogIn, alertLogOut: alertLogOut}));
+}
+
+// Return a list of names of all your friends
 function getAllFriends() {
     return Object.keys(socialTab.onlineFriends).concat(Object.keys(socialTab.offlineFriends));
 }
 
-
-// Put favorite friends to the top of your Friend List
-
+// Overload updateFriendList function to move favorite friends to the top of the list
 SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
     let sortedFriends = Object.values(friendMap).sort((a, b) => a.name.localeCompare(b.name));
-    if (type === "online" || type === "offline") {
-        let tempFriends = [];
-        let tempFavoriteFriends = [];
-        sortedFriends.forEach((entry) => {
-            if (favoriteList.includes(entry.name)) {
-                tempFavoriteFriends.push(entry);
-            }
-            else {
-                tempFriends.push(entry);
-            }
-        });
-        sortedFriends = tempFavoriteFriends.concat(tempFriends);
-    }
+    let tempFriends = [];
+    let tempFavoriteFriends = [];
+    sortedFriends.forEach((entry) => {
+        if (favoriteList.includes(entry.name)) {
+            tempFavoriteFriends.push(entry);
+        }
+        else {
+            tempFriends.push(entry);
+        }
+    });
+    sortedFriends = tempFavoriteFriends.concat(tempFriends);
     sortedFriends.forEach((entry, index) => {
         entry.inList = type;
         if (index === 0) {
@@ -172,11 +193,9 @@ SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
     });
 };
 
-
-// When favorite friend join
-
+// Listen for favorite friend log in/out
 new Listener("friend state change", (payload) => {
-    if (favoriteList.includes(payload.name)) {
+    if (((alertLogIn && payload.online) || (alertLogOut && !payload.online)) && favoriteList.includes(payload.name)) {
         popoutMessages.displayStandardMessage("", `${payload.name} is ${payload.online ? "online" : "offline"}`);
     }
 }).bindListener();
