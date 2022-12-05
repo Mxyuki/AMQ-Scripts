@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4
-// @description  Move your favorite friends to the top of your list and get notified when they log in/out
+// @version      1.5
+// @description  Move your favorite friends to the top of the list and get notified when they log in/out
 // @author       Mxyuki & kempanator
 // @match        https://animemusicquiz.com/*
 // @grant        none
@@ -38,6 +38,12 @@ $("#gameContainer").append($(`
                         <input id="alertFavoriteLogOut" type="checkbox">
                         <label for="alertFavoriteLogOut">Log Out</label>
                     </p>
+                    <p>
+                        <input id="onlineColor" type="color">
+                        <label for="onlineColor">Online color</label>
+                        <input id="offlineColor" type="color">
+                        <label for="offlineColor">Offline color</label>
+                    </p>
                     <p>Input name (case sensitive)</p>
                     <input id="favoriteTextBox" type="text">
                     <button id="favoriteAdd" class="btn btn-primary">Add</button>
@@ -50,11 +56,23 @@ $("#gameContainer").append($(`
 `));
 
 // Add favorite button to settings
-$("#optionsContainer > ul").prepend($(`
-    <li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>
-`));
+$("#optionsContainer > ul").prepend($(`<li class="clickAble" data-toggle="modal" data-target="#friendFavorite">Favorite</li>`));
 
-// Add the info about the script
+// Assign variables and set up settings window
+let savedData = JSON.parse(localStorage.getItem("favoriteFriends")) || {list: [], alertLogIn: false, alertLogOut: false};
+let favoriteList = savedData.list || [];
+let alertLogIn = savedData.alertLogIn || false;
+let alertLogOut = savedData.alertLogOut || false;
+let onlineColor = savedData.onlineColor || "#FAD681";
+let offlineColor = savedData.offlineColor || "#CCAD63";
+let favoriteInput;
+if (alertLogIn) document.querySelector("#alertFavoriteLogIn").checked = true;
+if (alertLogOut) document.querySelector("#alertFavoriteLogOut").checked = true;
+favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
+document.querySelector("#onlineColor").value = onlineColor;
+document.querySelector("#offlineColor").value = offlineColor;
+
+// Add info about the script
 AMQ_addScriptData({
     name: "Favorite Friends",
     author: "Mxyuki & kempanator",
@@ -73,10 +91,13 @@ AMQ_addScriptData({
 // Add styles
 AMQ_addStyle(`
     #friendOnlineList li.favoriteFriend h4 {
-        color: #fad681;
+        color: ${onlineColor};
     }
     #friendOfflineList li.favoriteFriend h4 {
-        color: #ccad63;
+        color: ${offlineColor};
+    }
+    #friendFavorite label[for="onlineColor"] {
+        margin-right: 20px;
     }
     #friendFavorite .modal-body{
         min-height: 400px;
@@ -93,16 +114,6 @@ AMQ_addStyle(`
         color: black;
     }
 `);
-
-// Create favorite friend list
-let savedData = JSON.parse(localStorage.getItem("favoriteFriends")) || {list: [], alertLogIn: false, alertLogOut: false};
-let favoriteList = savedData.list || [];
-let alertLogIn = savedData.alertLogIn || false;
-let alertLogOut = savedData.alertLogOut || false;
-let favoriteInput;
-if (alertLogIn) document.querySelector("#alertFavoriteLogIn").checked = true;
-if (alertLogOut) document.querySelector("#alertFavoriteLogOut").checked = true;
-favoriteList.forEach((friend) => $("#listOfFavorite").append($(`<li>${friend}</li>`)));
 
 // Add click functions to buttons
 $("#favoriteAdd").click(() => {
@@ -127,10 +138,20 @@ $("#alertFavoriteLogOut").click(() => {
     alertLogOut = !alertLogOut;
     saveSettings();
 });
+$("#onlineColor").on("change", function() {
+    onlineColor = $(this).val();
+    AMQ_addStyle(`#friendOnlineList li.favoriteFriend h4 { color: ${onlineColor} }`);
+    saveSettings();
+});
+$("#offlineColor").on("change", function() {
+    offlineColor = $(this).val();
+    AMQ_addStyle(`#friendOfflineList li.favoriteFriend h4 { color: ${offlineColor} }`);
+    saveSettings();
+});
 
 // Set up stuff on initial log in
 function setup() {
-    favoriteInput = new AmqAwesomeplete(document.querySelector("#favoriteTextBox"), {list: getAllFriends(), minChars: 1, maxItems: 10});
+    favoriteInput = new AmqAwesomeplete(document.querySelector("#favoriteTextBox"), {list: getAllFriends(), minChars: 1, maxItems: 8});
     for (let li of document.querySelectorAll("#friendOnlineList li, #friendOfflineList li")) {
         if (favoriteList.includes(li.querySelector("h4").innerText)) {
             li.classList.add("favoriteFriend");
@@ -138,7 +159,7 @@ function setup() {
     }
 }
 
-// Update the list and reload friends list
+// Update favorite list and reload friends list
 function updateList() {
     favoriteList.sort((a, b) => a.localeCompare(b));
     saveSettings();
@@ -156,8 +177,15 @@ function updateList() {
     socialTab.updateFriendList(socialTab.offlineFriends, "offline", socialTab.$offlineFriendList);
 }
 
+// Save settings to local storage
 function saveSettings() {
-    localStorage.setItem("favoriteFriends", JSON.stringify({list: favoriteList, alertLogIn: alertLogIn, alertLogOut: alertLogOut}));
+    localStorage.setItem("favoriteFriends", JSON.stringify({
+        list: favoriteList,
+        alertLogIn: alertLogIn,
+        alertLogOut: alertLogOut,
+        onlineColor: onlineColor,
+        offlineColor: offlineColor
+    }));
 }
 
 // Return a list of names of all your friends
@@ -170,27 +198,16 @@ SocialTab.prototype.updateFriendList = function (friendMap, type, $list) {
     let sortedFriends = Object.values(friendMap).sort((a, b) => a.name.localeCompare(b.name));
     let tempFriends = [];
     let tempFavoriteFriends = [];
-    sortedFriends.forEach((entry) => {
-        if (favoriteList.includes(entry.name)) {
-            tempFavoriteFriends.push(entry);
-        }
-        else {
-            tempFriends.push(entry);
-        }
-    });
+    sortedFriends.forEach((entry) => { favoriteList.includes(entry.name) ? tempFavoriteFriends.push(entry) : tempFriends.push(entry) });
     sortedFriends = tempFavoriteFriends.concat(tempFriends);
     sortedFriends.forEach((entry, index) => {
-        entry.inList = type;
-        if (index === 0) {
-            $list.prepend(entry.$html);
-        } else {
-            entry.$html.insertAfter(sortedFriends[index - 1].$html);
+        if (entry.inList !== type) {
+            entry.inList = type;
+            index === 0 ? $list.prepend(entry.$html) : entry.$html.insertAfter(sortedFriends[index - 1].$html);
+            entry.updateTextSize();
         }
-        entry.updateTextSize();
     });
-    sortedFriends.forEach(entry => {
-        entry.checkLazyLoad();
-    });
+    sortedFriends.forEach(entry => { entry.checkLazyLoad() });
 };
 
 // Listen for favorite friend log in/out
