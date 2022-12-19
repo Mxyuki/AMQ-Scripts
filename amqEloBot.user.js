@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EloBot
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.1.1
 // @description  Bored so i try to make a Bot that make an elo system room
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -45,4 +45,12 @@ new Listener("Spectator Change To Player", (payload) => {
             eloList.push({name: name, elo: 0});
         }
     }
+}).bindListener();
+
+new Listener("answer results", (payload) => {
+
+    payload.players.forEach((x) => {
+        console.log(x.gamePlayerId);
+        console.log(x.correct);
+    });
 }).bindListener();
