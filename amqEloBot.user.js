@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EloBot
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1.4
+// @version      0.1.5
 // @description  Bored so i try to make a Bot that make an elo system room
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -17,15 +17,17 @@ let joinPlayer = 0;
 if (document.getElementById("startPage")) return;
 
 new Listener("New Player", (payload) => {
-    joinPlayer++;
-    let name = payload.name;
-    let id = payload.gamePlayerId;
-    playerList.push({name: name, id: id});
-    if(name != "Miyuki_Damon"){
+    if(payload.name != "Miyuki_Damon"){
+        joinPlayer++;
+        let name = payload.name;
+        let id = payload.gamePlayerId;
+        playerList.push({name: name, id: id});
         let player = eloList.find(p => p.name === name);
         if(player){
             totalElo += player.elo;
             avgElo = totalElo / joinPlayer;
+            console.log("New Player");
+            console.log("joinPlayer: " + joinPlayer);
             console.log("avgElo: " + avgElo);
             console.log("name: " + name);
             console.log("id:   " + id);
@@ -43,15 +45,17 @@ new Listener("New Player", (payload) => {
 
 
 new Listener("Spectator Change To Player", (payload) => {
-    joinPlayer++;
-    let name = payload.name;
-    let id = payload.gamePlayerId;
-    playerList.push({name: name, id: id});
-    if(name != "Miyuki_Damon"){
+    if(payload.name != "Miyuki_Damon"){
+        joinPlayer++;
+        let name = payload.name;
+        let id = payload.gamePlayerId;
+        playerList.push({name: name, id: id});
         let player = eloList.find(p => p.name === name);
         if(player){
             totalElo += player.elo;
             avgElo = totalElo / joinPlayer;
+            console.log("Spectator Change To Player");
+            console.log("joinPlayer: " + joinPlayer);
             console.log("avgElo: " + avgElo);
             console.log("name: " + name);
             console.log("id:   " + id);
@@ -67,14 +71,17 @@ new Listener("Spectator Change To Player", (payload) => {
 }).bindListener();
 
 new Listener("Player Left", (payload) => {
-    joinPlayer--;
-    let name = payload.name;
-    let id = payload.gamePlayerId;
-    if(name != "Miyuki_Damon"){
+    if(payload.player.name != "Miyuki_Damon"){
+        joinPlayer--;
+        let name = payload.player.name;
+        console.log("nameee Spec Change: " + name);
+        let id = payload.player.gamePlayerId;
         let player = eloList.find(p => p.name === name);
         if(player){
             totalElo -= player.elo;
             avgElo = totalElo / joinPlayer;
+            console.log("Player Changed To Spectator");
+            console.log("joinPlayer: " + joinPlayer);
             console.log("avgElo: " + avgElo);
             console.log("name: " + name);
             console.log("id:   " + id);
@@ -86,15 +93,17 @@ new Listener("Player Left", (payload) => {
 }).bindListener();
 
 new Listener("Player Changed To Spectator", (payload) => {
-    joinPlayer--;
-    let name = payload.playerDescription.name;
-    console.log("nameee: " + name);
-    let id = payload.gamePlayerId;
-    if(name != "Miyuki_Damon"){
+    if(payload.playerDescription.name != "Miyuki_Damon"){
+        joinPlayer--;
+        let name = payload.playerDescription.name;
+        console.log("nameee Spec Change: " + name);
+        let id = payload.playerDescription.gamePlayerId;
         let player = eloList.find(p => p.name === name);
         if(player){
             totalElo -= player.elo;
             avgElo = totalElo / joinPlayer;
+            console.log("Player Changed To Spectator");
+            console.log("joinPlayer: " + joinPlayer);
             console.log("avgElo: " + avgElo);
             console.log("name: " + name);
             console.log("id:   " + id);
