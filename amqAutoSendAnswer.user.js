@@ -1,43 +1,45 @@
 // ==UserScript==
 // @name         AMQ AutoSendAnswer
 // @namespace    https://github.com/Mxyuki
-// @version      0.3
+// @version      0.4
 // @description  Press [Alt + T] to activate. Will send your answer at each letter you write when you are in team.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
 // ==/UserScript==
 
-if (document.getElementById('startPage')) {
-    return;
+const startPageElement = document.getElementById('startPage');
+if (startPageElement) {
+  return;
 }
 
-var isAutoSend=false;
-var answer
-var x = ' ';
+let isAutoSend = false;
+let canWrite = true;
 
-function doAltT(event) {
-    if(event.altKey && event.keyCode=='84') {
-        isAutoSend=!isAutoSend;
-        gameChat.systemMessage(isAutoSend?"Auto Send is Enabled. Press [ALT+T] to disable.":"Auto Send is Disabled. Press [ALT+T] to enable.");
+document.addEventListener('keyup', (event) => {
+  if (event.altKey && event.keyCode === 84) {
+    isAutoSend = !isAutoSend;
+    gameChat.systemMessage(isAutoSend ? "Auto Send is Enabled. Press [ALT+T] to disable." : "Auto Send is Disabled. Press [ALT+T] to enable.");
+  } else if (event.keyCode >= 0 && isAutoSend && canWrite) {
+    quiz.answerInput.submitAnswer(true);
+    const answerInput = document.getElementById("qpAnswerInput");
+    const answer = answerInput.value;
+    if (answer === "" && event.keyCode === 8) {
+      answerInput.value = " ";
+      quiz.answerInput.submitAnswer(true);
+      answerInput.value = "";
     }
-}
-document.addEventListener('keyup', doAltT, false);
+  }
+});
 
-function doKeyPressed(event) {
-    if(event.keyCode >= 0 && isAutoSend == true){
-        quiz.answerInput.submitAnswer(true);
-        answer = document.getElementById("qpAnswerInput").value;
-        if(answer == "" && event.keyCode == 8){
-            $("#qpAnswerInput").val(" ");
-            quiz.answerInput.submitAnswer(true);
-            $("#qpAnswerInput").val("");
-        }
-    }
-}
-document.addEventListener('keydown', doKeyPressed, false);
-document.addEventListener('keyup', doKeyPressed, false);
+new Listener("quiz next video info", (payload) => {
+  canWrite = true;
+}).bindListener();
+
+new Listener("answer results", (payload) => {
+  canWrite = false;
+}).bindListener();
 
 function chatSystemMessage(msg) {
-    if(!gameChat.isShown()) return;
-    gameChat.systemMessage(msg);
+  if (!gameChat.isShown()) return;
+  gameChat.systemMessage(msg);
 }
