@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EloBot
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1.5
+// @version      0.1.6
 // @description  Bored so i try to make a Bot that make an elo system room
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -39,6 +39,21 @@ new Listener("New Player", (payload) => {
             totalElo += 1000;
             avgElo = totalElo / joinPlayer;
         }
+
+        let avgDiff = Math.round(100-(avgElo/30));
+        let low = avgDiff-20;
+        let high = avgDiff+20;
+
+        let settings = hostModal.getSettings();
+        settings.songDifficulity.advancedOn = true;
+        settings.songDifficulity.advancedValue = [low, high];
+        changeGameSettings(settings);
+
+        console.log("avgDiff: " + avgDiff);
+        console.log("low:   " + low);
+        console.log("high:  " + high);
+        console.log("----------------------------");
+
     }
 }).bindListener();
 
@@ -67,6 +82,21 @@ new Listener("Spectator Change To Player", (payload) => {
             totalElo += 1000;
             avgElo = totalElo / joinPlayer;
         }
+
+        let avgDiff = Math.round(100-(avgElo/30));
+        let low = avgDiff-20;
+        let high = avgDiff+20;
+
+        let settings = hostModal.getSettings();
+        settings.songDifficulity.advancedOn = true;
+        settings.songDifficulity.advancedValue = [low, high];
+        changeGameSettings(settings);
+
+        console.log("avgDiff: " + avgDiff);
+        console.log("low:   " + low);
+        console.log("high:  " + high);
+        console.log("----------------------------");
+
     }
 }).bindListener();
 
@@ -88,7 +118,21 @@ new Listener("Player Left", (payload) => {
             console.log("elo:  " + player.elo);
             console.log("----------------------------");
         }
-        else return;
+
+        let avgDiff = Math.round(100-(avgElo/30));
+        let low = avgDiff-20;
+        let high = avgDiff+20;
+
+        let settings = hostModal.getSettings();
+        settings.songDifficulity.advancedOn = true;
+        settings.songDifficulity.advancedValue = [low, high];
+        changeGameSettings(settings);
+
+        console.log("avgDiff: " + avgDiff);
+        console.log("low:   " + low);
+        console.log("high:  " + high);
+        console.log("----------------------------");
+
     }
 }).bindListener();
 
@@ -110,7 +154,21 @@ new Listener("Player Changed To Spectator", (payload) => {
             console.log("elo:  " + player.elo);
             console.log("----------------------------");
         }
-        else return;
+
+        let avgDiff = Math.round(100-(avgElo/30));
+        let low = avgDiff-20;
+        let high = avgDiff+20;
+
+        let settings = hostModal.getSettings();
+        settings.songDifficulity.advancedOn = true;
+        settings.songDifficulity.advancedValue = [low, high];
+        changeGameSettings(settings);
+
+        console.log("avgDiff: " + avgDiff);
+        console.log("low:   " + low);
+        console.log("high:  " + high);
+        console.log("----------------------------");
+
     }
 }).bindListener();
 
@@ -150,3 +208,16 @@ new Listener("answer results", (payload) => {
 
     });
 }).bindListener();
+
+function changeGameSettings(settings) {
+    let settingChanges = {};
+    for (let key of Object.keys(settings)) {
+        if (JSON.stringify(lobby.settings[key]) !== JSON.stringify(settings[key])) {
+            settingChanges[key] = settings[key];
+        }
+    }
+    if (Object.keys(settingChanges).length > 0) {
+        hostModal.changeSettings(settingChanges);
+        setTimeout(() => { lobby.changeGameSettings() }, 1);
+    }
+}
