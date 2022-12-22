@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm
 // @namespace    https://github.com/Mxyuki/
-// @version      0.6
+// @version      0.7
 // @description  Auto Farm for AMQ. Answer and it will send it in the chatm everyone with the script will have it writen automaticaly.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
+// @updateURL	 https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCoopFarm.user.js
 // ==/UserScript==
 
 
@@ -56,7 +57,7 @@ new Listener("game chat update", (payload) => {
 }).bindListener();
 
 function processChatCommand(payload) {
-  if (payload.message.startsWith(prefix) && mode == 1 || payload.message.startsWith(prefix) && mode == 4 ) {
+  if (payload.message.startsWith(prefix) && mode == 1 || payload.message.startsWith(prefix) && mode == 4 && message.send) {
     var index = payload.message.indexOf(' ');
     if (index > 0) ar = payload.message.replace(prefix, "");
     else ar = '';
@@ -68,11 +69,10 @@ function processChatCommand(payload) {
       quiz.answerInput.submitAnswer(true);
     }
   }
-
+}
 	new Listener("answer results", (data) => {
 		lastAnswer = "";
 	}).bindListener();
-}
 function Enable(){
 $("#farmStatus").text('Enabled');
     mode = 1;
@@ -180,6 +180,7 @@ function setup() {
 
     let oldWidth = $("#qpOptionContainer").width();
     $("#qpOptionContainer").width(oldWidth + 35);
+
     $("#qpOptionContainer > div").append($(`<div id="qpFarmCoop" class="clickAble qpOption"><i aria-hidden="true" class="fa fa-bars qpMenuItem"></i></div>`)
         .click(() => {
             if (farmWindow.isVisible()) {
