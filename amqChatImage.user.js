@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Chat Image
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.5.1
+// @version      0.5.2
 // @description  When a link finishing by .png of .jpg is sent in the chat show the image directly in the chat
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -21,9 +21,7 @@ new Listener("game chat update", (payload) => {
       setTimeout(function() {
         const element = document.createElement("img");
         element.src = url;
-        element.id = "chatImage-" + counter;
         element.className = "myImage";
-        counter++;
         document.getElementById("gcMessageContainer").appendChild(element);
 
         $(".myImage").css({
@@ -42,13 +40,13 @@ new Listener("game chat update", (payload) => {
 }).bindListener();
 
 new Listener("Host Game", (payload) => {
-    $("[id*='chatImage']").remove();
+    $(".myImage").remove();
 }).bindListener();
 
 new Listener("Join Game", (payload) => {
-    $("[id*='chatImage']").remove();
+    $(".myImage").remove();
 }).bindListener();
 
 new Listener("Spectate Game", (payload) => {
-    $("[id*='chatImage']").remove();
+    $(".myImage").remove();
 }).bindListener();
