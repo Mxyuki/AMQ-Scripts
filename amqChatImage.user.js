@@ -9,7 +9,6 @@
 
 if (document.getElementById("startPage")) return;
 
-let counter = 0;
 let regex = /(https?:\/\/[^\s]+\.(?:png|jpe?g|gif|PNG|JPE?G|GIF))/;
 
 new Listener("game chat update", (payload) => {
