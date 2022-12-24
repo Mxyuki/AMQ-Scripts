@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         AMQ PlayButton Change
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      0.3
 // @description  Change how the Solo, Multi and Nexus button are displayed
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqPlayButtonChange.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqPlayButtonChange.user.js
 // ==/UserScript==
 
 if (document.getElementById("startPage")) return;
