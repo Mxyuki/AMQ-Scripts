@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Chat Image
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.5
+// @version      0.5.1
 // @description  When a link finishing by .png of .jpg is sent in the chat show the image directly in the chat
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -30,7 +30,8 @@ new Listener("game chat update", (payload) => {
           "margin": "auto",
           "display": "block",
           "max-width": "70%",
-          "max-height": "20%"
+          "max-height": "20%",
+          "cursor": "pointer"
         });
           element.addEventListener("click", () => {
               element.remove();
