@@ -33,8 +33,6 @@ new Listener("game chat update", (payload) => {
           "max-height": "20%"
         });
       }, 100);
-    } else {
-      console.log("nique");
     }
   });
 }).bindListener();
