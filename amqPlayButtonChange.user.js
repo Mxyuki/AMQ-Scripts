@@ -2,7 +2,7 @@
 // @name         AMQ PlayButton Change
 // @namespace    http://tampermonkey.net/
 // @version      0.3
-// @description  Change how the Solo, Multi and Nexus button are diplayed
+// @description  Change how the Solo, Multi and Nexus button are displayed
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
 // ==/UserScript==
