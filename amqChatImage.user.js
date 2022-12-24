@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Chat Image
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3
+// @version      0.4
 // @description  When a link finishing by .png of .jpg is sent in the chat show the image directly in the chat
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -10,7 +10,7 @@
 if (document.getElementById("startPage")) return;
 
 let counter = 0;
-let regex = /(https?:\/\/[^\s]+\.(?:png|jpe?g|gif))/;
+let regex = /(https?:\/\/[^\s]+\.(?:png|jpe?g|gif|PNG|JPE?G))/;
 
 new Listener("game chat update", (payload) => {
   payload.messages.forEach(message => {
