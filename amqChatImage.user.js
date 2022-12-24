@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         AMQ Chat Image
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.5.2
+// @version      0.5.3
 // @description  When a link finishing by .png of .jpg is sent in the chat show the image directly in the chat
 // @author       Mxyuki
-// @match        https://animemusicquiz.com/
+// @match        https://animemusicquiz.com/*
 // ==/UserScript==
 
 if (document.getElementById("startPage")) return;
