@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         AMQ Test Gif sercher
+// @name         AMQ Gif Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      0.6
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
