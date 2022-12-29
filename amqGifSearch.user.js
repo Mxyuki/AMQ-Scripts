@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Gif Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.7
+// @version      0.8
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -33,12 +33,14 @@ $('#gcGifSearcherContainer').css({
     'top': '35px',
     'right': '86px',
     'width': '24px',
-    'height': '29px'
+    'height': '29px',
+    'z-index': '20'
 });
 
 $('#gcGifSearcherButton > i').css({
     'font-size': '25px',
-    'color': '#1b1b1b'
+    'color': '#1b1b1b',
+    'z-index': '20'
 });
 
 $('#gcGifContainer').css({
@@ -47,21 +49,29 @@ $('#gcGifContainer').css({
     'display': 'none',
     'position': 'absolute',
     'bottom': '75px',
-    'background-color': 'rgba(0, 0, 0, 0.5)'
+    'background-color': 'rgba(0, 0, 0, 0.5)',
+    'z-index': '20'
 });
 
 $('#gcGifTextbox').css({
-    'width': '85%'
+    'width': '85%',
+    'z-index': '20'
 });
 $('#search-button').css({
-    'width': '15%'
+    'width': '15%',
+    'z-index': '20'
 });
 
 $('#search-button').html('Search');
 
 $('#gif-container').css({
     'overflow': 'auto',
-    'maxHeight': '175px'
+    'maxHeight': '175px',
+    'z-index': '20'
+});
+
+$('.gcInputContainer > .textAreaContainer').css({
+    'width': 'calc(100% - 120px)'
 });
 
 $(document).ready(function() {
@@ -88,7 +98,8 @@ $(document).ready(function() {
                     'margin-left': '3px',
                     'margin-bottom': '3px',
                     'border-radius': '5px',
-                    'cursor': 'pointer'
+                    'cursor': 'pointer',
+                    'index-z': '21'
                 });
             });
         });
