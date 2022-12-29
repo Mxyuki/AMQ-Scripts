@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Gif Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.8
+// @version      0.9
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -44,7 +44,7 @@ $('#gcGifSearcherButton > i').css({
 });
 
 $('#gcGifContainer').css({
-    'height': '190px',
+    'height': '195px',
     'width': '100%',
     'display': 'none',
     'position': 'absolute',
@@ -66,7 +66,7 @@ $('#search-button').html('Search');
 
 $('#gif-container').css({
     'overflow': 'auto',
-    'maxHeight': '175px',
+    'maxHeight': '170px',
     'z-index': '20'
 });
 
