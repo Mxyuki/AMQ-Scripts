@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Test Gif sercher
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3
+// @version      0.4
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -40,11 +40,12 @@ $('#gcGifSearcherButton > i').css({
 });
 
 $('#gcGifContainer').css({
-    'height': '100px',
+    'height': '190px',
     'width': '100%',
     'display': 'none',
     'position': 'absolute',
-    'bottom': '175px'
+    'bottom': '70px',
+    'background-color': 'rgba(0, 0, 0, 0.5)'
 });
 
 $('#gcGifTextbox').css({
@@ -55,14 +56,14 @@ $('#search-button').html('Search');
 
 $('#gif-container').css({
     'overflow': 'scroll',
-    'maxHeight': '175px',
+    'maxHeight': '175px'
 });
 
 $(document).ready(function() {
     $(`#${SEARCH_BUTTON_ID}`).click(function() {
         $('.tenorGif').remove();
         const searchQuery = $(`#${SEARCH_BAR_ID}`).val();
-        fetch(`https://api.tenor.com/v1/search?q=${searchQuery}&key=${TENOR_API_KEY}&limit=100`)
+        fetch(`https://api.tenor.com/v1/search?q=${searchQuery}&key=${TENOR_API_KEY}&limit=200`)
             .then(response => response.json())
             .then(data => {
             const gifs = data.results;
