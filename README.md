@@ -8,7 +8,13 @@ Then 1. click on the script you want to add and then clic on the **Raw** button 
 
 Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and Load or Reload https://animemusicquiz.com/
 
-# AMQ Chat Image
+# AMQ Play Button Change
+
+A script that change how in the AMQ menu the Play button is displayed.
+
+Instead of having the window with the Solo / Multi / Nexus appear those 3 options a directly available on the Play button now.
+
+# AMQ Gif Search
 
 AMQ Gif Search is a script that is made to go with AMQ Chat Image
 
