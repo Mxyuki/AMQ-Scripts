@@ -70,10 +70,6 @@ $('#gif-container').css({
     'z-index': '20'
 });
 
-$('.gcInputContainer > .textAreaContainer').css({
-    'width': 'calc(100% - 120px)'
-});
-
 $(document).ready(function() {
     $(`#${SEARCH_BUTTON_ID}`).click(function() {
         $('.tenorGif').remove();
