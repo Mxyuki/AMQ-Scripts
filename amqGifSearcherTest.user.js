@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Test Gif sercher
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.4
+// @version      0.5
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -50,6 +50,9 @@ $('#gcGifContainer').css({
 
 $('#gcGifTextbox').css({
     'width': '85%'
+});
+$('#search-button').css({
+    'width': '15%'
 });
 
 $('#search-button').html('Search');
