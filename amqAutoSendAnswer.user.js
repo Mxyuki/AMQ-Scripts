@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ AutoSendAnswer
 // @namespace    https://github.com/Mxyuki
-// @version      0.4
+// @version      0.5
 // @description  Press [Alt + T] to activate. Will send your answer at each letter you write when you are in team.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -31,11 +31,11 @@ document.addEventListener('keyup', (event) => {
   }
 });
 
-new Listener("quiz next video info", (payload) => {
+new Listener("play next song", (payload) => {
   canWrite = true;
 }).bindListener();
 
-new Listener("answer results", (payload) => {
+new Listener("guess phase over", (payload) => {
   canWrite = false;
 }).bindListener();
 
