@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Test Gif sercher
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
@@ -59,27 +59,28 @@ $('#gif-container').css({
 });
 
 $(document).ready(function() {
-  $(`#${SEARCH_BUTTON_ID}`).click(function() {
-    $('.tenorGif').remove();
-    const searchQuery = $(`#${SEARCH_BAR_ID}`).val();
-    fetch(`https://api.tenor.com/v1/search?q=${searchQuery}&key=${TENOR_API_KEY}&limit=100`)
-      .then(response => response.json())
-      .then(data => {
-        const gifs = data.results;
-        gifs.forEach(gif => {
-          const gifUrl = gif.media[0].gif.url;
-          const gifImg = $('<img class="tenorGif" lazy>').attr('src', gifUrl);
-          $(gifImg).on('click', function() {
-            console.log($(this).attr('src'));
-          });
-          $(`#${GIF_CONTAINER_ID}`).append(gifImg);
+    $(`#${SEARCH_BUTTON_ID}`).click(function() {
+        $('.tenorGif').remove();
+        const searchQuery = $(`#${SEARCH_BAR_ID}`).val();
+        fetch(`https://api.tenor.com/v1/search?q=${searchQuery}&key=${TENOR_API_KEY}&limit=100`)
+            .then(response => response.json())
+            .then(data => {
+            const gifs = data.results;
+            gifs.forEach(gif => {
+                const gifUrl = gif.media[0].gif.url;
+                const gifImg = $('<img class="tenorGif" lazy>').attr('src', gifUrl);
+                $(gifImg).on('click', function() {
+                    console.log($(this).attr('src'));
+                    $('#gcGifContainer').toggle();
+                });
+                $(`#${GIF_CONTAINER_ID}`).append(gifImg);
 
-          $('.tenorGif').css({
-              'height': '70px',
-              'margin-left': '3px',
-              'cursor': 'pointer'
-          });
+                $('.tenorGif').css({
+                    'height': '70px',
+                    'margin-left': '3px',
+                    'cursor': 'pointer'
+                });
+            });
         });
-      });
-  });
+    });
 });
