@@ -5,8 +5,8 @@
 // @description  A test to add a gif search fonction on amq to add it to kempanator Chat Plus script
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
-// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqGifSearcherTest.user.js
-// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqGifSearcherTest.user.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqGifSearch.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqGifSearch.user.js
 // ==/UserScript==
 
 const TENOR_API_KEY = 'LIVDSRZULELA';
