@@ -8,6 +8,22 @@ Then 1. click on the script you want to add and then clic on the **Raw** button 
 
 Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and Load or Reload https://animemusicquiz.com/
 
+# AMQ Chat Image
+
+AMQ Gif Search is a script that is made to go with AMQ Chat Image
+
+It add a button under the emoji buttons in games, that make appear a TextBox where you can searcg GIF.
+
+By clicking on an image it will add the link to the gif to your message.
+
+Kempanator will add it to his Chat Plus script, so you don't need to have a lot of script, and will add some other options and fix some problems that might exist.
+
+# AMQ Chat Image
+
+AMQ Chat Image is a script that detect when there is a link that finish with png/jpg/gif, and then make the image appear under it in the chat.
+
+Kempanator made a better version of it in his Chat Plus script, that has more options and works better
+
 # AMQ Favorite Friends
 
 AMQ Favorite Friend is a script that will let you add favorite friends and then show them at the top of your Friend List
@@ -26,7 +42,7 @@ If one of your friends that you are adding is already online just refresh the pa
 
 # AMQ Co-op Farm
 
-AMQ Co-op Farm is a that make your games in Farm co-op easier.
+AMQ Co-op Farm is a script that make your games in Farm co-op easier.
 
 **--- Buttons ---**
 
@@ -58,6 +74,8 @@ Delete : When you answered something press delete to change it to LowerCase.
 
 # AMQ DAYT WHY
 
+(Have not been ypdated in a while)
+
 AMQ DAYT WHY is a script made so we can reuse shorten name of anime and not have to write all the long name.
 
 **--- Example ---**
@@ -70,7 +88,7 @@ If you write Denyuden when you will press Enter it will automaticaly change your
           $("#qpAnswerInput").val('Full name that work for AMQ');
         }
 
-# AMQ DAYT WHY
+# AMQ Song Artist Type
 
 AMQ Song Artist Type is a script to play alone or with your friend the gamemode Song/Artist.
 
@@ -96,6 +114,8 @@ When you will write your answer it will send it automaticaly at each letter and 
 Alt + T : Pressing it will enable or disable the script and send a message in chat to know in which state you are.
 
 # AMQ No Host
+
+(Not been updated in a while and really bad scripting)
 
 A script that give instantly Host to the last player who joined the game when someone give you Host.
 
