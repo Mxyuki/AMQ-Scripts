@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Change Picture
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  A script to change your Picture on amq
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -9,7 +9,7 @@
 
 if (document.querySelector("#startPage")) return;
 
-let picture = "https://i.imgur.com/BIvbHqy.png"; // Put the Image you want Here
+let picture = "https://i.imgur.com/BIvbHqy.png";
 
 let loadInterval = setInterval(() => {
 
@@ -29,8 +29,11 @@ let loadInterval = setInterval(() => {
 
     if ($('.ppProfileImg').length > 0) {
         // Profile Picture
-        const imgElement = $('.ppProfileImg');
-        imgElement.attr('src', picture);
-        imgElement.removeAttr('srcset');
+        const name = $('.ppPlayerName').text();
+        if(name == selfName){
+            const imgElement = $('.ppProfileImg');
+            imgElement.attr('src', picture);
+            imgElement.removeAttr('srcset');
+        }
     }
 }, 100);
