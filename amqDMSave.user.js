@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ DM Save
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
-// @description  Save the last 5 messages you sent in dm
+// @version      0.3
+// @description  Save the last messages you sent in dm
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqDMSave.user.js
@@ -16,11 +16,13 @@ let messages = savedMessages ? JSON.parse(savedMessages) : {};
 
 let firstMessage = [];
 
-let message1;
-let message2;
-let message3;
-let message4;
-let message5;
+let numberSaved = 20; // < number of message saved by DM -1 (19)
+
+let dmName;
+let dmMessage;
+let dmTimestamp;
+
+let timestamp;
 
 new Listener("chat message", (receive) => {
 
@@ -32,13 +34,16 @@ new Listener("chat message", (receive) => {
         }
     }
 
+    getTime();
+
     if (!messages[receive.sender]) messages[receive.sender] = [];
     messages[receive.sender].push({
         sender: receive.sender,
-        message: receive.message
+        message: receive.message,
+        timestamp: timestamp
     });
 
-    if (messages[receive.sender].length > 5) messages[receive.sender].shift();
+    if (messages[receive.sender].length > numberSaved) messages[receive.sender].shift();
 
     localStorage.setItem("messages", JSON.stringify(messages));
 
@@ -54,14 +59,17 @@ new Listener("chat message response", (send) => {
         }
     }
 
+    getTime();
+
     if (!messages[send.target]) messages[send.target] = [];
 
     messages[send.target].push({
         sender: selfName,
-        message: send.msg
+        message: send.msg,
+        timestamp: timestamp
     });
 
-    if (messages[send.target].length > 5) messages[send.target].shift();
+    if (messages[send.target].length > numberSaved) messages[send.target].shift();
 
     localStorage.setItem("messages", JSON.stringify(messages));
 
@@ -69,50 +77,36 @@ new Listener("chat message response", (send) => {
 
 function loadMessages(name){
 
-    if(messages[name].length >= 1) message1 = messages[name][0].sender + ": " + messages[name][0].message;
-    if(messages[name].length >= 2) message2 = messages[name][1].sender + ": " + messages[name][1].message;
-    if(messages[name].length >= 3) message3 = messages[name][2].sender + ": " + messages[name][2].message;
-    if(messages[name].length >= 4) message4 = messages[name][3].sender + ": " + messages[name][3].message;
-    if(messages[name].length >= 5) message5 = messages[name][4].sender + ": " + messages[name][4].message;
+    setTimeout(function() {
 
-
-    if(messages[name].length >= 5){
-        setTimeout(function() {
-            $(`#chatBox-${name} > .chatBoxContainer > .chatContent > .ps__scrollbar-y-rail`).after(
-                `<li>${message5}</li>`
+        $(`#chatBox-${name} > .chatBoxContainer > .chatContent > .ps__scrollbar-y-rail`).after(
+            `<li class="previousMessage" style="padding-left: 4rem">--- Previous Messages ---</li>`
             );
-        }, 20);
-    }
 
-    if(messages[name].length >= 4){
-        setTimeout(function() {
-            $(`#chatBox-${name} > .chatBoxContainer > .chatContent > .ps__scrollbar-y-rail`).after(
-                `<li>${message4}</li>`
-            );
-        }, 20);
-    }
+        for (let i = messages[name].length - 1 ; i > 0 ; i--) {
+            if(messages[name].length >= i){
 
-    if(messages[name].length >= 3){
-        setTimeout(function() {
-            $(`#chatBox-${name} > .chatBoxContainer > .chatContent > .ps__scrollbar-y-rail`).after(
-                `<li>${message3}</li>`
-            );
-        }, 20);
-    }
+                dmName = messages[name][i-1].sender + ":";
+                dmMessage = " " + messages[name][i-1].message;
+                dmTimestamp = messages[name][i-1].timestamp;
 
-    if(messages[name].length >= 2){
-        setTimeout(function() {
-            $(`#chatBox-${name} > .chatBoxContainer > .chatContent > .ps__scrollbar-y-rail`).after(
-                `<li>${message2}</li>`
-            );
-        }, 20);
-    }
+            }
 
-    if(messages[name].length >= 1){
-        setTimeout(function() {
             $(`#chatBox-${name} > .chatBoxContainer > .chatContent > .ps__scrollbar-y-rail`).after(
-                `<li>${message1}</li>`
+                `<li>
+                <span class="dmTimestamp">${dmTimestamp}</span>
+                <span class="dmUsername">${dmName}</span>
+                ${dmMessage}
+                </li>`
             );
-        }, 20);
-    }
+        }
+    }, 20);
+
+    $('.dmTimestamp').css("opacity", 0.5);
+
+}
+
+function getTime(){
+    let now = new Date();
+    timestamp = now.getMonth() + "/" + now.getDate() + " | "+ now.getHours() + ":" + now.getMinutes();
 }
