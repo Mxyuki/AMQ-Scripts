@@ -66,6 +66,12 @@ Receive Only        - Only receive the answer and don't send answer.
 
 Disabled            - Don't receive anser and don't send answer.
 
+# AMQ Change Picture
+
+AMQ Change Picture is a script that change your amq picture, In the bottom rightcorner, in lobbys and in your profile
+
+To change the picture displayed just change the link of "let picture" to the link of your image finishing by jpg/png/gif
+
 # AMQ LowerToUpper
 
 AMQ LowerToUpper is a script made to change all your answer in Uppercase answer or Lowercase answer.
