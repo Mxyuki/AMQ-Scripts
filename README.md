@@ -8,6 +8,8 @@ Then 1. click on the script you want to add and then clic on the **Raw** button 
 
 Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and Load or Reload https://animemusicquiz.com/
 
+If a Script isn't discribed under here it's either the script is not finished or as just been added recently or it's really useless and i forgot it
+
 # AMQ Play Button Change
 
 A script that change how in the AMQ menu the Play button is displayed.
