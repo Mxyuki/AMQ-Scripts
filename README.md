@@ -68,6 +68,12 @@ Receive Only        - Only receive the answer and don't send answer.
 
 Disabled            - Don't receive anser and don't send answer.
 
+# AMQ DM Save
+
+AMQ DM Save is a script that save the last 5 messages sent in dm of everyone who sent you a message or at who you sent a message.
+
+The saved DM will appear when you Get or Send a message to this person.
+
 # AMQ Change Picture
 
 AMQ Change Picture is a script that change your amq picture, In the bottom rightcorner, in lobbys and in your profile
