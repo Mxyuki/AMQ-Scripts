@@ -88,7 +88,7 @@ Delete : When you answered something press delete to change it to LowerCase.
 
 # AMQ DAYT WHY
 
-(Have not been ypdated in a while)
+(Have not been updated in a while)
 
 AMQ DAYT WHY is a script made so we can reuse shorten name of anime and not have to write all the long name.
 
