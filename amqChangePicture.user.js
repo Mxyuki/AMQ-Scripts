@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Change Picture
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  A script to change your Picture on amq
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -20,9 +20,9 @@ let loadInterval = setInterval(() => {
         imgElement.removeAttr('srcset');
     }
 
-    if ($('.lobbyAvatarImg').length > 0) {
+    if ($('.isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImg').length > 0) {
         // Lobby Picture
-        const imgElement = $('.lobbyAvatarImg');
+        const imgElement = $('.isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImg');
         imgElement.attr('src', picture);
         imgElement.removeAttr('srcset');
     }
