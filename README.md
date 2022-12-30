@@ -74,6 +74,8 @@ AMQ Change Picture is a script that change your amq picture, In the bottom right
 
 To change the picture displayed just change the link of "let picture" to the link of your image finishing by jpg/png/gif
 
+Other player don't see the image.
+
 # AMQ LowerToUpper
 
 AMQ LowerToUpper is a script made to change all your answer in Uppercase answer or Lowercase answer.
