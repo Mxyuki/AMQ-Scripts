@@ -25,18 +25,14 @@ let message5;
 new Listener("chat message", (receive) => {
 
     if (!firstMessage.includes(receive.sender)) {
-
         firstMessage.push(receive.sender);
-
         if(messages[receive.sender]){
-
             console.log(`${receive.sender} added`);
             loadMessages(receive.sender);
         }
     }
 
     if (!messages[receive.sender]) messages[receive.sender] = [];
-
     messages[receive.sender].push({
         sender: receive.sender,
         message: receive.message
@@ -51,11 +47,8 @@ new Listener("chat message", (receive) => {
 new Listener("chat message response", (send) => {
 
     if (!firstMessage.includes(send.target)) {
-
         firstMessage.push(send.target);
-
         if(messages[send.target]){
-
             console.log(`${send.target} added`);
             loadMessages(send.target);
         }
