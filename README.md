@@ -70,9 +70,11 @@ Disabled            - Don't receive anser and don't send answer.
 
 # AMQ DM Save
 
-AMQ DM Save is a script that save the last 5 messages sent in dm of everyone who sent you a message or at who you sent a message.
+AMQ DM Save is a script that save the last messages sent in dm of everyone who sent you a message or at who you sent a message.
 
 The saved DM will appear when you Get or Send a message to this person.
+
+To change the number of saved DM just change the value of `numberSaved` to the number of dm you want saved + 1.
 
 # AMQ Change Picture
 
