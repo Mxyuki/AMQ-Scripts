@@ -40,9 +40,9 @@ it will also show you when they log in and log out
 
 **--- Add/Remove Favorite ---**
 
-To add or remove a friend from Favorite you just need to click the gear button at the bottom right and then click the Favorite button.
+To add or remove a friend from Favorite you just need to click the `Gear Button` at the bottom right and then click the Favorite button.
 
-it will open a window where you can enter the name of your friend in a textbox and click add or remove.
+it will open a window where you can enter the name of your friend in a textbox and click `Add` or `Remove`.
 
 then their name will be displayed under to know every favorite friends you have.
 
@@ -54,19 +54,19 @@ AMQ Co-op Farm is a script that make your games in Farm co-op easier.
 
 **--- Buttons ---**
 
-Enter : Pressing enter will send your answer.
+`Enter` : Pressing enter will send your answer.
 
-At the top right Coop Farm button : Allow you to change how the script will work with differents Mods.
+`At the top right Coop Farm button` : Allow you to change how the script will work with differents Mods.
 
 **--- Mods ---**
 
-Enabled             - Receive answer and Send answer.
+`Enabled`             - Receive answer and Send answer.
 
-Send Answer Only    - Only send your answer and don't receive answer.
+`Send Answer Only`    - Only send your answer and don't receive answer.
 
-Receive Only        - Only receive the answer and don't send answer.
+`Receive Only`        - Only receive the answer and don't send answer.
 
-Disabled            - Don't receive anser and don't send answer.
+`Disabled`            - Don't receive anser and don't send answer.
 
 # AMQ DM Save
 
@@ -80,9 +80,9 @@ To change the number of saved DM just change the value of `numberSaved` to the n
 
 AMQ Change Picture is a script that change your amq picture, In the bottom rightcorner, in lobbys and in your profile
 
-To change the picture displayed just change the link of "let picture" to the link of your image finishing by jpg/png/gif
+To change the picture displayed just change the link of `let picture` to the link of your image finishing by `jpg/png/gif`
 
-Other player don't see the image.
+*Other player don't see the image.*
 
 # AMQ LowerToUpper
 
@@ -92,9 +92,9 @@ AMQ LowerToUpper is a script made to change all your answer in Uppercase answer 
 
 **--- Buttons ---**
 
-insert : When you answered something press insert to change it to UpperCase.
+`Insert` : When you answered something press insert to change it to UpperCase.
 
-Delete : When you answered something press delete to change it to LowerCase.
+`Delete` : When you answered something press delete to change it to LowerCase.
 
 # AMQ DAYT WHY
 
@@ -118,7 +118,7 @@ AMQ Song Artist Type is a script to play alone or with your friend the gamemode 
 
 **--- Buttons ---**
 
-At the top right Artsit/Song button : Open the window to play S/A.
+`At the top right Artsit/Song button` : Open the window to play S/A.
 
 In this window you can enable or disable the script.
 
@@ -135,7 +135,7 @@ When you will write your answer it will send it automaticaly at each letter and 
 
 **--- Buttons ---**
 
-Alt + T : Pressing it will enable or disable the script and send a message in chat to know in which state you are.
+`Alt + T` : Pressing it will enable or disable the script and send a message in chat to know in which state you are.
 
 # AMQ No Host
 
@@ -147,9 +147,9 @@ Plus a mode that put the last settings you saved before giving host to the last 
 
 **--- Buttons ---**
 
-Alt + I : Auto give Host to someone else
+`Alt + I` : Auto give Host to someone else
 
-Alt + O : Auto put last saved settings plus give Host to someone else
+`Alt + O` : Auto put last saved settings plus give Host to someone else
 
 # AMQ HuTao Voice
 
