@@ -6,7 +6,7 @@ You must add the extension **Tampermonkey** to your browser.
 
 Then 1. click on the script you want to add and then clic on the **Raw** button at the top right of the lines of code
 
-Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and Load or Reload https://animemusicquiz.com/
+Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and `Load` or `Reload` https://animemusicquiz.com/
 
 If a Script isn't discribed under here it's either the script is not finished or as just been added recently or it's really useless and i forgot it
 
