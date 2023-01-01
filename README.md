@@ -76,6 +76,12 @@ The saved DM will appear when you Get or Send a message to this person.
 
 To change the number of saved DM just change the value of `numberSaved` to the number of dm you want saved + 1.
 
+# AMQ Update List
+
+AMQ Update List is a script that will update your list each time you log on amq, so you always get the last anime you watched in your list.
+
+To activate the Auto Update of one of your list, just go in `Settings` > `Anime List` > `Check the Checkbox of the list you want`
+
 # AMQ Change Picture
 
 AMQ Change Picture is a script that change your amq picture, In the bottom rightcorner, in lobbys and in your profile
