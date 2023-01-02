@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Chat Image To Link
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Make that you can drag or paste a file in amq chat to get a litterbox file added to your amq message. (kitty is a leagend btw)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -36,14 +36,14 @@ textarea.ondrop = (dropArea) => {
 }
 
 textarea.addEventListener('paste', (pasteArea) => {
-    pasteArea.preventDefault();
+  pasteArea.preventDefault();
 
-    const file = pasteArea.clipboardData.files[0];
+  const file = pasteArea.clipboardData.files[0];
 
-    if (!file) {
-        return;
-    }
-
+  if (!file) {
+    const pastedText = pasteArea.clipboardData.getData('text');
+    textarea.value += pastedText;
+  } else {
     const formData = new FormData();
 
     formData.append('fileToUpload', file);
@@ -58,4 +58,5 @@ textarea.addEventListener('paste', (pasteArea) => {
     }).then((data) => {
         textarea.value += data;
     });
+  }
 });
