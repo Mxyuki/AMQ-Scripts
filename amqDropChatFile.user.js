@@ -5,6 +5,8 @@
 // @description  Make that you can drag a file in amq chat to get a litterbox file added to your amq message. (kitty is a leagend btw)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqDropChatFile.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqDropChatFile.user.js
 // ==/UserScript==
 
 
