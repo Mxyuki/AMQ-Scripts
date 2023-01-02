@@ -26,6 +26,14 @@ By clicking on an image it will add the link to the gif to your message.
 
 Kempanator will add it to his Chat Plus script, so you don't need to have a lot of script, and will add some other options and fix some problems that might exist.
 
+# AMQ Chat Image To Link
+
+AMQ Chat Image To Link is a script that make that you can `Drag` an image saved on your computer or `Paste` a copied image into AMQ chatbox and it will add to your message a litterbox file to send
+
+I advise to use this script with a script that show image in chat.
+
+*Also big thank to Kitty for allowing API request from AMQ*
+
 # AMQ Chat Image
 
 AMQ Chat Image is a script that detect when there is a link that finish with png/jpg/gif, and then make the image appear under it in the chat.
