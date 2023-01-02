@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Auto Update List
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  Auto Update your choosen list when lauching amq
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -22,6 +22,9 @@ let savedSettings = JSON.parse(localStorage.getItem("autoUpdate")) || {};
 let autoUpdateMal = savedSettings.autoUpdateMal !== undefined ? savedSettings.autoUpdateMal : false;
 let autoUpdateAnilist = savedSettings.autoUpdateAnilist !== undefined ? savedSettings.autoUpdateAnilist : false;
 let autoUpdateKitsu = savedSettings.autoUpdateKitsu !== undefined ? savedSettings.autoUpdateKitsu : false;
+
+let popup = true;
+let message = "";
 
 $('#aniListLastUpdateDate').after(`
 <div>
@@ -95,5 +98,27 @@ function setup(){
 new Listener("anime list update result", (payload) => {
     setTimeout(function() {
         $('.swal2-confirm').click();
+
+
+        let aniListName = $("#aniListUserNameInput").val();
+        let malName = $("#malUserNameInput").val();
+        let kitsuName = $("#kitsuUserNameInput").val();
+
+        if (aniListName) message += `AniList Name: ${aniListName}\n`;
+
+        if (malName) message += `MAL Name: ${malName}\n`;
+
+        if (kitsuName) message += `Kitsu Name: ${kitsuName}`;
+
     }, 0);
+
+    setTimeout(function() {
+        if(popup){
+            if(message){
+                //console.log(message);
+                popoutMessages.displayStandardMessage("List Status", `${message}`);
+                popup = !popup;
+            }
+        }
+    }, 100);
 }).bindListener();
