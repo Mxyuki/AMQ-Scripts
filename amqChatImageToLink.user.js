@@ -9,52 +9,53 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqChatImageToLink.user.js
 // ==/UserScript==
 
+if (document.querySelector("#startPage")) return;
 
 const textarea = document.getElementById('gcInput');
 
 textarea.ondrop = (dropArea) => {
-  dropArea.preventDefault();
+    dropArea.preventDefault();
 
-  const file = dropArea.dataTransfer.files[0];
+    const file = dropArea.dataTransfer.files[0];
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  formData.append('fileToUpload', file);
-  formData.append('reqtype', 'fileupload');
-  formData.append('time', '1h');
+    formData.append('fileToUpload', file);
+    formData.append('reqtype', 'fileupload');
+    formData.append('time', '1h');
 
-  fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
-      method: 'POST',
-      body: formData
-  }).then((response) => {
-      return response.text();
-  }).then((data) => {
-      console.log(data);
-      textarea.value += data;
-  });
+    fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+        method: 'POST',
+        body: formData
+    }).then((response) => {
+        return response.text();
+    }).then((data) => {
+        console.log(data);
+        textarea.value += data;
+    });
 }
 
 textarea.addEventListener('paste', (pasteArea) => {
-  pasteArea.preventDefault();
+    pasteArea.preventDefault();
 
-  const file = pasteArea.clipboardData.files[0];
+    const file = pasteArea.clipboardData.files[0];
 
-  if (!file) {
-    return;
-  }
+    if (!file) {
+        return;
+    }
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  formData.append('fileToUpload', file);
-  formData.append('reqtype', 'fileupload');
-  formData.append('time', '1h');
+    formData.append('fileToUpload', file);
+    formData.append('reqtype', 'fileupload');
+    formData.append('time', '1h');
 
-  fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
-    method: 'POST',
-    body: formData
-  }).then((response) => {
-    return response.text();
-  }).then((data) => {
-    textarea.value += data;
-  });
+    fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+        method: 'POST',
+        body: formData
+    }).then((response) => {
+        return response.text();
+    }).then((data) => {
+        textarea.value += data;
+    });
 });
