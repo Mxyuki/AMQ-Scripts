@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ DM Save
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.4
+// @version      0.5
 // @description  Save the last messages you sent in dm
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -108,5 +108,5 @@ function loadMessages(name){
 
 function getTime(){
     let now = new Date();
-    timestamp = now.getMonth().toString(10).padStart(2, '0') + "/" + now.getDate().toString(10).padStart(2, '0') + " | "+ now.getHours().toString(10).padStart(2, '0') + ":" + now.getMinutes().toString(10).padStart(2, '0');
+    timestamp = (now.getMonth() + 1).toString(10).padStart(2, '0') + "/" + now.getDate().toString(10).padStart(2, '0') + " | "+ now.getHours().toString(10).padStart(2, '0') + ":" + now.getMinutes().toString(10).padStart(2, '0');
 }
