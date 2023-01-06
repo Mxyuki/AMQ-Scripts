@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         Skin Counter
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinCounter.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinCounter.user.js
 // ==/UserScript==
 
 if (document.getElementById("startPage")) return;
@@ -38,14 +40,10 @@ function setup(){
     console.log("Collection : " + ((total/total2)*100).toFixed(2) + "%");
 
     $('#swRightColumnBottomInner').prepend(`
-        <div id="swRightColumnTotalSkin">
+        <div id="swRightColumnTotalSkin" style="margin-bottom: 10px">
             <div id="swRightColumnTotalSkinArea" class="text-center" style="margin-top: -20px;">
                 <h1 style="font-size: 25px;">Total Skins:</h1>
-                 ${total} / ${total2}
-            </div>
-            <div id="swRightColumnCollection" class="text-center" style="margin-top: -20px;">
-                <h1 style="font-size: 25px;">Collection:</h1>
-                ${collection} %
+                 ${total} / ${total2} | ${collection} %
             </div>
         </div>
     `);
