@@ -140,7 +140,7 @@ If you write Denyuden when you will press Enter it will automaticaly change your
 
 **--- Add shortened name ---**
 
-        if (x == 'shortened name'){ **Must be in lowercase**
+        if (x == 'shortened name'){            //Must be in lowercase
           $("#qpAnswerInput").val('Full name that work for AMQ');
         }
 
