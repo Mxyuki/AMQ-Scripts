@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Skin Counter
+// @name         AMQ Skin Counter
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -23,6 +23,8 @@ function setup(){
     var total = 0;
     var total2 = 0;
     var collection = 0;
+
+    if($('#swRightColumnTotalSkinArea')) $('#swRightColumnTotalSkinArea').remove();
 
     $('.swTopBarAvatarImageContainer > .swTopBarUnlockStatusContainer > .swTopBarUnlockStatusAmountContainerOuter > .swTopBarUnlockStatusAmountContainer > .swTopBarUnlockStautsNumberContainer > .swTopBarUnlockStatusUnlocked').each(function() {
         total += parseInt($(this).text());
@@ -48,3 +50,13 @@ function setup(){
         </div>
     `);
 }
+
+new Listener("ticket roll result", (payload) => {
+    setTimeout(function() {
+        setup();
+    }, 20000);
+}).bindListener();
+
+new Listener("unlock avatar", (payload) => {
+    setup();
+}).bindListener();
