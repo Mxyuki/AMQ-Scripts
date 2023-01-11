@@ -36,6 +36,13 @@ By clicking on an image it will add the link to the gif to your message.
 Kempanator will add it to his Chat Plus script, so you don't need to have a lot of script, and will add some other options and fix some problems that might exist.
 
 
+# AMQ Room Password
+
+AMQ Room Password is a script that save the Passwords of Rooms you joined at least once, It saves the password with Who was the host of the room at the moment you joined.
+
+For the moment the password are Only findable in `Inspect > Application > Storage > Local Storage > animemusicquiz.com > room-info-list`
+
+
 # AMQ Chat Image To Link
 
 AMQ Chat Image To Link is a script that make that you can `Drag` an image saved on your computer or `Paste` a copied image into AMQ chatbox and it will add to your message a litterbox file to send
