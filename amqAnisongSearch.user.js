@@ -2,46 +2,35 @@
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      0.2
-// @description  Based on Kempanator amqAnswerStats, i just kept what interested me in the script and made it looks like i wanted, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
+// @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
 // ==/UserScript==
-
-
-// answer results
 
 if (document.querySelector("#startPage")) return;
 
 let anisongdbWindow;
 
 new Listener("answer results", (payload) => {
-
     setTimeout(function() {
         var p = document.getElementById("qpSongArtist");
-
         p.addEventListener("click", function(){
             anisongdbWindow.open();
             getAnisongdbData("artist", payload.songInfo.artist);
         });
-
         p = document.getElementById("qpAnimeName");
-
         p.addEventListener("click", function(){
             anisongdbWindow.open();
             getAnisongdbData("anime", payload.songInfo.animeNames.romaji);
         });
-
         p = document.getElementById("qpSongName");
-
         p.addEventListener("click", function(){
             anisongdbWindow.open();
             getAnisongdbData("song", payload.songInfo.songName);
         });
-
         applyStyles();
     }, 100);
-
 }).bindListener();
 
 function getAnisongdbData(mode, query) {
