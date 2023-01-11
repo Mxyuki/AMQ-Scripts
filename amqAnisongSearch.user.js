@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3
+// @version      0.4
 // @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -11,29 +11,44 @@
 // ==/UserScript==
 
 if (document.querySelector("#startPage")) return;
+let loadInterval = setInterval(() => {
+    if (document.querySelector("#loadingScreen").classList.contains("hidden")) {
+        setup();
+        clearInterval(loadInterval);
+    }
+}, 500);
 
 let anisongdbWindow;
 
+let artist;
+let anime;
+let song;
+
 new Listener("answer results", (payload) => {
     setTimeout(function() {
-        var p1 = document.getElementById("qpSongArtist");
-        p1.addEventListener("click", function(){
-            anisongdbWindow.open();
-            getAnisongdbData("artist", payload.songInfo.artist);
-        });
-        var p2 = document.getElementById("qpAnimeName");
-        p2.addEventListener("click", function(){
-            anisongdbWindow.open();
-            getAnisongdbData("anime", payload.songInfo.animeNames.romaji);
-        });
-        var p3 = document.getElementById("qpSongName");
-        p3.addEventListener("click", function(){
-            anisongdbWindow.open();
-            getAnisongdbData("song", payload.songInfo.songName);
-        });
+
+        artist = payload.songInfo.artist;
+        anime = payload.songInfo.animeNames.romaji;
+        song = payload.songInfo.songName;
+
         applyStyles();
-    }, 100);
+    }, 200);
 }).bindListener();
+
+function setup(){
+    $("#qpSongArtist").on("click", function(){
+        anisongdbWindow.open();
+        getAnisongdbData("artist", artist);
+    });
+    $("#qpAnimeName").on("click", function(){
+        anisongdbWindow.open();
+        getAnisongdbData("anime", anime);
+    });
+    $("#qpSongName").on("click", function(){
+        anisongdbWindow.open();
+        getAnisongdbData("song", song);
+    });
+}
 
 function getAnisongdbData(mode, query) {
     anisongdbWindow.panels[0].clear();
