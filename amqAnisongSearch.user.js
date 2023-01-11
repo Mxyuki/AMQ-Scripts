@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAnisongSearch.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAnisongSearch.user.js
 // ==/UserScript==
 
 if (document.querySelector("#startPage")) return;
@@ -14,18 +16,18 @@ let anisongdbWindow;
 
 new Listener("answer results", (payload) => {
     setTimeout(function() {
-        var p = document.getElementById("qpSongArtist");
-        p.addEventListener("click", function(){
+        var p1 = document.getElementById("qpSongArtist");
+        p1.addEventListener("click", function(){
             anisongdbWindow.open();
             getAnisongdbData("artist", payload.songInfo.artist);
         });
-        p = document.getElementById("qpAnimeName");
-        p.addEventListener("click", function(){
+        var p2 = document.getElementById("qpAnimeName");
+        p2.addEventListener("click", function(){
             anisongdbWindow.open();
             getAnisongdbData("anime", payload.songInfo.animeNames.romaji);
         });
-        p = document.getElementById("qpSongName");
-        p.addEventListener("click", function(){
+        var p3 = document.getElementById("qpSongName");
+        p3.addEventListener("click", function(){
             anisongdbWindow.open();
             getAnisongdbData("song", payload.songInfo.songName);
         });
