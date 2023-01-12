@@ -46,7 +46,6 @@ function setup(){
         getAnisongdbData("song", song);
     });
     $("#qpAnswerStateCheck").on("click", function(){
-        console.log("test");
         anisongdbWindow.open();
         getSearchAnime();
     });
