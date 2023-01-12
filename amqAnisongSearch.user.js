@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.4
+// @version      0.5
 // @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -84,9 +84,9 @@ function getAnisongdbData(mode, query) {
         for (let result of json) {
             let $row = $(`
                 <tr>
-                    <td>${options.useRomajiNames ? result.animeJPName : result.animeENName}</td>
-                    <td>${result.songArtist}</td>
-                    <td>${result.songName}</td>
+                    <td class="tbAnime">${options.useRomajiNames ? result.animeJPName : result.animeENName}</td>
+                    <td class="tbArtist">${result.songArtist}</td>
+                    <td class="tbSong">${result.songName}</td>
                     <td>${shortenType(result.songType)}</td>
                     <td>${result.animeVintage}</td>
                 </tr>
@@ -94,11 +94,26 @@ function getAnisongdbData(mode, query) {
             $table.append($row);
         }
         anisongdbWindow.panels[0].panel.append($table);
+        windowClick();
     });
 }
 
 function shortenType(type) {
     return type.replace("Opening ", "OP").replace("Ending ", "ED").replace("Insert Song", "IN");
+}
+
+function windowClick(){
+    $(document).ready(function() {
+        $(".tbAnime").click(function() {
+            getAnisongdbData("anime", $(this).html());
+        });
+        $(".tbArtist").click(function() {
+            getAnisongdbData("artist", $(this).html());
+        });
+        $(".tbSong").click(function() {
+            getAnisongdbData("song", $(this).html());
+        });
+    });
 }
 
 anisongdbWindow = new AMQWindow({
@@ -126,6 +141,21 @@ function applyStyles() {
     style.appendChild(document.createTextNode(`
         #anisongdbTable {
             width: 100%;
+        }
+        tr .tbAnime:hover {
+            cursor: pointer;
+            color: #4A79A8;
+            font-weight: bold;
+        }
+        tr .tbArtist:hover {
+            cursor: pointer;
+            color: #4A79A8;
+            font-weight: bold;
+        }
+        tr .tbSong:hover {
+            cursor: pointer;
+            color: #4A79A8;
+            font-weight: bold;
         }
         #anisongdbTable th {
             font-weight: bold;
