@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.6
+// @version      0.6.1
 // @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -80,7 +80,7 @@ function getAnisongdbData(mode, query) {
         anisongdbWindow.panels[0].clear();
         let $table = $(`
             <table id="anisongdbTable">
-                <tr class="firstRow">
+                <tr class="tbfirstRow">
                     <th class="anime">Anime</th>
                     <th class="artist">Artist</th>
                     <th class="song">Song</th>
@@ -190,7 +190,7 @@ function applyStyles() {
         #anisongdbTable tr:nth-child(even) {
             background-color: #353535;
         }
-        .firstRow {
+        .tbfirstRow {
             background-color: #282828;
             padding: 10px;
         }
