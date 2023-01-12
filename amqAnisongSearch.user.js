@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.5
+// @version      0.6
 // @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -26,12 +26,9 @@ let song;
 
 new Listener("answer results", (payload) => {
     setTimeout(function() {
-
         artist = payload.songInfo.artist;
         anime = payload.songInfo.animeNames.romaji;
         song = payload.songInfo.songName;
-
-        applyStyles();
     }, 200);
 }).bindListener();
 
@@ -48,6 +45,17 @@ function setup(){
         anisongdbWindow.open();
         getAnisongdbData("song", song);
     });
+    $("#qpAnswerStateCheck").on("click", function(){
+        console.log("test");
+        anisongdbWindow.open();
+        getSearchAnime();
+    });
+    applyStyles();
+}
+
+function getSearchAnime(){
+    let searchAnime = document.getElementById("qpAnswerInput").value;
+    getAnisongdbData("anime", searchAnime);
 }
 
 function getAnisongdbData(mode, query) {
@@ -97,6 +105,7 @@ function getAnisongdbData(mode, query) {
         windowClick();
     });
 }
+window.getAnisongdbData = getAnisongdbData;
 
 function shortenType(type) {
     return type.replace("Opening ", "OP").replace("Ending ", "ED").replace("Insert Song", "IN");
