@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
-// @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier.
+// @version      2.0
+// @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
@@ -29,11 +29,17 @@ let tier1 = false;
 let tier2 = false;
 let tier3 = false;
 
+let skinNameList = [];
+
 function setup(){
 
     countSkins();
+    getSkinsNames();
 
     $('#swRightColumnBottomInner').prepend(`
+        <div id="skinSearch">
+            <input id="spTextBox" type="text" placeholder="Search Skin">
+        </div>
         <div id="skinTiers">
             <div class="spContainer">
                 <p id="skinLocked" class="skinTierButtom">Locked</p>
@@ -89,6 +95,14 @@ function setup(){
         </div>
     `);
    
+    $("#spTextBox").keyup(function(event) {
+        if (event.keyCode === 13) {
+          textboxProcess();
+        }
+      });
+
+    let spInput = new AmqAwesomeplete(document.querySelector("#spTextBox"), {list: skinNameList, minChars: 1, maxItems: 5});
+
     checkboxCheck();
     applyStyles();
 }
@@ -113,6 +127,11 @@ function applyStyles() {
     style.type = "text/css";
     style.id = "answerStatsStyle";
     style.appendChild(document.createTextNode(`
+        #skinSearch{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         #skinTiers {
             display: flex;
             justify-content: space-between;
@@ -176,5 +195,35 @@ function skinFiltering(){
         $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
         $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
         $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
+    }
+}
+
+function getSkinsNames(){
+    skinNameList = $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').map(function() {
+        return this.classList.item(this.classList.length - 1);
+    }).get();
+    skinNameList = skinNameList.slice(2, -1);
+}
+
+function textboxProcess(){
+    let skinSearchText = $("#spTextBox").val();
+    if(skinSearchText != ""){
+        $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
+            this.classList.remove("hidden");
+        });
+        $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
+            let lastClass = this.classList.item(this.classList.length - 1);
+            if(lastClass == "selected"){
+                lastClass = this.classList.item(this.classList.length - 2);
+            }
+            if(lastClass !== skinSearchText){
+                $(this).addClass("hidden");
+            }
+          });
+    }
+    else{
+        $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
+            this.classList.remove("hidden");
+        });
     }
 }
