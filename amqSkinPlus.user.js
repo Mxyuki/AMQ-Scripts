@@ -94,7 +94,7 @@ function setup(){
             </div>
         </div>
     `);
-   
+
     $("#spTextBox").keyup(function(event) {
         if (event.keyCode === 13) {
           textboxProcess();
@@ -125,6 +125,7 @@ function applyStyles() {
 
     let style = document.createElement("style");
     style.type = "text/css";
+    style.id = "skinPlusStyle";
     style.appendChild(document.createTextNode(`
         #skinSearch{
             display: flex;
@@ -145,7 +146,7 @@ function applyStyles() {
         #swRightColumnTotalSkin {
             margin-bottom: 10px
         }
-        
+
     `));
     document.head.appendChild(style);
 }
