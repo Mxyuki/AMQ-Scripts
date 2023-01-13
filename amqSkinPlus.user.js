@@ -125,7 +125,6 @@ function applyStyles() {
 
     let style = document.createElement("style");
     style.type = "text/css";
-    style.id = "answerStatsStyle";
     style.appendChild(document.createTextNode(`
         #skinSearch{
             display: flex;
