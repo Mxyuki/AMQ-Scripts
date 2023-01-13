@@ -45,7 +45,7 @@ function setup(){
 
     $('#swRightColumnBottomInner').prepend(`
         <div id="skinTiers" style="display: flex; justify-content: space-between; margin: 15px">
-             <p id="skinLocked" class="skinTierButtom">Lock</p>
+             <p id="skinLocked" class="skinTierButtom">Locked</p>
              <p id="skinTier0" class="skinTierButtom">Tier 0</p>
              <p id="skinTier1" class="skinTierButtom">Tier 1</p>
              <p id="skinTier2" class="skinTierButtom">Tier 2</p>
