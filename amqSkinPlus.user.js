@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0
+// @version      2.1
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
+// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // ==/UserScript==
@@ -122,11 +122,7 @@ function countSkins(){
 }
 
 function applyStyles() {
-
-    let style = document.createElement("style");
-    style.type = "text/css";
-    style.id = "skinPlusStyle";
-    style.appendChild(document.createTextNode(`
+    AMQ_addStyle(`
         #skinSearch{
             display: flex;
             flex-direction: column;
@@ -146,9 +142,10 @@ function applyStyles() {
         #swRightColumnTotalSkin {
             margin-bottom: 10px
         }
-
-    `));
-    document.head.appendChild(style);
+        .swAvatarTile:nth-of-type(4n) {
+            margin-right: 6.5%;
+        }
+    `);
 }
 
 function checkboxCheck(){
