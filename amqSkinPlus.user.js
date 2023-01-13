@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.4
+// @version      0.5
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -45,6 +45,8 @@ function setup(){
 
     $('#swRightColumnBottomInner').prepend(`
         <div id="skinTiers" style="display: flex; justify-content: space-between; margin: 15px">
+             <p id="skinLocked" class="skinTierButtom">Lock</p>
+             <p id="skinTier0" class="skinTierButtom">Tier 0</p>
              <p id="skinTier1" class="skinTierButtom">Tier 1</p>
              <p id="skinTier2" class="skinTierButtom">Tier 2</p>
              <p id="skinTier3" class="skinTierButtom">Tier 3</p>
@@ -57,6 +59,12 @@ function setup(){
             </div>
         </div>
     `);
+    $(document).on("click", "#skinLocked", function(){
+        locked();
+    });
+    $(document).on("click", "#skinTier0", function(){
+        tierZero();
+    });
     $(document).on("click", "#skinTier1", function(){
         tierOne();
     });
@@ -79,27 +87,73 @@ function setup(){
         }
     );
 
+    $("#skinLocked").css({
+        "color": "#757575",
+        "font-size": "16px"
+    });
+    $("#skinTier0").css({
+        "color": "#757575",
+        "font-size": "16px"
+    });
     $("#skinTier1").css({
         "color": "#757575",
-        "font-size": "18px"
+        "font-size": "16px"
     });
     $("#skinTier2").css({
         "color": "#757575",
-        "font-size": "18px"
+        "font-size": "16px"
     });
     $("#skinTier3").css({
         "color": "#757575",
-        "font-size": "18px"
+        "font-size": "16px"
     });
     $("#skinTierAll").css({
-        "font-size": "18px"
+        "font-size": "16px"
     });
 
 }
 
-function tierOne(){
+function locked(){
 
-    console.log("test");
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
+
+    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
+
+    $("#skinLocked").css("color", "#000");
+
+    $("#skinTier0").css("color", "#757575");
+    $("#skinTier1").css("color", "#757575");
+    $("#skinTier2").css("color", "#757575");
+    $("#skinTier3").css("color", "#757575");
+
+}
+
+function tierZero(){
+
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
+
+    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
+
+    $("#skinTier0").css("color", "#000");
+
+    $("#skinLocked").css("color", "#757575");
+    $("#skinTier1").css("color", "#757575");
+    $("#skinTier2").css("color", "#757575");
+    $("#skinTier3").css("color", "#757575");
+
+}
+
+function tierOne(){
 
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
 
@@ -111,6 +165,8 @@ function tierOne(){
 
     $("#skinTier1").css("color", "#000");
 
+    $("#skinLocked").css("color", "#757575");
+    $("#skinTier0").css("color", "#757575");
     $("#skinTier2").css("color", "#757575");
     $("#skinTier3").css("color", "#757575");
 
@@ -127,6 +183,8 @@ function tierTwo(){
 
     $("#skinTier2").css("color", "#000");
 
+    $("#skinLocked").css("color", "#757575");
+    $("#skinTier0").css("color", "#757575");
     $("#skinTier1").css("color", "#757575");
     $("#skinTier3").css("color", "#757575");
 
@@ -142,6 +200,8 @@ function tierThree(){
 
     $("#skinTier3").css("color", "#000");
 
+    $("#skinLocked").css("color", "#757575");
+    $("#skinTier0").css("color", "#757575");
     $("#skinTier1").css("color", "#757575");
     $("#skinTier2").css("color", "#757575");
 
@@ -155,6 +215,8 @@ function tierAll(){
 
     $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "0");
 
+    $("#skinLocked").css("color", "#757575");
+    $("#skinTier0").css("color", "#757575");
     $("#skinTier1").css("color", "#757575");
     $("#skinTier2").css("color", "#757575");
     $("#skinTier3").css("color", "#757575");
