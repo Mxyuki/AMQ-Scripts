@@ -18,9 +18,13 @@ A script that change how in the AMQ menu the Play button is displayed.
 Instead of having the window with the Solo / Multi / Nexus appear those 3 options a directly available on the Play button now.
 
 
-# AMQ Skin Counter
+# AMQ Skin Plus
 
-AMQ Skin Counter is a script that display `The number of skin owner` / `The number of total skins in AMQ`, it will also tell you ther Percentage of skin you have.
+AMQ Skin Plus is a script that display `The number of skin owner` / `The number of total skins in AMQ`, it will also tell you ther Percentage of skin you have.
+
+It also let you filter Skins by `Tier`
+
+And let you Search Skins by `Name`.
 
 All of that in the `Avatar Page` on top of your `Avatar`.
 
