@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.5
+// @version      1.0
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // ==/UserScript==
@@ -18,16 +19,81 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
+let total = 0;
+let total2 = 0;
+let collection = 0;
+
+let locked = false;
+let tier0 = false;
+let tier1 = false;
+let tier2 = false;
+let tier3 = false;
+
 function setup(){
 
-    var total = 0;
-    var total2 = 0;
-    var collection = 0;
+    countSkins();
 
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
+    $('#swRightColumnBottomInner').prepend(`
+        <div id="skinTiers">
+            <div class="spContainer">
+                <p id="skinLocked" class="skinTierButtom">Locked</p>
+                <div class="customCheckbox spCheckbox">
+                    <input id="spLockedCheckbox" type="checkbox">
+                    <label for="spLockedCheckbox">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                    </label>
+                </div>
+            </div>
+            <div class="spContainer">
+                <p id="skinTier0" class="skinTierButtom">Tier 0</p>
+                <div class="customCheckbox spCheckbox">
+                    <input id="spTier0Checkbox" type="checkbox">
+                    <label for="spTier0Checkbox">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                    </label>
+                </div>
+            </div>
+            <div class="spContainer">
+                <p id="skinTier1" class="skinTierButtom">Tier 1</p>
+                <div class="customCheckbox spCheckbox">
+                    <input id="spTier1Checkbox" type="checkbox">
+                    <label for="spTier1Checkbox">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                    </label>
+                </div>
+            </div>
+            <div class="spContainer">
+                <p id="skinTier2" class="skinTierButtom">Tier 2</p>
+                <div class="customCheckbox spCheckbox">
+                    <input id="spTier2Checkbox" type="checkbox">
+                    <label for="spTier2Checkbox">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                    </label>
+                </div>
+            </div>
+            <div class="spContainer">
+                <p id="skinTier3" class="skinTierButtom">Tier 3</p>
+                <div class="customCheckbox spCheckbox">
+                    <input id="spTier3Checkbox" type="checkbox">
+                    <label for="spTier3Checkbox">
+                        <i class="fa fa-check" aria-hidden="true"></i>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div id="swRightColumnTotalSkin">
+            <div id="swRightColumnTotalSkinArea" class="text-center" style="margin-top: -20px;">
+                <h1 style="font-size: 25px;">Total Skins:</h1>
+                 ${total} / ${total2} | ${collection} %
+            </div>
+        </div>
+    `);
+   
+    checkboxCheck();
+    applyStyles();
+}
 
-    if($('#swRightColumnTotalSkinArea')) $('#swRightColumnTotalSkinArea').remove();
-
+function countSkins(){
     $('.swTopBarAvatarImageContainer > .swTopBarUnlockStatusContainer > .swTopBarUnlockStatusAmountContainerOuter > .swTopBarUnlockStatusAmountContainer > .swTopBarUnlockStautsNumberContainer > .swTopBarUnlockStatusUnlocked').each(function() {
         total += parseInt($(this).text());
     });
@@ -39,196 +105,76 @@ function setup(){
     total = total - 45;
     total2 = total2 - 105;
     collection = ((total/total2)*100).toFixed(2);
+}
 
-    console.log(total + " / " + total2);
-    console.log("Collection : " + ((total/total2)*100).toFixed(2) + "%");
+function applyStyles() {
 
-    $('#swRightColumnBottomInner').prepend(`
-        <div id="skinTiers" style="display: flex; justify-content: space-between; margin: 15px">
-             <p id="skinLocked" class="skinTierButtom">Locked</p>
-             <p id="skinTier0" class="skinTierButtom">Tier 0</p>
-             <p id="skinTier1" class="skinTierButtom">Tier 1</p>
-             <p id="skinTier2" class="skinTierButtom">Tier 2</p>
-             <p id="skinTier3" class="skinTierButtom">Tier 3</p>
-             <p id="skinTierAll" class="skinTierButtom">All</p>
-        </div>
-        <div id="swRightColumnTotalSkin" style="margin-bottom: 10px">
-            <div id="swRightColumnTotalSkinArea" class="text-center" style="margin-top: -20px;">
-                <h1 style="font-size: 25px;">Total Skins:</h1>
-                 ${total} / ${total2} | ${collection} %
-            </div>
-        </div>
-    `);
-    $(document).on("click", "#skinLocked", function(){
-        locked();
-    });
-    $(document).on("click", "#skinTier0", function(){
-        tierZero();
-    });
-    $(document).on("click", "#skinTier1", function(){
-        tierOne();
-    });
-    $(document).on("click", "#skinTier2", function(){
-        tierTwo();
-    });
-    $(document).on("click", "#skinTier3", function(){
-        tierThree();
-    });
-    $(document).on("click", "#skinTierAll", function(){
-        tierAll();
-    });
-
-    $(".skinTierButtom").hover(
-        function() {
-            $(this).css("cursor", "pointer");
-        },
-        function() {
-            $(this).css("cursor", "default");
+    let style = document.createElement("style");
+    style.type = "text/css";
+    style.id = "answerStatsStyle";
+    style.appendChild(document.createTextNode(`
+        #skinTiers {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px;
+            padding-bottom: 20px
         }
-    );
-
-    $("#skinLocked").css({
-        "color": "#757575",
-        "font-size": "16px"
-    });
-    $("#skinTier0").css({
-        "color": "#757575",
-        "font-size": "16px"
-    });
-    $("#skinTier1").css({
-        "color": "#757575",
-        "font-size": "16px"
-    });
-    $("#skinTier2").css({
-        "color": "#757575",
-        "font-size": "16px"
-    });
-    $("#skinTier3").css({
-        "color": "#757575",
-        "font-size": "16px"
-    });
-    $("#skinTierAll").css({
-        "font-size": "16px"
-    });
-
+        .spContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #swRightColumnTotalSkin {
+            margin-bottom: 10px
+        }
+        
+    `));
+    document.head.appendChild(style);
 }
 
-function locked(){
+function checkboxCheck(){
+    $('#spLockedCheckbox').prop('checked', locked).click(() => {
+        locked = !locked;
+        skinFiltering();
+    });
+    $('#spTier0Checkbox').prop('checked', tier0).click(() => {
+        tier0 = !tier0;
+        skinFiltering();
+    });
+    $('#spTier1Checkbox').prop('checked', tier1).click(() => {
+        tier1 = !tier1;
+        skinFiltering();
+    });
+    $('#spTier2Checkbox').prop('checked', tier2).click(() => {
+        tier2 = !tier2;
+        skinFiltering();
+    });
+    $('#spTier3Checkbox').prop('checked', tier3).click(() => {
+        tier3 = !tier3;
+        skinFiltering();
+    });
+}
 
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
-
+function skinFiltering(){
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
+    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
 
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
+    if(locked){
+        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+        $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
+    }
+    if(tier0) $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+    if(tier1) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
+    if(tier2) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
+    if(tier3) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
 
-    $("#skinLocked").css("color", "#000");
-
-    $("#skinTier0").css("color", "#757575");
-    $("#skinTier1").css("color", "#757575");
-    $("#skinTier2").css("color", "#757575");
-    $("#skinTier3").css("color", "#757575");
-
+    if(!locked && !tier0 && !tier1 && !tier2 && !tier3 || locked && tier0 && tier1 && tier2 && tier3){
+        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
+        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
+        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
+    }
 }
-
-function tierZero(){
-
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
-
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
-
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
-
-    $("#skinTier0").css("color", "#000");
-
-    $("#skinLocked").css("color", "#757575");
-    $("#skinTier1").css("color", "#757575");
-    $("#skinTier2").css("color", "#757575");
-    $("#skinTier3").css("color", "#757575");
-
-}
-
-function tierOne(){
-
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
-
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
-
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
-
-    $("#skinTier1").css("color", "#000");
-
-    $("#skinLocked").css("color", "#757575");
-    $("#skinTier0").css("color", "#757575");
-    $("#skinTier2").css("color", "#757575");
-    $("#skinTier3").css("color", "#757575");
-
-}
-
-function tierTwo(){
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
-
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
-
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
-
-    $("#skinTier2").css("color", "#000");
-
-    $("#skinLocked").css("color", "#757575");
-    $("#skinTier0").css("color", "#757575");
-    $("#skinTier1").css("color", "#757575");
-    $("#skinTier3").css("color", "#757575");
-
-}
-function tierThree(){
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
-
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
-
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "6.5%");
-
-    $("#skinTier3").css("color", "#000");
-
-    $("#skinLocked").css("color", "#757575");
-    $("#skinTier0").css("color", "#757575");
-    $("#skinTier1").css("color", "#757575");
-    $("#skinTier2").css("color", "#757575");
-
-}
-
-function tierAll(){
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
-    $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
-
-    $(".swAvatarTile:nth-of-type(4n)").css("margin-right", "0");
-
-    $("#skinLocked").css("color", "#757575");
-    $("#skinTier0").css("color", "#757575");
-    $("#skinTier1").css("color", "#757575");
-    $("#skinTier2").css("color", "#757575");
-    $("#skinTier3").css("color", "#757575");
-
-}
-
-new Listener("ticket roll result", (payload) => {
-    setTimeout(function() {
-        setup();
-    }, 20000);
-}).bindListener();
-
-new Listener("unlock avatar", (payload) => {
-    setup();
-}).bindListener();
