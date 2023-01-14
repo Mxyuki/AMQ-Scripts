@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.6
+// @version      2.6.1
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -208,7 +208,7 @@ function getSkinsNames(){
 }
 
 function textboxProcess(searchList){
-    if(searchList != ""){
+    if(searchList != null){
         $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
             this.classList.remove("hidden");
         });
