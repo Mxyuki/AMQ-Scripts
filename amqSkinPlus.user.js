@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.6.1
+// @version      2.6.2
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -90,7 +90,7 @@ function setup(){
         <div id="swRightColumnTotalSkin">
             <div id="swRightColumnTotalSkinArea" class="text-center" style="margin-top: -20px;">
                 <h1 style="font-size: 25px;">Total Skins:</h1>
-                 ${total} / ${total2} | ${collection} %
+                <p id="totalSkinText">${total} / ${total2} | ${collection} %</p>
             </div>
         </div>
     `);
@@ -106,6 +106,10 @@ function setup(){
 }
 
 function countSkins(){
+
+    total = 0;
+    total2 = 0;
+
     $('.swTopBarAvatarImageContainer > .swTopBarUnlockStatusContainer > .swTopBarUnlockStatusAmountContainerOuter > .swTopBarUnlockStatusAmountContainer > .swTopBarUnlockStautsNumberContainer > .swTopBarUnlockStatusUnlocked').each(function() {
         total += parseInt($(this).text());
     });
@@ -117,6 +121,8 @@ function countSkins(){
     total = total - 45;
     total2 = total2 - 105;
     collection = ((total/total2)*100).toFixed(2);
+
+    if($('#totalSkinText'))$('#totalSkinText').text(`${total} / ${total2} | ${collection} %`);
 }
 
 function applyStyles() {
@@ -231,5 +237,6 @@ function textboxProcess(searchList){
 }
 
 new Listener("unlock avatar", (payload) => {
+    countSkins();
     skinFiltering();
 }).bindListener();
