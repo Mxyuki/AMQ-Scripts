@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.6.2
+// @version      3.0
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -189,20 +189,56 @@ function skinFiltering(){
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().addClass('hidden');
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
 
-    if(locked){
-        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
-        $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
-    }
-    if(tier0) $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
-    if(tier1) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
-    if(tier2) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
-    if(tier3) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
+    if(!locked){
+    
+        if(tier0) $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+        if(tier1) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
+        if(tier2) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
+        if(tier3) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
 
-    if(!locked && !tier0 && !tier1 && !tier2 && !tier3 || locked && tier0 && tier1 && tier2 && tier3){
-        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
-        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
-        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
-        $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
+        if(!tier0 && !tier1 && !tier2 && !tier3 || tier0 && tier1 && tier2 && tier3){
+            $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+            $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().removeClass('hidden');
+            $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').parent().parent().parent().removeClass('hidden');
+            $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().removeClass('hidden');
+        }
+    }
+    else{
+        if(tier0){
+            $('.swAvatarTilePrice').each(function() {
+                if (["10,000", "40,000", "50,000", "250,000", "290,000"].includes($(this.text()))){
+                    $(this).closest('.hidden').removeClass('hidden');
+                }
+                else if($(this).text() === '700'){
+                    if(!$(this).parent().hasClass('secondRow')) $(this).closest('.hidden').removeClass('hidden');   
+                }
+            });
+        }
+        if(tier1){
+            $('.swAvatarTilePrice').each(function() {
+                if ($(this).text() === '20' && !$(this).parent().hasClass('hide')) {
+                    $(this).closest('.hidden').removeClass('hidden');
+                }
+            });
+        }
+        if(tier2){
+            $('.swAvatarTilePrice').each(function() {
+                if ($(this).text() === '60' && !$(this).parent().hasClass('hide')) {
+                    $(this).closest('.hidden').removeClass('hidden');
+                }
+            });
+        }
+        if(tier3){
+            $('.swAvatarTilePrice').each(function() {
+                if ($(this).text() === '200' && !$(this).parent().hasClass('hide')) {
+                    $(this).closest('.hidden').removeClass('hidden');
+                }
+            });
+        }
+        if(!tier0 && !tier1 && !tier2 && !tier3 || tier0 && tier1 && tier2 && tier3){
+            $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().removeClass('hidden');
+            $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
+        }
     }
 }
 
@@ -227,7 +263,7 @@ function textboxProcess(searchList){
             if(!searchList.includes(lastClass)){
                 $(this).addClass("hidden");
             }
-          });
+        });
     }
     else{
         $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
