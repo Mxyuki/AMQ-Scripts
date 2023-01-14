@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.4
+// @version      2.5
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -42,7 +42,7 @@ function setup(){
         </div>
         <div id="skinTiers">
             <div class="spContainer">
-                <p id="skinLocked" class="skinTierButtom">Locked</p>
+                <p id="skinLocked" class="skinTierText">Locked</p>
                 <div class="customCheckbox spCheckbox">
                     <input id="spLockedCheckbox" type="checkbox">
                     <label for="spLockedCheckbox">
@@ -51,7 +51,7 @@ function setup(){
                 </div>
             </div>
             <div class="spContainer">
-                <p id="skinTier0" class="skinTierButtom">Tier 0</p>
+                <p id="skinTier0" class="skinTierText">Tier 0</p>
                 <div class="customCheckbox spCheckbox">
                     <input id="spTier0Checkbox" type="checkbox">
                     <label for="spTier0Checkbox">
@@ -60,7 +60,7 @@ function setup(){
                 </div>
             </div>
             <div class="spContainer">
-                <p id="skinTier1" class="skinTierButtom">Tier 1</p>
+                <p id="skinTier1" class="skinTierText">Tier 1</p>
                 <div class="customCheckbox spCheckbox">
                     <input id="spTier1Checkbox" type="checkbox">
                     <label for="spTier1Checkbox">
@@ -69,7 +69,7 @@ function setup(){
                 </div>
             </div>
             <div class="spContainer">
-                <p id="skinTier2" class="skinTierButtom">Tier 2</p>
+                <p id="skinTier2" class="skinTierText">Tier 2</p>
                 <div class="customCheckbox spCheckbox">
                     <input id="spTier2Checkbox" type="checkbox">
                     <label for="spTier2Checkbox">
@@ -78,7 +78,7 @@ function setup(){
                 </div>
             </div>
             <div class="spContainer">
-                <p id="skinTier3" class="skinTierButtom">Tier 3</p>
+                <p id="skinTier3" class="skinTierText">Tier 3</p>
                 <div class="customCheckbox spCheckbox">
                     <input id="spTier3Checkbox" type="checkbox">
                     <label for="spTier3Checkbox">
@@ -142,6 +142,13 @@ function applyStyles() {
         }
         .swAvatarTile:nth-of-type(4n) {
             margin-right: 6.5%;
+        }
+        #spTextBox{
+             background-color: #424242;
+             margin-top: 15px;
+        }
+        .skinTierText {
+             font-weight: bold;
         }
     `);
 }
