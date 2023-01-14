@@ -2,7 +2,7 @@
 
 /* MelodyElodie script edited by Mxyuki */
 
-/* Mxyuki | 0.1 */
+/* Mxyuki | 0.2 */
 
  :root {
      
@@ -53,6 +53,15 @@
     background: var(--chatbg);
 
 }
+
+#qpAnswerInputContainer.floatingContainer {
+    top: -8px;
+    border-radius: 0px;
+}
+#qpAnswerInputContainer.focused {
+    box-shadow: none;
+}
+
 .leftShadowBorder, #currencyContainer, #menuBarOptionContainer, #awContentRow .rightShadowBorder {
     box-shadow:none;
 }
@@ -184,7 +193,7 @@ width: 100%;
     background: rgba(0, 0, 0, 0.3);
 }    
 #qpAnimeNameHider {
-    background-color: #625D60;
+    background-color: #625d6000;
 }
 #qpVideoHider {
     opacity:1;
@@ -634,9 +643,33 @@ div#popoutMessageContainer.floatingContainer.popoutMessage.noShadow {
     border-radius: 2px;
     overflow: hidden;
     z-index: 1;
-    border-radius: 20px;
+    border-radius: 0px;
     box-shadow: 0 0 0px
 }
+
+#qpAnimeNameContainer {
+    border-radius: 0px;
+    width: 100%;
+    height: 50px;
+    top: 12px;
+    z-index: 15;
+    background-color: rgb(0, 0, 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#qpCounterShadowHider {
+    top: 52px;
+    right: 0;
+    width: 90px;
+    z-index: 16;
+}
+#qpAnimeName{
+    z-index: 20;
+    min-width: 80%;
+    width: 80%;
+}
+
  #qpVideoHider {
      border-radius: 20px;
      background-color: rgba(0,0,0,0);
@@ -649,7 +682,10 @@ div#popoutMessageContainer.floatingContainer.popoutMessage.noShadow {
     overflow: hidden;
     width: 80px;
     height: 100%;
-    border-radius: 20px;
+    border-radius: 0px;
+}
+#qpCounter{
+    background-color: rgba(0, 0, 0, 0);
 }
 
 #qpVideoTroubleshootingContainer{
@@ -662,18 +698,45 @@ div#popoutMessageContainer.floatingContainer.popoutMessage.noShadow {
 }
 
 #qpVideoProgressBar{
-    background-color: #fff;
+    background-color: #c9c0c5;
+    width: 50%;
+}
+#qpAnswerStateContainerOuter{
+    border-radius: 0px;
+}
+
+#qpAnswerStateCheck {
+    transform: skewX(0deg) rotate(0deg);
+    position: absolute;
+    left: 3px;
+    top: 14px;
+    font-size: 18px;
+}
+#qpVoteSkip.toggled {
+    background-color: #c9c0c5;
+    width: 60px;
+}
+#qpAnswerStateContainerInner {
+    position: absolute;
+    width: 35px;
+    right: -12px;
+    background-color: #c9c0c5;
+    font-size: 12px;
+    height: 100%;
+    transform: skewX(0deg);
+    -webkit-box-shadow: 1px -3px 10px rgb(0 0 0 / 89%);
+    box-shadow: 1px -3px 10px rgb(0 0 0 / 89%);
 }
 
 #qpAnswerInputContainer.floatingContainer {
-    border-radius: 20px;
+    border-radius: 0px;
 }
 #qpVoteState {
     border-radius: 20px;
 }
 
 #qpAnswerInputContainer .awesomplete {
-    width: 95%;
+    width: 100%;
 }
 
 .qpAvatarAnswerContainer {
@@ -689,10 +752,6 @@ div#popoutMessageContainer.floatingContainer.popoutMessage.noShadow {
 }
 
 #qpAnimeNameHider {
-    border-radius: 10px;
-}
-
-.qpSideContainer, .qpAnimeNameContainer {
     border-radius: 10px;
 }
 
