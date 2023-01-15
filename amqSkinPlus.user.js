@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.1.1
+// @version      3.2.0
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -99,10 +99,34 @@ function setup(){
           textboxProcess(spInput.currentSubList);
     });
 
+    $('#swContentAvatarContainer').on('change', function() {
+        skinFiltering();
+    });
+
     let spInput = new AmqAwesomeplete(document.querySelector("#spTextBox"), {list: skinNameList, minChars: 1, maxItems: 5});
+
+    var target = document.querySelector("#swContentAvatarContainer");
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutationProcess(mutation);
+        });
+    });
+    var config = { childList: true };
+    observer.observe(target, config);
 
     checkboxCheck();
     applyStyles();
+}
+
+function mutationProcess(mutation){
+    if (mutation.type === 'childList') {
+        for(let i=0; i< mutation.addedNodes.length; i++){
+            let node = mutation.addedNodes[i];
+            if(node.classList && !node.classList.contains("previewTile")) {
+                skinFiltering();
+            }
+        }
+    }
 }
 
 function countSkins(){
@@ -190,7 +214,7 @@ function skinFiltering(){
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier3').parent().parent().parent().addClass('hidden');
 
     if(!locked){
-    
+
         if(tier0) $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').closest('.hidden').removeClass('hidden');
         if(tier1) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').closest('.hidden').removeClass('hidden');
         if(tier2) $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier2').closest('.hidden').removeClass('hidden');
@@ -210,7 +234,7 @@ function skinFiltering(){
                     $(this).closest('.hidden').removeClass('hidden');
                 }
                 else if($(this).text() === '700'){
-                    if(!$(this).parent().hasClass('secondRow')) $(this).closest('.hidden').removeClass('hidden');   
+                    if(!$(this).parent().hasClass('secondRow')) $(this).closest('.hidden').removeClass('hidden');
                 }
             });
         }
