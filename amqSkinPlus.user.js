@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.2.0
+// @version      3.3.0
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
@@ -19,6 +20,8 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
+let skinWidth = "10%";
+
 let total = 0;
 let total2 = 0;
 let collection = 0;
@@ -28,6 +31,8 @@ let tier0 = false;
 let tier1 = false;
 let tier2 = false;
 let tier3 = false;
+
+let timeoutId;
 
 let skinNameList = [];
 
@@ -123,7 +128,8 @@ function mutationProcess(mutation){
         for(let i=0; i< mutation.addedNodes.length; i++){
             let node = mutation.addedNodes[i];
             if(node.classList && !node.classList.contains("previewTile")) {
-                skinFiltering();
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(skinFiltering, 100);
             }
         }
     }
@@ -171,11 +177,15 @@ function applyStyles() {
             margin-bottom: 10px
         }
         .swAvatarTile:nth-of-type(4n) {
-            margin-right: 6.5%;
+            margin-right: 1.5%;
+        }
+        .swAvatarTile {
+            width: ${skinWidth};
+            margin-right: 1.5%;
         }
         #spTextBox{
-             background-color: #424242;
-             margin-top: 15px;
+            background-color: #424242;
+            margin-top: 15px;
         }
         .skinTierText {
              font-weight: bold;
@@ -207,6 +217,15 @@ function checkboxCheck(){
 }
 
 function skinFiltering(){
+
+    $(".swAvatarTilePrice").each(function() {
+        if(!$(this).parent().hasClass('secondRow') && ["10,000", "40,000", "50,000", "250,000", "290,000", "20", "60", "200", "700"].includes($(this).text())){
+            $(this).parent().click(buySkin);
+        }
+    });
+
+    clearTimeout(timeoutId);
+
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble.unlocked .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.hide').parent().parent().parent().addClass('hidden');
     $('.swAvatarTile.swMainContent.floatingContainer.clickAble .swAvatarTileTypeContainer .swAvatarTileType.rightLeftTopBottom .swAvatarTileRarityColor.tier1').parent().parent().parent().addClass('hidden');
@@ -296,7 +315,38 @@ function textboxProcess(searchList){
     }
 }
 
+function buySkin(){
+    setTimeout(function() {
+        document.getElementById("swRightColumnActionButtonText").click()
+    }, 100);
+}
+
 new Listener("unlock avatar", (payload) => {
     countSkins();
     skinFiltering();
 }).bindListener();
+
+AMQ_addScriptData({
+    name: "Skin Plus",
+    author: "Mxyuki",
+    description: `
+        <p>This script help you in the AMQ Skins Store.</p>
+        <p>How to use it ?</p>
+        <p>Total Skins Counter : Just count the number of skins you have and make a % of collection</p>
+        <img src="https://i.imgur.com/1wfrCvF.png">
+        <p>Tier Filter : When a Skin is Display you are able to filter by Skin Tier</p>
+        <p>Unlocked Skins Filter</p>
+        <img src="https://i.imgur.com/yWT44em.png" alt="Unlocked Skins Tier Filter">
+        <img src="https://i.imgur.com/dH9Bl9b.png" alt="Unlocked Skins Tier Filter">
+        <p>Locked Skins Filter</p>
+        <img src="https://i.imgur.com/Uuh5Hl8.png" alt="Locked Skins Tier Filter">
+        <img src="https://i.imgur.com/MzPyDfI.png" alt="Locked Skins Tier Filter">
+        <p>Search Bar : Allow you to Filter Skins at the top by the Skin Name</p>
+        <img src="https://i.imgur.com/RYVGHII.png" alt="Skin Search Bar">
+        <img src="https://i.imgur.com/5tEbNM8.png" alt="Filtered Top Bar">
+        <p>Fast Buy : Just click on the Price of a Skin to Buy it</p>
+        <img src="https://i.imgur.com/bOcAFtc.png" alt="Fast Buy">
+        <p>Skins Width : Allow you to change the size of the Skins</p>
+        <img src="https://i.imgur.com/Do7Yra3.png" alt="Skin Width">
+    `
+});
