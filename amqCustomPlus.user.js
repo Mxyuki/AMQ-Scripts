@@ -5,6 +5,8 @@
 // @description  Customize your AMQ, Change your Name / Level / Profil / Skin Everywhere, However you want (Of course it only display for You)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomPlus.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomPlus.user.js
 // ==/UserScript==
 
 if (document.querySelector("#startPage")) return;
