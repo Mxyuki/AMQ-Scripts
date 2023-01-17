@@ -1,12 +1,10 @@
 // ==UserScript==
 // @name         AMQ Custom Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.0
+// @version      1.1.0
 // @description  Customize your AMQ, Change your Name / Level / Profil / Skin Everywhere, However you want (Of course it only display for You)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
-// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomPlus.user.js
-// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomPlus.user.js
 // ==/UserScript==
 
 if (document.querySelector("#startPage")) return;
@@ -37,6 +35,7 @@ let skinWaiting = "https://cdn.animemusicquiz.com/v1/avatars/Honoka/Fall/Hairban
 let skinNoAnswer = "https://cdn.animemusicquiz.com/v1/avatars/Honoka/Fall/Hairband/latte/900px/Confused.webp";
 let skinCorrect = "https://cdn.animemusicquiz.com/v1/avatars/Honoka/Fall/Hairband/latte/900px/Right.webp";
 let skinWrong = "https://cdn.animemusicquiz.com/v1/avatars/Honoka/Fall/Hairband/latte/900px/Wrong.webp";
+let skinBackground = "https://cdn.animemusicquiz.com/v1/backgrounds/250px/Honoka_Fall_latte_vert.webp";
 
 let loadSpeed = 5;
 let previousSrc = null;
@@ -117,13 +116,13 @@ function nameChange(){
 }
 
 function levelChange(){
-    const levelTextElement = document.querySelector('.lobbyAvatarSubTextContainer h3');
-    if (levelTextElement) {
-        levelTextElement.textContent = Level;
-    }
-    const levelLobbyTextElement = document.querySelector('.qpAvatarLevel.self');
+    const levelLobbyTextElement = document.querySelector('.lobbyAvatarSubTextContainer h3');
     if (levelLobbyTextElement) {
         levelLobbyTextElement.textContent = Level;
+    }
+    const levelGameTextElement = document.querySelector('.qpAvatarLevel.self');
+    if (levelGameTextElement) {
+        levelGameTextElement.textContent = Level;
     }
     const levelTextElements = document.querySelectorAll('#xpLevelContainer p.levelText');
     levelTextElements.forEach(element => {
@@ -160,6 +159,10 @@ function observeAvatar(){
     if (avatarName) {
         const avatarContainer = avatarName.closest('.qpAvatarContainer');
         if (avatarContainer) {
+            const backgroundImage = avatarContainer.querySelector('.qpAvatarImageContainer.floatingContainer .qpAvatarBackgroundContainer');
+            if (backgroundImage) {
+                backgroundImage.style.backgroundImage = `url(${skinBackground})`;
+            }
             const avatarImage = avatarContainer.querySelector('.qpAvatarImageContainer.floatingContainer .qpAvatarImageInnerContainer .qpAvatarImage.inFocusHighlighted.sizeMod51');
             if (avatarImage) {
                 const observer = new MutationObserver(mutations => {
@@ -199,6 +202,8 @@ new Listener("Join Game", (payload) => {
         levelChange();
         nameChange();
         hideRoom();
+        observeAvatar();
+        filterAvatar("Basic");
     }, loadSpeed);
 }).bindListener();
 new Listener("Host Game", (payload) => {
@@ -243,5 +248,5 @@ new Listener("Player Changed To Spectator", (payload) => {
 new Listener("quiz xp credit gain", (payload) => {
     setTimeout(function() {
         levelChange();
-    }, loadSpeed);
+    }, 10);
 }).bindListener();
