@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Custom Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1.0
+// @version      1.2.0
 // @description  Customize your AMQ, Change your Name / Level / Profil / Skin Everywhere, However you want (Of course it only display for You)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -161,6 +161,9 @@ function filterAvatar(state){
 }
 
 function observeAvatar(){
+
+    previousSrc = null;
+
     const avatarName = document.querySelector('.qpAvatarName.outOfFocusReduced.self');
     if (avatarName) {
         const avatarContainer = avatarName.closest('.qpAvatarContainer');
@@ -169,7 +172,7 @@ function observeAvatar(){
             if (backgroundImage) {
                 backgroundImage.style.backgroundImage = `url(${skinBackground})`;
             }
-            const avatarImage = avatarContainer.querySelector('.qpAvatarImageContainer.floatingContainer .qpAvatarImageInnerContainer .qpAvatarImage.inFocusHighlighted.sizeMod51');
+            const avatarImage = avatarContainer.querySelector('.qpAvatarImageContainer.floatingContainer .qpAvatarImageInnerContainer .qpAvatarImage.inFocusHighlighted');
             if (avatarImage) {
                 const observer = new MutationObserver(mutations => {
                     mutations.forEach(mutation => {
@@ -194,7 +197,7 @@ function changeAvatar(skin){
     if (avatarName) {
         const avatarContainer = avatarName.closest('.qpAvatarContainer');
         if (avatarContainer) {
-            const avatarImage = avatarContainer.querySelector('.qpAvatarImageContainer.floatingContainer .qpAvatarImageInnerContainer .qpAvatarImage.inFocusHighlighted.sizeMod51');
+            const avatarImage = avatarContainer.querySelector('.qpAvatarImageContainer.floatingContainer .qpAvatarImageInnerContainer .qpAvatarImage.inFocusHighlighted');
             if (avatarImage) {
                 avatarImage.removeAttribute("srcset");
                 avatarImage.src = skin;
