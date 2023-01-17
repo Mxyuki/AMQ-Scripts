@@ -2,14 +2,14 @@
 
 /* MelodyElodie script edited by Mxyuki */
 
-/* Mxyuki | 0.2 */
+/* Mxyuki | 0.3 */
 
  :root {
      
     /* Change the URL in quotes to whatever you want the bg to be. */
     /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/916779647738454046/unknown.png?width=1248&height=702);*/
     /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1052803852849647626/image.png?width=1248&height=702);*/
-    --bg: url(https://media.discordapp.net/attachments/553924474173653002/951127589026664508/FNXfXl8VUAIeL24.png?width=1248&height=702);
+    --bg: url(https://media.discordapp.net/attachments/553924474173653002/951127589026664508/FNXfXl8VUAIeL24.png);
     /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1049876236035440640/image.png);*/
     /* Optional: if you want a different background for chat. Phone wallpapers tend to work best. */
     --chatbg: rgba(0, 0, 0, 0.1);
@@ -834,4 +834,10 @@ div.modal-content {
 }
 #gcEmojiPickerOuterContainer, #gcGifSearchOuterContainer{
     right: 86px;
+}
+#avatarUserImg{
+    content: url("https://i.imgur.com/DuucUb4.png");
+}
+.isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImg{
+    content:url("https://i.imgur.com/DuucUb4.png");
 }
