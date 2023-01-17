@@ -113,6 +113,10 @@ function nameChange(){
     if (nameGameTextElement) {
         nameGameTextElement.textContent = Name;
     }
+    const nameStandingTextElement = document.querySelector('.qpsPlayerName.self');
+    if (nameStandingTextElement) {
+        nameStandingTextElement.textContent = Name;
+    }
 }
 
 function levelChange(){
