@@ -117,13 +117,15 @@ AMQ Update List is a script that will update your list each time you log on amq,
 To activate the Auto Update of one of your list, just go in `Settings` > `Anime List` > `Check the Checkbox of the list you want`
 
 
-# AMQ Change Picture
+# AMQ Custom Plus
 
-AMQ Change Picture is a script that change your amq picture, In the bottom rightcorner, in lobbys and in your profile
+AMQ Custom Plus is a script that change your `AMQ Picture`, In the bottom right corner, in lobbys and in your profile.
 
-To change the picture displayed just change the link of `let picture` to the link of your image finishing by `jpg/png/gif`
+It also let you put any `Level` you want displayed on your game.
 
-*Other player don't see the image.*
+You can also have any `Skin` you want
+
+*Other player don't see the Image / Level / Skin. It only display for you*
 
 
 # AMQ LowerToUpper
