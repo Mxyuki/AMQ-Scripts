@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Custom Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.0
+// @version      1.3.0
 // @description  Customize your AMQ, Change your Name / Level / Profil / Skin Everywhere, However you want (Of course it only display for You)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -20,6 +20,7 @@ let loadInterval = setInterval(() => {
 function setup(){
     profileChange();
     levelChange();
+    changeImage();
 }
 
 let Image = "https://i.imgur.com/BIvbHqy.png";
@@ -204,6 +205,11 @@ function changeAvatar(skin){
             }
         }
     }
+}
+
+function changeImage(){
+    document.querySelector("#avatarUserImg").style.content = `url("${Image}")`;
+    document.querySelector(".isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImg").style.content = `url("${Image}")`;
 }
 
 new Listener("Join Game", (payload) => {
