@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Custom Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.1
+// @version      1.3.2
 // @description  Customize your AMQ, Change your Name / Level / Profil / Skin Everywhere, However you want (Of course it only display for You)
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -243,7 +243,9 @@ new Listener("Game Starting", (payload) => {
 new Listener("quiz over", (payload) => {
     setTimeout(function() {
         levelChange();
-        nameChange();
+        setTimeout(function() {
+            nameChange();
+        }, loadSpeed);
         hideRoom();
     }, loadSpeed);
 }).bindListener();
