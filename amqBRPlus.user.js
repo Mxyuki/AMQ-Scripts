@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1
+// @version      1.2
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -10,8 +10,10 @@
 // @description  Clicking on Anime Name or ANN ID at the top Organize your picks.
 // @description  Clicking on a Name will write it automatically into the answer box.
 // @description  Clicking on an ANN ID will send you to the anime ANN Page.
-// @description  Display button : when clicked in the looting page, will show every item names (doesn't show datastore items).
-// @description  Hide  button : does the oposite of Display button and hide every shown item names.
+// @description  Clicking on the "-" Next to the anime name wiil remove the anime from the picked list.
+// @description  Display button : when clicked toggle that when entering a new tile it display all items names (doesn't show datastore items).
+// @description  Share button : when clicked upload your picked list as a json on litterbox and give you the link to it.
+// @description  "/brpload https://litter.catbox.moe/XXXXXX.json" will add the animes of the litterbox page into your picked list.
 // @description  Tile List button : Open the Tile List Page.
 // @description  ----- Tile List Page : -----
 // @description  When in Looting phase, display all the animes that are in your Tile (doesn't show datastore items), it change automatically at each time you change tile.
@@ -39,8 +41,11 @@ let loadInterval = setInterval(() => {
 let tileShow = [];
 let pickedShow = [];
 
+let isDisplayed = false;
 
 let filteredAnimes = [];
+
+let regex = /^https:\/\/litter\.catbox\.moe\/.+\.json$/;
 
 let brpWindow;
 let brpTileListWindow;
@@ -68,17 +73,19 @@ function displayPicked(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName">${pickedShow[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i>${pickedShow[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
         brpTable.appendChild(tr);
 
-        const brpPickedName = tr.querySelector('.brpPickedName');
-        brpPickedName.addEventListener('click', function() {
+        tr.querySelector('i').addEventListener('click', function() {
+            tr.remove();
+        });
+
+        tr.querySelector('.brpPickedName').addEventListener('click', function() {
             $("#qpAnswerInput").val(pickedShow[i].name);
             quiz.answerInput.submitAnswer(true);
         });
 
-        const brpPickedANNID = tr.querySelector('.brpPickedANNID');
-        brpPickedANNID.addEventListener('click', function() {
+        tr.querySelector('.brpPickedANNID').addEventListener('click', function() {
             window.open(`https://www.animenewsnetwork.com/encyclopedia/anime.php?id=${pickedShow[i].id}`, '_blank');
         });
     }
@@ -95,17 +102,19 @@ function displayFiltered(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName">${filteredAnimes[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
+        tr.innerHTML = `<td><button><i class="fa fa-minus" aria-hidden="true"></i></button></td><td class="brpPickedName">${filteredAnimes[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
         brpTable.appendChild(tr);
 
-        const brpPickedName = tr.querySelector('.brpPickedName');
-        brpPickedName.addEventListener('click', function() {
+        tr.querySelector('button').addEventListener('click', function() {
+            tr.remove();
+        });
+
+        tr.querySelector('.brpPickedName').addEventListener('click', function() {
             $("#qpAnswerInput").val(filteredAnimes[i].name);
             quiz.answerInput.submitAnswer(true);
         });
 
-        const brpPickedANNID = tr.querySelector('.brpPickedANNID');
-        brpPickedANNID.addEventListener('click', function() {
+        tr.querySelector('.brpPickedANNID').addEventListener('click', function() {
             window.open(`https://www.animenewsnetwork.com/encyclopedia/anime.php?id=${filteredAnimes[i].id}`, '_blank');
         });
     }
@@ -133,8 +142,6 @@ function displayTile() {
 }
 
 function findName(name){
-
-    console.log(name);
 
     document.querySelectorAll('.brShowEntry.brMapObject').forEach((element) => {
         element.dispatchEvent(new MouseEvent('mouseover'));
@@ -172,6 +179,56 @@ function showName(){
     });
 
 }
+
+function sendChatMessage(message) {
+    gameChat.$chatInputField.val(message);
+    //gameChat.sendMessage();
+}
+
+function share(){
+    const file = new File([JSON.stringify(pickedShow)], "pickedShow.json", {type: "application/json"});
+
+    const formData = new FormData();
+
+    formData.append('fileToUpload', file);
+    formData.append('reqtype', 'fileupload');
+    formData.append('time', '1h');
+
+    fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+        method: 'POST',
+        body: formData
+    }).then((response) => {
+        return response.text();
+    }).then((data) => {
+        console.log(data);
+        sendChatMessage(data);
+    });
+}
+
+function processChatCommand(message){
+    if (message.message.startsWith("/brpload") && message.sender == selfName){
+        let link = message.message.split(" ")[1];
+        if(regex.test(link)){
+            getArrayFromCatboxFile(link);
+        }
+    }
+}
+
+function getArrayFromCatboxFile(link) {
+    fetch(link)
+      .then(response => response.json())
+      .then(array => {
+        console.log(array);
+        for (let i = 0; i < array.length; i++) {
+            pickedShow.push(array[i]);
+        }
+        displayPicked();
+      })
+      .catch(error => {
+        console.error("Failed to retrieve array from Catbox file:", error);
+      });
+  }
+
 
 function setup(){
 
@@ -229,11 +286,12 @@ function setup(){
 
         $(`<input type="text" id="brpSearch" class="brpLeft brpTextBox brpOptionPanel" placeholder="Search Anime"></input>`),
 
-        $(`<button class="btn btn-primary brpRight brpButton">Hide</button>`).click(function () {
-            hideName();
-        }),
         $(`<button class="btn btn-primary brpRight brpButton">Display</button>`).click(function () {
-            showName();
+            isDisplayed = !isDisplayed
+            isDisplayed ? showName() : hideName();
+        }),
+        $(`<button class="btn btn-primary brpRight brpButton">Share</button>`).click(function () {
+            share();
         }),
         $(`<button class="btn btn-primary brpRight brpButton">Tile List</button>`).click(function () {
             if (brpTileListWindow.isVisible()) {
@@ -350,6 +408,12 @@ function setup(){
             border-color: #4d366a;
         }
 
+        .brpRight:hover {
+            background-color: #7C7CC1;
+            border-color: #4d366a;
+            box-shadow: none;
+        }
+
         .brpOptionPanel {
             margin-top: 10px;
         }
@@ -424,6 +488,10 @@ function setup(){
 
         #brpTableANN:hover {
             cursor: pointer;
+        }
+
+        .brpRemove {
+            margin-right: 10px;
         }
 
         // Tile List
@@ -521,6 +589,10 @@ new Listener("battle royal spawn", (payload) => {
 
     tileShow = [];
 
+    setTimeout(function() {
+        isDisplayed ? showName() : hideName();
+    }, 100);
+
     payload.objects.forEach((object) => {
         if (object.info.type == "NameEntry") {
             if (object.info.jap) {
@@ -530,5 +602,13 @@ new Listener("battle royal spawn", (payload) => {
             }
         }
         displayTile();
+    });
+
+}).bindListener();
+
+new Listener("game chat update", (payload) => {
+    payload.messages.forEach(message => {
+        console.log(message);
+        processChatCommand(message);
     });
 }).bindListener();
