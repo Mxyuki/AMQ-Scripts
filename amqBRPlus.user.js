@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
+// @version      1.1
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -91,22 +91,22 @@ function displayFiltered(){
         brpPickedSong.remove();
     });
 
-    for (let i = 0; i < pickedShow.length; i++) {
+    for (let i = 0; i < filteredAnimes.length; i++) {
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName">${pickedShow[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        tr.innerHTML = `<td class="brpPickedName">${filteredAnimes[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
         brpTable.appendChild(tr);
 
         const brpPickedName = tr.querySelector('.brpPickedName');
         brpPickedName.addEventListener('click', function() {
-            $("#qpAnswerInput").val(pickedShow[i].name);
+            $("#qpAnswerInput").val(filteredAnimes[i].name);
             quiz.answerInput.submitAnswer(true);
         });
 
         const brpPickedANNID = tr.querySelector('.brpPickedANNID');
         brpPickedANNID.addEventListener('click', function() {
-            window.open(`https://www.animenewsnetwork.com/encyclopedia/anime.php?id=${pickedShow[i].id}`, '_blank');
+            window.open(`https://www.animenewsnetwork.com/encyclopedia/anime.php?id=${filteredAnimes[i].id}`, '_blank');
         });
     }
 }
@@ -294,11 +294,8 @@ function setup(){
 
     );
 
-    const brpOption = document.getElementById("brpPickedList");
-    brpOption.style.overflow = "auto";
-
-    const brpTileOption = document.getElementById("brpTileList");
-    brpTileOption.style.overflow = "auto";
+    document.getElementById("brpPickedList").style.overflow = "auto";
+    document.getElementById("brpTileList").style.overflow = "auto";
 
     let searchInput = document.getElementById("brpSearch");
 
