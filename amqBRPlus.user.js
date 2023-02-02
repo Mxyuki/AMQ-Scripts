@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.1
+// @version      1.5.0
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -65,6 +65,12 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+document.querySelector('#gcInput').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        processCommand(this.value);
+    }
+});
+
 function displayPicked(){
 
     const brpPickedSongs = document.querySelectorAll('.brpPickedSong');
@@ -111,7 +117,7 @@ function displayFiltered(){
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
         tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${filteredAnimes[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
-
+        
         brpTable.appendChild(tr);
 
         tr.querySelector('i').addEventListener('click', function() {
@@ -166,7 +172,7 @@ function findName(name){
         for (let i = 0; i < popovers.length; i++) {
             if (popovers[i].textContent === name) {
                 let targetPopoverId = popovers[i].id;
-
+  
                 let elements = document.getElementsByClassName('brMapObject');
                 for (let j = 0; j < elements.length; j++) {
                     if (elements[j].getAttribute('aria-describedby') !== targetPopoverId) {
@@ -200,7 +206,7 @@ function sendChatMessage(message) {
 }
 
 function share(){
-
+    
     if (pickedShow.length === 0) return;
 
     const file = new File([JSON.stringify(pickedShow)], "pickedShow.json", {type: "application/json"});
@@ -221,19 +227,6 @@ function share(){
     });
 }
 
-function processChatCommand(message){
-    if (message.message.startsWith("/brpload") && message.sender == selfName){
-        let link = message.message.split(" ")[1];
-        if(regex.test(link)){
-            getArrayFromCatboxFile(link);
-        }
-    }
-    else if (message.message.startsWith("/brpclean") && message.sender == selfName){
-        pickedShow = [];
-        displayPicked();
-    }
-}
-
 function getArrayFromCatboxFile(link) {
     fetch(link)
       .then(response => response.json())
@@ -246,7 +239,26 @@ function getArrayFromCatboxFile(link) {
       .catch(error => {
         console.error("Failed to retrieve array from Catbox file:", error);
       });
-  }
+}
+
+function processCommand(text){
+    if (text.startsWith("/brpload")){
+
+        document.querySelector('#gcInput').value = "";
+
+        let link = text.split(" ")[1];
+        if(regex.test(link)){
+            getArrayFromCatboxFile(link);
+        }
+    }
+    else if (text.startsWith("/brpclean")){
+
+        document.querySelector('#gcInput').value = "";
+
+        pickedShow = [];
+        displayPicked();
+    }
+}
 
 
 function setup(){
@@ -651,10 +663,4 @@ new Listener("battle royal spawn", (payload) => {
         displayTile();
     });
 
-}).bindListener();
-
-new Listener("game chat update", (payload) => {
-    payload.messages.forEach(message => {
-        processChatCommand(message);
-    });
 }).bindListener();
