@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2
+// @version      1.4
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -14,13 +14,14 @@
 // @description  Display button : when clicked toggle that when entering a new tile it display all items names (doesn't show datastore items).
 // @description  Share button : when clicked upload your picked list as a json on litterbox and give you the link to it.
 // @description  "/brpload https://litter.catbox.moe/XXXXXX.json" will add the animes of the litterbox page into your picked list.
+// @description  "/brpclean" remove all the animes in your Picked List
 // @description  Tile List button : Open the Tile List Page.
 // @description  ----- Tile List Page : -----
 // @description  When in Looting phase, display all the animes that are in your Tile (doesn't show datastore items), it change automatically at each time you change tile.
 // @description  Clicking on Anime Name or ANN ID at the top Organize the Tile Animes.
 // @description  Clicking on an Anime name, it will show you were it is in the Tile.
 // @description  Clicking on an ANN ID will send you to the anime ANN Page.
-// @description  The pages are resizable.
+// @description  The pages are resizable, and titles language adapt based on the one you have in settings.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
@@ -42,6 +43,8 @@ let tileShow = [];
 let pickedShow = [];
 
 let isDisplayed = false;
+
+let language;
 
 let filteredAnimes = [];
 
@@ -73,14 +76,19 @@ function displayPicked(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i>${pickedShow[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${pickedShow[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
         brpTable.appendChild(tr);
 
         tr.querySelector('i').addEventListener('click', function() {
             tr.remove();
+            pickedShow.forEach(function(show, index) {
+                if (show.name === pickedShow[i].name) {
+                    pickedShow.splice(index, 1);
+                }
+            });
         });
 
-        tr.querySelector('.brpPickedName').addEventListener('click', function() {
+        tr.querySelector('p').addEventListener('click', function() {
             $("#qpAnswerInput").val(pickedShow[i].name);
             quiz.answerInput.submitAnswer(true);
         });
@@ -102,14 +110,20 @@ function displayFiltered(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td><button><i class="fa fa-minus" aria-hidden="true"></i></button></td><td class="brpPickedName">${filteredAnimes[i].name}</td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
+        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${filteredAnimes[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
+        
         brpTable.appendChild(tr);
 
-        tr.querySelector('button').addEventListener('click', function() {
+        tr.querySelector('i').addEventListener('click', function() {
             tr.remove();
+            pickedShow.forEach(function(show, index) {
+                if (show.name === filteredAnimes[i].name) {
+                    pickedShow.splice(index, 1);
+                }
+            });
         });
 
-        tr.querySelector('.brpPickedName').addEventListener('click', function() {
+        tr.querySelector('p').addEventListener('click', function() {
             $("#qpAnswerInput").val(filteredAnimes[i].name);
             quiz.answerInput.submitAnswer(true);
         });
@@ -200,7 +214,6 @@ function share(){
     }).then((response) => {
         return response.text();
     }).then((data) => {
-        console.log(data);
         sendChatMessage(data);
     });
 }
@@ -212,13 +225,16 @@ function processChatCommand(message){
             getArrayFromCatboxFile(link);
         }
     }
+    else if (message.message.startsWith("/brpclean") && message.sender == selfName){
+        pickedShow = [];
+        displayPicked();
+    }
 }
 
 function getArrayFromCatboxFile(link) {
     fetch(link)
       .then(response => response.json())
       .then(array => {
-        console.log(array);
         for (let i = 0; i < array.length; i++) {
             pickedShow.push(array[i]);
         }
@@ -231,6 +247,8 @@ function getArrayFromCatboxFile(link) {
 
 
 function setup(){
+
+    language = document.querySelector('#smShowName').value;
 
     let oldWidth = $("#qpOptionContainer").width();
     $("#qpOptionContainer").width(oldWidth + 35);
@@ -472,6 +490,12 @@ function setup(){
         .brpPickedName {
             padding-left: 10px;
             font-size: 15.23px;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .brpPickedName p {
+            margin: 0;
         }
 
         .brpPickedANNID {
@@ -492,6 +516,7 @@ function setup(){
 
         .brpRemove {
             margin-right: 10px;
+            margin-top: 3.5px;
         }
 
         // Tile List
@@ -563,11 +588,21 @@ function setup(){
 }
 
 new Listener("new collected name entry", (payload) => {
-    if(payload.jap){
-        pickedShow.push({id: payload.id, name: payload.jap});
+    if(language == 0){
+        if(payload.eng){
+            pickedShow.push({id: payload.id, name: payload.eng});
+        }
+        else if(payload.jap){
+            pickedShow.push({id: payload.id, name: payload.jap});
+        }
     }
-    else if(payload.eng){
-        pickedShow.push({id: payload.id, name: payload.eng});
+    else{
+        if(payload.jap){
+            pickedShow.push({id: payload.id, name: payload.jap});
+        }
+        else if(payload.eng){
+            pickedShow.push({id: payload.id, name: payload.eng});
+        }
     }
     displayPicked();
 }).bindListener();
@@ -595,10 +630,19 @@ new Listener("battle royal spawn", (payload) => {
 
     payload.objects.forEach((object) => {
         if (object.info.type == "NameEntry") {
-            if (object.info.jap) {
-                tileShow.push({ id: object.info.id, name: object.info.jap });
-            } else {
-                tileShow.push({ id: object.info.id, name: object.info.eng });
+            if(language == 0){
+                if (object.info.eng) {
+                    tileShow.push({ id: object.info.id, name: object.info.eng });
+                } else {
+                    tileShow.push({ id: object.info.id, name: object.info.jap });
+                }
+            }
+            else{
+                if (object.info.jap) {
+                    tileShow.push({ id: object.info.id, name: object.info.jap });
+                } else {
+                    tileShow.push({ id: object.info.id, name: object.info.eng });
+                }
             }
         }
         displayTile();
@@ -608,7 +652,6 @@ new Listener("battle royal spawn", (payload) => {
 
 new Listener("game chat update", (payload) => {
     payload.messages.forEach(message => {
-        console.log(message);
         processChatCommand(message);
     });
 }).bindListener();
