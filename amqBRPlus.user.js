@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.5.1
+// @version      1.6.0
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -260,6 +260,23 @@ function processCommand(text){
     }
 }
 
+function toggleButton(showSelection){
+
+    if(showSelection === undefined) return;
+
+    if(showSelection == 2 && $('#qpBRPlus').hasClass('hidden')){
+        let currentWidth = $("#qpOptionContainer").width();
+        $("#qpOptionContainer").width(currentWidth + 35);
+        $('#qpBRPlus').removeClass('hidden');
+    }
+    else if(showSelection != 2){
+        let currentWidth = $("#qpOptionContainer").width();
+        $("#qpOptionContainer").width(currentWidth - 35);
+        $('#qpBRPlus').addClass('hidden');
+    }
+
+}
+
 function setup(){
 
     language = document.querySelector('#smShowName').value;
@@ -346,7 +363,6 @@ function setup(){
                 </tr>
             </table>
         `),
-
     );
 
 
@@ -372,7 +388,6 @@ function setup(){
     });
 
     brpTileListWindow.panels[0].panel.append(
-
         $(`
             <table id="brpTileListTable">
                 <tr id="brpTileListTableTop">
@@ -381,7 +396,6 @@ function setup(){
                 </tr>
             </table>
         `),
-
     );
 
     document.getElementById("brpPickedList").style.overflow = "auto";
@@ -420,42 +434,33 @@ function setup(){
     });
 
     AMQ_addStyle(`
-
         // Option Panel
-
         .brpButton {
             width: 75px;
             height: 40px;
             font-size: 15px;
         }
-
         .brpLeft {
             margin-left: 10px;
         }
-
         .brpRight {
             float: right;
             margin-right: 10px;
             background-color: #8d8cdd;
             border-color: #4d366a;
         }
-
         .brpRight:hover {
             background-color: #7C7CC1;
             border-color: #4d366a;
             box-shadow: none;
         }
-
         .brpOptionPanel {
             margin-top: 10px;
         }
-
         #brpSearch {
             color: #000;
         }
-
         // Picked Anime List
-
         #brpPickedList {
             width: 100%;
             height: 100px;
@@ -464,77 +469,61 @@ function setup(){
             top: 70px;
             overflow: scroll;
         }
-
         #brpTable {
             width: 95%;
             table-layout: fixed;
             margin: 0 auto;
         }
-
         #brpTable th {
             border: 1px solid black;
             text-align: center;
             background-color: #212121;
             color: white;
         }
-
         #brpTableName {
             width: 85%;
             margin-left: 10px;
         }
-
         #brpTableANN {
             width: 15%;
         }
-
         #brpPickedList::-webkit-scrollbar {
             width: 12px;
             background-color: rgba(0,0,0,0);
         }
-
         #brpPickedList::-webkit-scrollbar-thumb {
             background-color: #212121;
             border-radius: 12px;
         }
-
         .brpPickedSong:nth-child(even) {
             background-color: #313131;
         }
-
         .brpPickedName {
             padding-left: 10px;
             font-size: 15.23px;
             display: flex;
             flex-direction: row;
         }
-
         .brpPickedName p {
             margin: 0;
         }
-
         .brpPickedANNID {
             font-size: 15.23px;
         }
-
         #brpTableName, #brpTableANN {
             font-size: 16px;
         }
-
         #brpTableName:hover {
             cursor: pointer;
         }
-
         #brpTableANN:hover {
             cursor: pointer;
         }
-
         .brpRemove {
             margin-right: 10px;
             margin-top: 3.5px;
         }
-
         // Tile List
-
         #brpTileList {
             width: 100%;
             height: 100px;
@@ -543,60 +532,48 @@ function setup(){
             top: 70px;
             overflow: scroll;
         }
-
         #brpTileListTable {
             width: 95%;
             table-layout: fixed;
             margin: 0 auto;
         }
-
         #brpTileListTable th {
             border: 1px solid black;
             text-align: center;
             background-color: #212121;
             color: white;
         }
-
         #brpTileListTableName {
             width: 85%;
             margin-left: 10px;
         }
-
         #brpTileListTableANN {
             width: 15%;
         }
-
         #brpTileList::-webkit-scrollbar {
             width: 12px;
             background-color: rgba(0,0,0,0);
         }
-
         #brpTileList::-webkit-scrollbar-thumb {
             background-color: #212121;
             border-radius: 12px;
         }
-
         .brpTileSong:nth-child(even) {
             background-color: #313131;
         }
-
         .brpTileName {
             padding-left: 10px;
             font-size: 15.23px;
         }
-
         .brpTileANNID {
             font-size: 15.23px;
         }
-
         #brpTileListTableName, #brpTileListTableANN {
             font-size: 16px;
         }
-
         #brpTileListTableName:hover, #brpTileListTableANN:hover, .brpTileSong:hover, .brpPickedName:hover, .brpPickedANNID:hover {
             cursor: pointer;
         }
-
     `);
 
 }
@@ -662,4 +639,28 @@ new Listener("battle royal spawn", (payload) => {
         displayTile();
     });
 
+}).bindListener();
+
+new Listener("Host Game", (payload) => {
+    setTimeout(function() {
+        toggleButton(payload.settings.showSelection);
+    }, 100);
+}).bindListener();
+
+new Listener("Room Settings Changed", (payload) => {
+    setTimeout(function() {
+        toggleButton(payload.showSelection);
+    }, 100);
+}).bindListener();
+
+new Listener("Join Game", (payload) => {
+    setTimeout(function() {
+        toggleButton(payload.settings.showSelection);
+    }, 100);
+}).bindListener();
+
+new Listener("Spectate Game", (payload) => {
+    setTimeout(function() {
+        toggleButton(payload.settings.showSelection);
+    }, 100);
 }).bindListener();
