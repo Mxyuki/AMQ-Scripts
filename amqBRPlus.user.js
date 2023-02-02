@@ -12,7 +12,7 @@
 // @description  Clicking on an ANN ID will send you to the anime ANN Page.
 // @description  Clicking on the "-" Next to the anime name wiil remove the anime from the picked list.
 // @description  Display button : when clicked toggle that when entering a new tile it display all items names (doesn't show datastore items).
-// @description  Share button : when clicked upload your picked list as a json on litterbox and give you the link to it (must have at least 1 anime in the list).
+// @description  Share button : when clicked upload your picked list as a json on litterbox and give you the link to it.
 // @description  "/brpload https://litter.catbox.moe/XXXXXX.json" will add the animes of the litterbox page into your picked list.
 // @description  "/brpclean" remove all the animes in your Picked List
 // @description  Tile List button : Open the Tile List Page.
@@ -111,7 +111,7 @@ function displayFiltered(){
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
         tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${filteredAnimes[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
-        
+
         brpTable.appendChild(tr);
 
         tr.querySelector('i').addEventListener('click', function() {
@@ -166,7 +166,7 @@ function findName(name){
         for (let i = 0; i < popovers.length; i++) {
             if (popovers[i].textContent === name) {
                 let targetPopoverId = popovers[i].id;
-  
+
                 let elements = document.getElementsByClassName('brMapObject');
                 for (let j = 0; j < elements.length; j++) {
                     if (elements[j].getAttribute('aria-describedby') !== targetPopoverId) {
@@ -200,7 +200,7 @@ function sendChatMessage(message) {
 }
 
 function share(){
-    
+
     if (pickedShow.length === 0) return;
 
     const file = new File([JSON.stringify(pickedShow)], "pickedShow.json", {type: "application/json"});
@@ -252,10 +252,6 @@ function getArrayFromCatboxFile(link) {
 function setup(){
 
     language = document.querySelector('#smShowName').value;
-
-    const config = { childList: true };
-
-    observer.observe(targetNode, config);
 
     let oldWidth = $("#qpOptionContainer").width();
     $("#qpOptionContainer").width(oldWidth + 35);
