@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.5.0
+// @version      1.5.1
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -117,7 +117,7 @@ function displayFiltered(){
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
         tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${filteredAnimes[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
-        
+
         brpTable.appendChild(tr);
 
         tr.querySelector('i').addEventListener('click', function() {
@@ -172,7 +172,7 @@ function findName(name){
         for (let i = 0; i < popovers.length; i++) {
             if (popovers[i].textContent === name) {
                 let targetPopoverId = popovers[i].id;
-  
+
                 let elements = document.getElementsByClassName('brMapObject');
                 for (let j = 0; j < elements.length; j++) {
                     if (elements[j].getAttribute('aria-describedby') !== targetPopoverId) {
@@ -206,7 +206,7 @@ function sendChatMessage(message) {
 }
 
 function share(){
-    
+
     if (pickedShow.length === 0) return;
 
     const file = new File([JSON.stringify(pickedShow)], "pickedShow.json", {type: "application/json"});
@@ -259,7 +259,6 @@ function processCommand(text){
         displayPicked();
     }
 }
-
 
 function setup(){
 
