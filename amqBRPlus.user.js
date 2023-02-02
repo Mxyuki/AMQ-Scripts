@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4
+// @version      1.4.1
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -200,6 +200,9 @@ function sendChatMessage(message) {
 }
 
 function share(){
+    
+    if (pickedShow.length === 0) return;
+
     const file = new File([JSON.stringify(pickedShow)], "pickedShow.json", {type: "application/json"});
 
     const formData = new FormData();
@@ -249,6 +252,10 @@ function getArrayFromCatboxFile(link) {
 function setup(){
 
     language = document.querySelector('#smShowName').value;
+
+    const config = { childList: true };
+
+    observer.observe(targetNode, config);
 
     let oldWidth = $("#qpOptionContainer").width();
     $("#qpOptionContainer").width(oldWidth + 35);
