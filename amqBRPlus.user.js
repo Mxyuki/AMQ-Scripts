@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.7.1
+// @version      1.7.2
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -10,7 +10,7 @@
 // @description  Clicking on Anime Name or ANN ID at the top Organize your picks.
 // @description  Clicking on a Name will write it automatically into the answer box.
 // @description  Clicking on an ANN ID will send you to the anime ANN Page.
-// @description  Clicking on the "-" Next to the anime name will remove the anime from the picked list.
+// @description  Clicking on the "-" Next to the anime name will remove the anime from the picked list, and in picking phase will drop the anime.
 // @description  Clicking on the Search icon on the right of the anime name will open an anisongdb search page for this anime.
 // @description  Display button : when clicked toggle that when entering a new tile it display all items names (doesn't show datastore items).
 // @description  Share button : when clicked upload your picked list as a json on litterbox and give you the link to it.
@@ -87,6 +87,13 @@ function displayPicked(){
         brpTable.appendChild(tr);
 
         tr.querySelector('.brpRemove').addEventListener('click', function() {
+
+            $("#brCollectedList li").each(function() {
+                if ($(this).text().trim().replace(/^×\s/, "") === pickedShow[i].name) {
+                    $(this).find(".brEntryDrop.clickAble").click();
+                }
+            });
+
             pickedShow.forEach(function(show, index) {
                 if (show.name === pickedShow[i].name) {
                     pickedShow.splice(index, 1);
