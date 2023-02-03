@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.6.1
+// @version      1.6.2
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -90,8 +90,8 @@ function displayPicked(){
                 if (show.name === pickedShow[i].name) {
                     pickedShow.splice(index, 1);
                 }
+                displayPicked();
             });
-            displayPicked();
         });
 
         tr.querySelector('p').addEventListener('click', function() {
@@ -125,8 +125,8 @@ function displayFiltered(){
                 if (show.name === filteredAnimes[i].name) {
                     pickedShow.splice(index, 1);
                 }
+                displayFiltered();
             });
-            displayFiltered();
         });
 
         tr.querySelector('p').addEventListener('click', function() {
