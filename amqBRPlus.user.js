@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.6.2
+// @version      1.7.0
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -10,7 +10,8 @@
 // @description  Clicking on Anime Name or ANN ID at the top Organize your picks.
 // @description  Clicking on a Name will write it automatically into the answer box.
 // @description  Clicking on an ANN ID will send you to the anime ANN Page.
-// @description  Clicking on the "-" Next to the anime name wiil remove the anime from the picked list.
+// @description  Clicking on the "-" Next to the anime name will remove the anime from the picked list.
+// @description  Clicking on the Search icon on the right of the anime name will open an anisongdb search page for this anime.
 // @description  Display button : when clicked toggle that when entering a new tile it display all items names (doesn't show datastore items).
 // @description  Share button : when clicked upload your picked list as a json on litterbox and give you the link to it.
 // @description  "/brpload https://litter.catbox.moe/XXXXXX.json" will add the animes of the litterbox page into your picked list.
@@ -52,6 +53,7 @@ let regex = /^https:\/\/litter\.catbox\.moe\/.+\.json$/;
 
 let brpWindow;
 let brpTileListWindow;
+let brpAnisongdbWindow;
 
 document.addEventListener('keydown', function(event) {
     if (event.altKey && event.code === 'KeyO') {
@@ -73,8 +75,7 @@ document.querySelector('#gcInput').addEventListener('keydown', function(event) {
 
 function displayPicked(){
 
-    const brpPickedSongs = document.querySelectorAll('.brpPickedSong');
-    brpPickedSongs.forEach(function(brpPickedSong) {
+    document.querySelectorAll('.brpPickedSong').forEach(function(brpPickedSong) {
         brpPickedSong.remove();
     });
 
@@ -82,16 +83,21 @@ function displayPicked(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${pickedShow[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${pickedShow[i].name}</p><i class="fa fa-search brpAnisongSearch" aria-hidden="true"></i></td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
         brpTable.appendChild(tr);
 
-        tr.querySelector('i').addEventListener('click', function() {
+        tr.querySelector('.brpRemove').addEventListener('click', function() {
             pickedShow.forEach(function(show, index) {
                 if (show.name === pickedShow[i].name) {
                     pickedShow.splice(index, 1);
                 }
                 displayPicked();
             });
+        });
+
+        tr.querySelector('.brpAnisongSearch').addEventListener('click', function() {
+            brpAnisongdbWindow.open();
+            getAnisongdbData(pickedShow[i].name);
         });
 
         tr.querySelector('p').addEventListener('click', function() {
@@ -107,8 +113,7 @@ function displayPicked(){
 
 function displayFiltered(){
 
-    const brpPickedSongs = document.querySelectorAll('.brpPickedSong');
-    brpPickedSongs.forEach(function(brpPickedSong) {
+    document.querySelectorAll('.brpPickedSong').forEach(function(brpPickedSong) {
         brpPickedSong.remove();
     });
 
@@ -116,17 +121,21 @@ function displayFiltered(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${filteredAnimes[i].name}</p></td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
-
+        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${filteredAnimes[i].name}</p><i class="fa fa-search brpAnisongSearch" aria-hidden="true"></i></td><td class="brpPickedANNID" style="text-align: center;">${filteredAnimes[i].id}</td>`;
         brpTable.appendChild(tr);
 
-        tr.querySelector('i').addEventListener('click', function() {
-            pickedShow.forEach(function(show, index) {
+        tr.querySelector('.brpRemove').addEventListener('click', function() {
+            filteredAnimes.forEach(function(show, index) {
                 if (show.name === filteredAnimes[i].name) {
-                    pickedShow.splice(index, 1);
+                    filteredAnimes.splice(index, 1);
                 }
-                displayFiltered();
+                displayPicked();
             });
+        });
+
+        tr.querySelector('.brpAnisongSearch').addEventListener('click', function() {
+            brpAnisongdbWindow.open();
+            getAnisongdbData(filteredAnimes[i].name);
         });
 
         tr.querySelector('p').addEventListener('click', function() {
@@ -277,6 +286,53 @@ function toggleButton(showSelection){
 
 }
 
+function getAnisongdbData(query) {
+    brpAnisongdbWindow.panels[0].clear();
+    brpAnisongdbWindow.panels[0].panel.append(`<p>loading...</p>`);
+    let json = {};
+    json.and_logic = false;
+    json.ignore_duplicate = false;
+    json.opening_filter = true;
+    json.ending_filter = true;
+    json.insert_filter = true;
+    json.anime_search_filter = {search: query, partial_match: false};
+    return fetch("https://anisongdb.com/api/search_request", {
+        method: "POST",
+        headers: {"Accept": "application/json", "Content-Type": "application/json"},
+        body: JSON.stringify(json)
+    }).then(res => (res.json())).then(json => {
+        brpAnisongdbWindow.panels[0].clear();
+        let $table = $(`
+            <table id="brpAnisongdbTable" style="width: 95%; table-layout: fixed; margin: 0 auto; margin-top: 10px;">
+                <tr class="tbfirstRow">
+                    <th class="anime" style="border: 1px solid black;">Anime</th>
+                    <th class="artist" style="border: 1px solid black;">Artist</th>
+                    <th class="song" style="border: 1px solid black;">Song</th>
+                    <th class="type" style="border: 1px solid black;">Type</th>
+                    <th class="vintage" style="border: 1px solid black;">Vintage</th>
+                </tr>
+            </table>
+        `);
+        for (let result of json) {
+            let $row = $(`
+                <tr>
+                    <td class="tbAnime">${options.useRomajiNames ? result.animeJPName : result.animeENName}</td>
+                    <td class="tbArtist">${result.songArtist}</td>
+                    <td class="tbSong">${result.songName}</td>
+                    <td>${shortenType(result.songType)}</td>
+                    <td>${result.animeVintage}</td>
+                </tr>
+            `)
+            $table.append($row);
+        }
+        brpAnisongdbWindow.panels[0].panel.append($table);
+    });
+}
+
+function shortenType(type) {
+    return type.replace("Opening ", "OP").replace("Ending ", "ED").replace("Insert Song", "IN");
+}
+
 function setup(){
 
     language = document.querySelector('#smShowName').value;
@@ -398,6 +454,24 @@ function setup(){
         `),
     );
 
+    brpAnisongdbWindow = new AMQWindow({
+        id: "brpAnisongdbWindow",
+        title: "AnisongDB Search",
+        width: 450,
+        height: 250,
+        minWidth: 450,
+        minHeight: 250,
+        zIndex: 1100,
+        resizable: true,
+        draggable: true
+    });
+    brpAnisongdbWindow.addPanel({
+        id: "brpAnisongdbPanel",
+        width: 1.0,
+        height: "100%",
+        scrollable: {x: false, y: true}
+    });
+
     document.getElementById("brpPickedList").style.overflow = "auto";
     document.getElementById("brpTileList").style.overflow = "auto";
 
@@ -502,10 +576,13 @@ function setup(){
             padding-left: 10px;
             font-size: 15.23px;
             display: flex;
+            align-items: center;
+            justify-content: space-between;
             flex-direction: row;
         }
         .brpPickedName p {
             margin: 0;
+            margin-right: auto;
         }
         .brpPickedANNID {
             font-size: 15.23px;
@@ -523,6 +600,12 @@ function setup(){
             margin-right: 10px;
             margin-top: 3.5px;
         }
+        .brpAnisongSearch {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+
         // Tile List
         #brpTileList {
             width: 100%;
@@ -573,6 +656,48 @@ function setup(){
         }
         #brpTileListTableName:hover, #brpTileListTableANN:hover, .brpTileSong:hover, .brpPickedName:hover, .brpPickedANNID:hover {
             cursor: pointer;
+        }
+
+        // Anisong Window
+
+        #brpAnisongdbTable {
+            width: 100%;
+        }
+        #brpAnisongdbTable th {
+            font-weight: bold;
+        }
+        #brpAnisongdbTable tr:hover {
+            color: #70b7ff;
+        }
+        #brpAnisongdbTable th.anime {
+            width: 25%;
+        }
+        #barpAnisongdbTable th.artist {
+            width: 25%;
+        }
+        #brpAnisongdbTable th.song {
+            width: 25%;
+        }
+        #brpAnisongdbTable th.type {
+            width: 10%;
+        }
+        #brpAnisongdbTable th.vintage {
+            width: 15%;
+        }
+        #brpAnisongdbTable tr:nth-child(even) {
+            background-color: #313131;
+        }
+        .tbfirstRow {
+            background-color: #212121;
+            padding: 10px;
+        }
+        #brpAnisongdbPanel::-webkit-scrollbar {
+            width: 12px;
+            background-color: rgba(0,0,0,0);
+        }
+        #brpAnisongdbPanel::-webkit-scrollbar-thumb {
+            background-color: #212121;
+            border-radius: 12px;
         }
     `);
 
