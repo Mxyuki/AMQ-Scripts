@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.7.0
+// @version      1.7.1
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -304,21 +304,21 @@ function getAnisongdbData(query) {
         brpAnisongdbWindow.panels[0].clear();
         let $table = $(`
             <table id="brpAnisongdbTable" style="width: 95%; table-layout: fixed; margin: 0 auto; margin-top: 10px;">
-                <tr class="tbfirstRow">
-                    <th class="anime" style="border: 1px solid black;">Anime</th>
-                    <th class="artist" style="border: 1px solid black;">Artist</th>
-                    <th class="song" style="border: 1px solid black;">Song</th>
-                    <th class="type" style="border: 1px solid black;">Type</th>
-                    <th class="vintage" style="border: 1px solid black;">Vintage</th>
+                <tr class="brptbfirstRow">
+                    <th class="brpAnime" style="border: 1px solid black;">Anime</th>
+                    <th class="brpArtist" style="border: 1px solid black;">Artist</th>
+                    <th class="brpSong" style="border: 1px solid black;">Song</th>
+                    <th class="brpType" style="border: 1px solid black;">Type</th>
+                    <th class="brpVintage" style="border: 1px solid black;">Vintage</th>
                 </tr>
             </table>
         `);
         for (let result of json) {
             let $row = $(`
                 <tr>
-                    <td class="tbAnime">${options.useRomajiNames ? result.animeJPName : result.animeENName}</td>
-                    <td class="tbArtist">${result.songArtist}</td>
-                    <td class="tbSong">${result.songName}</td>
+                    <td class="brptbAnime">${options.useRomajiNames ? result.animeJPName : result.animeENName}</td>
+                    <td class="brptbArtist">${result.songArtist}</td>
+                    <td class="brptbSong">${result.songName}</td>
                     <td>${shortenType(result.songType)}</td>
                     <td>${result.animeVintage}</td>
                 </tr>
@@ -666,28 +666,25 @@ function setup(){
         #brpAnisongdbTable th {
             font-weight: bold;
         }
-        #brpAnisongdbTable tr:hover {
-            color: #70b7ff;
-        }
-        #brpAnisongdbTable th.anime {
+        #brpAnisongdbTable th.brpAnime {
             width: 25%;
         }
-        #barpAnisongdbTable th.artist {
+        #barpAnisongdbTable th.brpArtist {
             width: 25%;
         }
-        #brpAnisongdbTable th.song {
+        #brpAnisongdbTable th.brpSong {
             width: 25%;
         }
-        #brpAnisongdbTable th.type {
+        #brpAnisongdbTable th.brpType {
             width: 10%;
         }
-        #brpAnisongdbTable th.vintage {
+        #brpAnisongdbTable th.brpVintage {
             width: 15%;
         }
         #brpAnisongdbTable tr:nth-child(even) {
             background-color: #313131;
         }
-        .tbfirstRow {
+        .brptbfirstRow {
             background-color: #212121;
             padding: 10px;
         }
