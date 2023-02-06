@@ -6,7 +6,7 @@
 // @description  You must already be in a game to start it.
 // @description  "/ag <artist name>" to start a game.
 // @description  "/agset" to open the setting window.
-// @description  "/reset" to leave the game. 
+// @description  "/reset" to leave the game.
 // @description  "/agvol <volume>" change the volume of the next musics.
 // @description  It's still in early version so bug are expected, and also a lot of features are missings.
 // @description  Also can't be played during ranked because I use anisongdb to get the music and artist API call are blocked during ranked.
@@ -161,7 +161,7 @@ function setup(){
     `);
 
     agWindow = new AMQWindow({
-        title: "BR Plus",
+        title: "Artist Game Settings",
         width: 700,
         height: 450,
         minWidth: 440,
