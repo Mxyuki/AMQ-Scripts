@@ -1,8 +1,15 @@
 // ==UserScript==
 // @name         AMQ Artist Game
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  Play with song only from a certain artist
+// @description  You must already be in a game to start it.
+// @description  "/ag <artist name>" to start a game.
+// @description  "/agset" to open the setting window.
+// @description  "/reset" to leave the game. 
+// @description  "/agvol <volume>" change the volume of the next musics.
+// @description  It's still in early version so bug are expected, and also a lot of features are missings.
+// @description  Also can't be played during ranked because I use anisongdb to get the music and artist API call are blocked during ranked.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
@@ -26,6 +33,12 @@ let currentSongIndex = 0;
 let songTime;
 let audio;
 let randomTime;
+let countDownInterval;
+let countDown;
+let pauseTime;
+let maxArtist = 99;
+let answer;
+let volume = 0.5;
 
 let point = 0;
 
@@ -48,7 +61,9 @@ let agWindow;
 function setup(){
 
     document.querySelector('#gcInput').addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') processCommand(this.value);
+        if (event.key === 'Enter'){
+            processCommand(this.value);
+        }
     });
 
     $('#gameChatPage > .col-xs-9').append('<div id="gameArtist" class="text-center hidden"></div>');
@@ -98,7 +113,7 @@ function setup(){
 
                 <div id="gaVideoContainerOuter">
                     <div id="gaVideoContainer">
-                        <h1 id="gaCountDown" style="position: relative; top: -150px;">0</h1>
+                        <h1 id="gaCountDown" style="position: relative; top: -180px; font-size: 120px;">0</h1>
                     </div>
                 </div>
 
@@ -228,6 +243,12 @@ function setup(){
                         <input id="gaDifficultyMaxText" type="text" value="100" class="gaText text-center">
                     </div>
                 </div>
+                <div id="gaMaxArtist" class="col-xs-6 text-center">
+                    <label>Max Other Artist</label>
+                    <div>
+                        <input id="gaMaxArtistText" type="text" value="99" class="gaText text-center">
+                    </div>
+                </div>
             </div>
         </div>
     `);
@@ -242,6 +263,12 @@ function setup(){
         gameSettings.ins = !gameSettings.ins;
     });
     document.getElementById("gaVoteSkip").addEventListener("click", gaSkipClicked);
+    document.getElementById("gaAnswerInput").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            answer = document.getElementById("gaAnswerInput").value;
+            $("#gaAnswerInputContainer").css("box-shadow", "0 0 10px 2px rgb(111, 187, 217)");
+        }
+    });
 
     AMQ_addStyle(`
 
@@ -420,6 +447,8 @@ function processCommand(command){
         let commandArtist = command.replace("/ag ", "");
         if(commandArtist == " ") return;
 
+        maxArtist = $('#gaMaxArtistText').val();
+
         currentSongIndex = 0;
         point = 0;
         anisongDB(commandArtist);
@@ -427,6 +456,11 @@ function processCommand(command){
     else if (command.startsWith("/reset")){
 
         document.querySelector('#gcInput').value = "";
+
+        clearInterval(countDownInterval);
+        countDown = 0;
+        clearTimeout(songTime);
+        clearTimeout(pauseTime);
 
         audio.pause();
 
@@ -440,6 +474,16 @@ function processCommand(command){
 
         agWindow.open();
 
+    }
+    else if (command.startsWith("/agvol ")){
+        document.querySelector('#gcInput').value = "";
+
+        if(command == "/agvol") return;
+        let commandVolume = command.replace("/agvol ", "");
+        if(commandVolume == " ") return;
+
+        volume = commandVolume;
+        chatSystemMessage("Volume changed to: " + volume)
     }
 }
 
@@ -456,7 +500,7 @@ async function anisongDB(query){
     json.opening_filter = true;
     json.ending_filter = true;
     json.insert_filter = true;
-    json.artist_search_filter = {search: query, partial_match: false, group_granularity: 0, max_other_artist: 99};
+    json.artist_search_filter = {search: query, partial_match: false, group_granularity: 0, max_other_artist: maxArtist};
     return fetch("https://anisongdb.com/api/search_request", {
         method: "POST",
         headers: {"Accept": "application/json", "Content-Type": "application/json"},
@@ -469,7 +513,6 @@ async function anisongDB(query){
 }
 
 function processJson(){
-    console.log(artistSongList);
 
     if(!$("#quizPage").hasClass("hidden") && artistSongList.length != 0){
 
@@ -494,7 +537,7 @@ function processsettings(){
     artistSongList.forEach(obj => {
         if(gameSettings.op == true && obj.songType.startsWith("Opening")) settingFiltered.push(obj);
         else if (gameSettings.ed == true && obj.songType.startsWith("Ending")) settingFiltered.push(obj);
-        else if (gameSettings.ins == true && obj.songType.startsWith("Insert")) settingFiltered.push(obj);       
+        else if (gameSettings.ins == true && obj.songType.startsWith("Insert")) settingFiltered.push(obj);
     });
 
     settingFiltered = settingFiltered.filter(obj => obj.songDifficulty >= gameSettings.minDiff && obj.songDifficulty <= gameSettings.maxDiff);
@@ -521,10 +564,6 @@ function processsettings(){
     $('#gaCurrentSongCount').text("?");
     $('#gaTotalSongCount').text(selectedAnime.length);
 
-    console.log(settingFiltered);
-    console.log(gameSettings);
-    console.log(selectedAnime);
-
     setTimeout(playMusic, 1000);
 
 }
@@ -532,26 +571,39 @@ function processsettings(){
 function playMusic() {
 
     $('#gaCurrentSongCount').text(currentSongIndex + 1);
-    
+    document.getElementById("gaAnswerInput").value = "";
+    $("#gaAnswerInputContainer").css("box-shadow", "none");
+    $("#gaStandingContainer").css("box-shadow", "none");
+    answer = "";
+
+    if (currentSongIndex >= selectedAnime.length) finished();
+
     audio = new Audio();
     audio.src = selectedAnime[currentSongIndex].audio;
     audio.onloadedmetadata = function() {
-        console.log(audio.duration);
         randomTime = Math.random() * (audio.duration - gameSettings.guessTime);
         audio.currentTime = randomTime;
+        audio.volume = volume;
         audio.play();
-    
-        songTime = setTimeout(function() {
-            audio.currentTime = randomTime;
-            displayInfo();
-            processAnswer();
-            currentSongIndex++;
-            if (currentSongIndex >= selectedAnime.length) finished();
-            setTimeout(function() {
-                audio.pause();
-                setTimeout(playMusic, 200);
-            }, 5000);
-        }, gameSettings.guessTime * 1000);
+
+        countDown = gameSettings.guessTime;
+        $('#gaCountDown').text(countDown);
+        countDownInterval = setInterval(function() {
+            countDown--;
+            $('#gaCountDown').text(countDown);
+            if (countDown === 0) {
+                clearInterval(countDownInterval);
+                audio.currentTime = randomTime;
+                displayInfo();
+                processAnswer();
+                currentSongIndex++;
+                if (currentSongIndex >= selectedAnime.length) finished();
+                pauseTime = setTimeout(function() {
+                    audio.pause();
+                    setTimeout(playMusic, 200);
+                }, 5000);
+            }
+        }, 1000);
     };
 }
 
@@ -571,6 +623,8 @@ function shuffleArray(array) {
 }
 
 function gaSkipClicked(){
+    clearInterval(countDownInterval);
+    countDown = 0;
     clearTimeout(songTime);
     audio.currentTime = randomTime;
     displayInfo();
@@ -583,12 +637,14 @@ function gaSkipClicked(){
 }
 
 function processAnswer(){
-    let inputText = document.getElementById("gaAnswerInput").value;
-    if(inputText == selectedAnime[currentSongIndex].animeJPName || inputText == selectedAnime[currentSongIndex].animeJPName){
+    if(answer.toLowerCase() == selectedAnime[currentSongIndex].animeJPName.toLowerCase() || answer.toLowerCase() == selectedAnime[currentSongIndex].animeENName.toLowerCase()){
         point++;
         $('#gaScoreText').text(point);
+        $("#gaStandingContainer").css("box-shadow", "0 0 10px 2px rgb(189 247 255)");
     }
-    document.getElementById("gaAnswerInput").value = "";
+    else{
+        $("#gaStandingContainer").css("box-shadow", "0 0 10px 2px rgb(227 105 59)");
+    }
 }
 
 function finished(){
