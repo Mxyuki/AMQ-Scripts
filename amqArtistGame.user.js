@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Artist Game
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3.0
+// @version      0.4.0
 // @description  Play with song only from a certain artist
 // @description  You must already be in a game to start it.
 // @description  "/ag <artist name>" to start a game.
@@ -449,6 +449,7 @@ function processCommand(command){
 
         currentSongIndex = 0;
         point = 0;
+        $('#gaScoreText').text(point);
         anisongDB(commandArtist);
     }
     else if (command.startsWith("/reset")){
@@ -506,6 +507,28 @@ async function anisongDB(query){
     }).then(res => (res.json())).then(json => {
         //console.log(json);
         artistSongList = json;
+
+        artistSongList = artistSongList.map(song => {
+            return {
+                ...song,
+                animeENName: [song.animeENName],
+                animeJPName: [song.animeJPName]
+            };
+        });
+
+        artistSongList.forEach(song1 => {
+            artistSongList.forEach(song2 => {
+                if (song1 !== song2 && song1.songArtist === song2.songArtist && song1.songName === song2.songName) {
+                    if (!song1.animeENName.includes(song2.animeENName)) {
+                        song1.animeENName.push(`${song2.animeENName[0]}`);
+                    }
+                    if (!song1.animeJPName.includes(song2.animeJPName)) {
+                        song1.animeJPName.push(`${song2.animeJPName[0]}`);
+                    }
+                }
+            });
+        });
+        //console.log(artistSongList);
         processJson();
     });
 }
@@ -619,7 +642,7 @@ function playMusic() {
 }
 
 function displayInfo(){
-    $('#gaAnimeName').text(selectedAnime[currentSongIndex].animeJPName);
+    $('#gaAnimeName').text(selectedAnime[currentSongIndex].animeJPName[0]);
     $('#gaSongName').text(selectedAnime[currentSongIndex].songName);
     $('#gaSongArtist').text(selectedAnime[currentSongIndex].songArtist);
     $('#gaSongType').text(selectedAnime[currentSongIndex].songType);
@@ -650,13 +673,27 @@ function gaSkipClicked(){
     }
 }
 
-function processAnswer(){
-    if(answer.toLowerCase() == selectedAnime[currentSongIndex].animeJPName.toLowerCase() || answer.toLowerCase() == selectedAnime[currentSongIndex].animeENName.toLowerCase()){
-        point++;
+function processAnswer() {
+
+    let answered = false;
+    answer = answer.toLowerCase();
+    let found = false;
+  
+    artistSongList.forEach(song => {
+        let animeENNameLower = song.animeENName.map(name => name.toLowerCase());
+        let animeJPNameLower = song.animeJPName.map(name => name.toLowerCase());
+      
+        if (!answered && animeENNameLower.includes(answer) || !answered && animeJPNameLower.includes(answer)) {
+            point++;
+            answered = true;
+            found = true;
+        }
+    });
+  
+    if (found) {
         $('#gaScoreText').text(point);
         $("#gaStandingContainer").css("box-shadow", "0 0 10px 2px rgb(189 247 255)");
-    }
-    else{
+    } else {
         $("#gaStandingContainer").css("box-shadow", "0 0 10px 2px rgb(227 105 59)");
     }
 }
