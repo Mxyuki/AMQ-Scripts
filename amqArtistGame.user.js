@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         AMQ Artist Game
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2.1
+// @version      0.3.0
 // @description  Play with song only from a certain artist
 // @description  You must already be in a game to start it.
 // @description  "/ag <artist name>" to start a game.
 // @description  "/agset" to open the setting window.
-// @description  "/reset" to leave the game. 
+// @description  "/reset" to leave the game.
 // @description  "/agvol <volume>" change the volume of the next musics.
 // @description  It's still in early version so bug are expected, and also a lot of features are missings.
 // @description  Also can't be played during ranked because I use anisongdb to get the music and artist API call are blocked during ranked.
+// @description  Will not update in a while since new thing i want to add are a pain to add miyDed
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
@@ -30,6 +31,12 @@ let loadInterval = setInterval(() => {
 let artistSongList = [];
 let allAnimeNames = [];
 
+let completed = [];
+let watching = [];
+let onHold = [];
+let dropped = [];
+let planning = [];
+
 let selectedAnime = [];
 let currentSongIndex = 0;
 let songTime;
@@ -41,6 +48,8 @@ let pauseTime;
 let maxArtist = 99;
 let answer;
 let volume = 0.5;
+
+let isSkippable;
 
 let point = 0;
 
@@ -55,7 +64,10 @@ let gameSettings = {
     minYear: 1944,
     maxYear: 2023,
     minDiff: 0,
-    maxDiff: 100
+    maxDiff: 100,
+    noYear: true,
+    noDiff: true,
+    list: true
 };
 
 let agWindow;
@@ -72,11 +84,7 @@ function setup(){
 
     $('#gameArtist').append(`
         <div id="gaAnimeContainer" class="row">
-
-
-
             <div class="col-xs-3">
-
                 <div id="gaStandingContainer" class="container qpSideContainer floatingContainer cheatTestHide">
 				    <div>
                         <h3>Score</h3>
@@ -95,13 +103,8 @@ function setup(){
                         <h1 id="gaScoreText">0</h1>
                     </div>
                 </div>
-
             </div>
-
-
-
             <div id="gaAnimeCenterContainer" class="col-xs-6">
-
                 <div id="gaCenterInfoContainer">
 	                <div id="gaCounterShadowHider">
                         <div id="gaCounter" class="floatingContainer">
@@ -112,15 +115,12 @@ function setup(){
                         <div id="gaAnimeName">Name</div>
                     </div>
                 </div>
-
                 <div id="gaVideoContainerOuter">
                     <div id="gaVideoContainer">
                         <h1 id="gaCountDown" style="position: relative; top: -180px; font-size: 120px;">0</h1>
                     </div>
                 </div>
-
                 <div id="gaAnswerInputContainer" class="floatingContainer">
-
 				    <div id="gaSkipContainer">
                         <div id="gaVoteShadowHider">
                             <duv id="gaVoteSkipGlowContainer"></duv>
@@ -130,13 +130,9 @@ function setup(){
                         </div>
                     </div>
                     <input type="text" class="flatTextInput" id="gaAnswerInput" placeholder="Anime Name" maxlength="255"">
-
                 </div>
-
             </div>
-
             <div class="col-xs-3">
-
                 <div id="gaSongInfoContainer" class="container qpSideContainer floatingContainer cheatTestHide">
                     <div class="row">
                         <h3>Song Info</h3>
@@ -154,11 +150,7 @@ function setup(){
                         <p id="gaSongType">type</p>
                     </div>
                 </div>
-
             </div>
-
-
-
         </div>
     `);
 
@@ -218,7 +210,6 @@ function setup(){
 					</div>
                 </div>
             </div>
-
             <div class="row">
                 <div id="gaNumberSong" class="col-xs-6 text-center">
                     <label>Number of Songs</label>
@@ -235,7 +226,6 @@ function setup(){
                     </div>
                 </div>
             </div>
-
             <div class="row">
                 <div id="gaDifficulty" class="col-xs-6 text-center">
                     <label>Min/Max Difficulty</label>
@@ -252,6 +242,41 @@ function setup(){
                     </div>
                 </div>
             </div>
+            <div class="row">
+
+                <div id="gaNotDefined" class="col-xs-6 text-center">
+                    <label>Year/Diff Not defined</label>
+                    <div id="gaSongTypeContainer" class="checkboxContainer">
+                        <div>
+                            <div class="customCheckbox">
+                                <input id="gaNoYear" type="checkbox" checked="">
+                                <label for="gaNoYear"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Toggle Year</p>
+                        </div>
+                        <div>
+                            <div class="customCheckbox">
+                                <input id="gaNoDiff" type="checkbox" checked="">
+                                <label for="gaNoDiff"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Toggle Diff</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="gaToggleList" class="col-xs-6 text-center">
+                    <label>not implemented yet</label>
+                    <div id="gaSongTypeContainer" class="checkboxContainer">
+                        <div>
+                            <div class="customCheckbox">
+                                <input id="gaListToggle" type="checkbox" checked="">
+                                <label for="gaListToggle"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Toggle List</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     `);
 
@@ -264,32 +289,34 @@ function setup(){
     $('#gaInsert').prop('checked', gameSettings.ins).click(() => {
         gameSettings.ins = !gameSettings.ins;
     });
+    $('#gaNoYear').prop('checked', gameSettings.noYear).click(() => {
+        gameSettings.noYear = !gameSettings.noYear;
+    });
+    $('#gaNoDiff').prop('checked', gameSettings.noDiff).click(() => {
+        gameSettings.noDiff = !gameSettings.noDiff;
+    });
+    $('#gaListToggle').prop('checked', gameSettings.list).click(() => {
+        gameSettings.list = !gameSettings.list;
+    });
     document.getElementById("gaVoteSkip").addEventListener("click", gaSkipClicked);
     document.getElementById("gaAnswerInput").addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
+            if(answer == document.getElementById("gaAnswerInput").value) gaSkipClicked();
             answer = document.getElementById("gaAnswerInput").value;
             $("#gaAnswerInputContainer").css("box-shadow", "0 0 10px 2px rgb(111, 187, 217)");
         }
     });
 
     AMQ_addStyle(`
-
     #gameArtist {
         height: calc(100%);
     }
-
     #gaAnimeContainer {
         margin-bottom: 20px;
     }
-
-
-
-
-
     #gaStandingContainer {
         padding: 0;
     }
-
     #gaStandingCorrectCount {
         position: absolute;
         top: 5px;
@@ -297,22 +324,15 @@ function setup(){
         margin: 0;
         text-shadow: 0 0 5px #fff, 0 0 15px #b6ff00, 0 0 20px #b6ff00, 0 0 25px #b6ff00;
     }
-
     #gaStandingItemContainer {
         position: relative;
     }
-
-
-
-
-
     #gaCounterShadowHider {
         position: relative;
         z-index: 5;
         overflow: hidden;
         padding-top: 5px;
     }
-
     #gaCounter {
         font-size: 22px;
         width: 7ch;
@@ -320,12 +340,10 @@ function setup(){
         border-top-left-radius: 50px;
         border-top-right-radius: 50px;
     }
-
     #gaAnimeNameContainer {
         font-size: 25px;
         position: relative;
     }
-
     #gaAnimeName {
         position: absolute;
         min-width: 100%;
@@ -333,7 +351,6 @@ function setup(){
         transform: translateY(-50%);
         white-space: pre-wrap;
     }
-
     #gaAnimeNameHider {
         position: absolute;
         top: 36px;
@@ -343,11 +360,6 @@ function setup(){
         line-height: 65px;
         font-size: 60px;
     }
-
-
-
-
-
     #gaVideoContainer {
         margin-top: 12px;
         width: 100%;
@@ -356,7 +368,6 @@ function setup(){
         position: relative;
         background-color: #000;
     }
-
     #gaVideoOverflowContainer {
         position: relative;
         height: 100%;
@@ -366,22 +377,17 @@ function setup(){
         z-index: 1;
         background-color: black;
     }
-
     @media screen and (max-height: 749px) #gaVideoContainer {
         width: 80%;
         padding-top: 45.1%;
         margin: 12px auto 0;
     }
-
-
-
     #gaAnswerInputContainer {
         width: 80%;
         margin: 8px auto 5px;
         padding: 5px;
         position: relative;
     }
-
     #gaSkipContainer {
         position: absolute;
         z-index: 1;
@@ -390,7 +396,6 @@ function setup(){
         height: 100%;
         width: 60px;
     }
-
     #gaVoteShadowHider {
         position: absolute;
         left: 0;
@@ -399,7 +404,6 @@ function setup(){
         width: 80px;
         height: 100%;
     }
-
     #gaVoteSkipGlowContainer {
         position: absolute;
         left: 0;
@@ -410,7 +414,6 @@ function setup(){
         opacity: 0.7;
         z-index: -1;
     }
-
     #gaVoteSkip {
         position: absolute;
         width: 60px;
@@ -421,23 +424,17 @@ function setup(){
         transform: skewX(-35.5deg);
         transition: transform 0.3s ease-out;
     }
-
     #gaSkipText {
         margin-top: 6px;
         margin-left: 7px;
     }
-
     #gaAnswerInputContainer .awesomplete {
         width: 100%;
     }
-
-
-
     .gaText {
         width: 50px;
         color: #000;
     }
-
     `);
 }
 
@@ -445,7 +442,6 @@ function processCommand(command){
     if (command.startsWith("/ag ")){
         document.querySelector('#gcInput').value = "";
 
-        if(command == "/ag") return;
         let commandArtist = command.replace("/ag ", "");
         if(commandArtist == " ") return;
 
@@ -542,14 +538,25 @@ function processsettings(){
         else if (gameSettings.ins == true && obj.songType.startsWith("Insert")) settingFiltered.push(obj);
     });
 
-    settingFiltered = settingFiltered.filter(obj => obj.songDifficulty >= gameSettings.minDiff && obj.songDifficulty <= gameSettings.maxDiff);
+    settingFiltered = settingFiltered.filter(obj => {
+        if (obj.songDifficulty) {
+            return obj.songDifficulty >= gameSettings.minDiff && obj.songDifficulty <= gameSettings.maxDiff;
+        }
+        else{
+            if(gameSettings.noDiff == false) return false;
+            else return true;
+        }
+    });
 
     settingFiltered = settingFiltered.filter(obj => {
         if (obj.animeVintage) {
             let year = parseInt(obj.animeVintage.split(" ")[1]);
             return year >= gameSettings.minYear && year <= gameSettings.maxYear;
         }
-        return false;
+        else{
+            if(gameSettings.noYear == false) return false;
+            else return true;
+        }
     });
 
     if(settingFiltered.length > gameSettings.songNumber){
@@ -577,6 +584,7 @@ function playMusic() {
     $("#gaAnswerInputContainer").css("box-shadow", "none");
     $("#gaStandingContainer").css("box-shadow", "none");
     answer = "";
+    isSkippable = true;
 
     if (currentSongIndex >= selectedAnime.length) finished();
 
@@ -594,6 +602,7 @@ function playMusic() {
             countDown--;
             $('#gaCountDown').text(countDown);
             if (countDown === 0) {
+                isSkippable = false;
                 clearInterval(countDownInterval);
                 audio.currentTime = randomTime;
                 displayInfo();
@@ -625,17 +634,20 @@ function shuffleArray(array) {
 }
 
 function gaSkipClicked(){
-    clearInterval(countDownInterval);
-    countDown = 0;
-    clearTimeout(songTime);
-    audio.currentTime = randomTime;
-    displayInfo();
-    processAnswer();
-    currentSongIndex++;
-    setTimeout(function() {
-        audio.pause();
-        setTimeout(playMusic, 200);
-    }, 5000);
+    if(isSkippable == true){
+        isSkippable = false;
+        clearInterval(countDownInterval);
+        countDown = 0;
+        clearTimeout(songTime);
+        audio.currentTime = randomTime;
+        displayInfo();
+        processAnswer();
+        currentSongIndex++;
+        setTimeout(function() {
+            audio.pause();
+            setTimeout(playMusic, 200);
+        }, 5000);
+    }
 }
 
 function processAnswer(){
