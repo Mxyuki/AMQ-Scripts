@@ -1,16 +1,18 @@
 // ==UserScript==
 // @name         AMQ Artist Game
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.4.0
+// @version      0.5.0
 // @description  Play with song only from a certain artist
 // @description  You must already be in a game to start it.
 // @description  "/ag <artist name>" to start a game.
 // @description  "/agset" to open the setting window.
 // @description  "/reset" to leave the game.
-// @description  "/agvol <volume>" change the volume of the next musics.
+// @description  "/agvol <volume>" change the volume.
+// @description  The Toggle List only use your AniList (MAL API is a pain that i didn't wante dto touch)
 // @description  It's still in early version so bug are expected, and also a lot of features are missings.
 // @description  Also can't be played during ranked because I use anisongdb to get the music and artist API call are blocked during ranked.
-// @description  Will not update in a while since new thing i want to add are a pain to add miyDed
+// @description  The next update i will make will be when anisongdb api call send long name (exemple noucome) or to fix bug.
+// @description  Will one day make a cleaner version with kempanator when he finished working on his other script, because this script is a mess.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
@@ -48,6 +50,8 @@ let pauseTime;
 let maxArtist = 99;
 let answer;
 let volume = 0.5;
+let commandArtist;
+let isreset = false;
 
 let isSkippable;
 
@@ -67,7 +71,12 @@ let gameSettings = {
     maxDiff: 100,
     noYear: true,
     noDiff: true,
-    list: true
+    list: true,
+    watching: true,
+    completed: true,
+    onHold: true,
+    dropped: true,
+    planning: true
 };
 
 let agWindow;
@@ -157,7 +166,7 @@ function setup(){
     agWindow = new AMQWindow({
         title: "Artist Game Settings",
         width: 700,
-        height: 450,
+        height: 550,
         minWidth: 440,
         minHeight: 250,
         zIndex: 999,
@@ -166,7 +175,7 @@ function setup(){
 
     agWindow.addPanel({
         width: 1.0,
-        height: 350,
+        height: 450,
         position: {
             x: 0,
             y: 20
@@ -264,7 +273,7 @@ function setup(){
                     </div>
                 </div>
                 <div id="gaToggleList" class="col-xs-6 text-center">
-                    <label>not implemented yet</label>
+                    <label>Anilist Anime Only</label>
                     <div id="gaSongTypeContainer" class="checkboxContainer">
                         <div>
                             <div class="customCheckbox">
@@ -276,6 +285,49 @@ function setup(){
                     </div>
                 </div>
 
+            </div>
+
+            <div class="row">
+                <div id="gaListType" class="text-center">
+                    <label>Include Entries</label>
+                    <div id="gaSongTypeContainer" class="checkboxContainer">
+                        <div>
+                            <div class="customCheckbox">
+                                <input id="gaWatching" type="checkbox" checked="">
+                                <label for="gaWatching"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Watching</p>
+                        </div>
+                        <div>
+                            <div class="customCheckbox">
+                                <input type="checkbox" id="gaCompleted" checked="">
+                                <label for="gaCompleted"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Completed</p>
+                        </div>
+                        <div>
+                            <div class="customCheckbox">
+                                <input type="checkbox" id="gaOnHold" checked="">
+                                <label for="gaOnHold"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>On Hold</p>
+                        </div>
+                        <div>
+                            <div class="customCheckbox">
+                                <input id="gaDropped" type="checkbox" checked="">
+                                <label for="gaDropped"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Dropped</p>
+                        </div>
+                        <div>
+                            <div class="customCheckbox">
+                                <input id="gaPlanning" type="checkbox" checked="">
+                                <label for="gaPlanning"><i class="fa fa-check" aria-hidden="true"></i></label>
+                            </div>
+                            <p>Planning</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `);
@@ -298,6 +350,22 @@ function setup(){
     $('#gaListToggle').prop('checked', gameSettings.list).click(() => {
         gameSettings.list = !gameSettings.list;
     });
+    $('#gaWatching').prop('checked', gameSettings.watching).click(() => {
+        gameSettings.watching = !gameSettings.watching;
+    });
+    $('#gaCompleted').prop('checked', gameSettings.completed).click(() => {
+        gameSettings.completed = !gameSettings.completed;
+    });
+    $('#gaOnHold').prop('checked', gameSettings.onHold).click(() => {
+        gameSettings.onHold = !gameSettings.onHold;
+    });
+    $('#gaDropped').prop('checked', gameSettings.dropped).click(() => {
+        gameSettings.dropped = !gameSettings.dropped;
+    });
+    $('#gaPlanning').prop('checked', gameSettings.planning).click(() => {
+        gameSettings.planning = !gameSettings.planning;
+    });
+
     document.getElementById("gaVoteSkip").addEventListener("click", gaSkipClicked);
     document.getElementById("gaAnswerInput").addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
@@ -442,26 +510,49 @@ function processCommand(command){
     if (command.startsWith("/ag ")){
         document.querySelector('#gcInput').value = "";
 
-        let commandArtist = command.replace("/ag ", "");
+        commandArtist = command.replace("/ag ", "");
         if(commandArtist == " ") return;
 
-        maxArtist = $('#gaMaxArtistText').val();
+        completed = [];
+        dropped = [];
+        planning = [];
+        onHold = [];
+        watching = [];
+        isreset = false;
 
-        currentSongIndex = 0;
-        point = 0;
-        $('#gaScoreText').text(point);
-        anisongDB(commandArtist);
+        gameSettings.guessTime = $('#gaGuessTimeText').val();
+        gameSettings.songNumber = $('#gaNumberSongText').val();
+        gameSettings.minYear = $('#gaYearMinText').val();
+        gameSettings.maxYear = $('#gaYearMaxText').val();
+        gameSettings.minDiff = $('#gaDifficultyMinText').val();
+        gameSettings.maxDiff = $('#gaDifficultyMaxText').val();
+
+        if(gameSettings.list == true){
+            if(gameSettings.watching == false && gameSettings.completed == false && gameSettings.onHold == false && gameSettings.dropped == false && gameSettings.planning == false || gameSettings.op == false && gameSettings.ed == false && gameSettings.ins == false || gameSettings.songNumber <= 0 || gameSettings.guessTime <= 0) return;
+            else getAnilist();
+        }
+        else{
+
+            maxArtist = $('#gaMaxArtistText').val();
+
+            currentSongIndex = 0;
+            point = 0;
+            $('#gaScoreText').text(point);
+            anisongDB(commandArtist);
+        }
     }
     else if (command.startsWith("/reset")){
 
         document.querySelector('#gcInput').value = "";
+
+        isreset = true;
 
         clearInterval(countDownInterval);
         countDown = 0;
         clearTimeout(songTime);
         clearTimeout(pauseTime);
 
-        audio.pause();
+        if(audio) audio.pause();
 
         $("#gameArtist").addClass("hidden");
         $("#quizPage").removeClass("hidden");
@@ -482,6 +573,7 @@ function processCommand(command){
         if(commandVolume == " ") return;
 
         volume = commandVolume;
+        if(audio) audio.volume = volume;
         chatSystemMessage("Volume changed to: " + volume)
     }
 }
@@ -491,7 +583,7 @@ function chatSystemMessage(msg) {
     gameChat.systemMessage(msg);
 }
 
-async function anisongDB(query){
+function anisongDB(query){
 
     let json = {};
     json.and_logic = false;
@@ -548,19 +640,63 @@ function processJson(){
 function processsettings(){
 
     settingFiltered = [];
-    gameSettings.guessTime = $('#gaGuessTimeText').val();
-    gameSettings.songNumber = $('#gaNumberSongText').val();
-    gameSettings.minYear = $('#gaYearMinText').val();
-    gameSettings.maxYear = $('#gaYearMaxText').val();
-    gameSettings.minDiff = $('#gaDifficultyMinText').val();
-    gameSettings.maxDiff = $('#gaDifficultyMaxText').val();
 
-    artistSongList.forEach(obj => {
-        if(gameSettings.op == true && obj.songType.startsWith("Opening")) settingFiltered.push(obj);
-        else if (gameSettings.ed == true && obj.songType.startsWith("Ending")) settingFiltered.push(obj);
-        else if (gameSettings.ins == true && obj.songType.startsWith("Insert")) settingFiltered.push(obj);
+    if(gameSettings.list == true){
+        //console.log(selectedAnime);
+
+        if(gameSettings.completed == true){
+            artistSongList.forEach(selected => {
+                if (completed.includes(selected.animeENName[0]) || completed.includes(selected.animeJPName[0])) {
+                    settingFiltered.push(selected);
+                }
+            });
+        }
+        if(gameSettings.watching == true){
+            artistSongList.forEach(selected => {
+                if (watching.includes(selected.animeENName[0]) || watching.includes(selected.animeJPName[0])) {
+                    settingFiltered.push(selected);
+                }
+            });
+        }
+        if(gameSettings.onHold == true){
+            artistSongList.forEach(selected => {
+                if (onHold.includes(selected.animeENName[0]) || onHold.includes(selected.animeJPName[0])) {
+                    settingFiltered.push(selected);
+                }
+            });
+        }
+        if(gameSettings.dropped == true){
+            artistSongList.forEach(selected => {
+                if (dropped.includes(selected.animeENName[0]) || dropped.includes(selected.animeJPName[0])) {
+                    settingFiltered.push(selected);
+                }
+            });
+        }
+        if(gameSettings.planning == true){
+            artistSongList.forEach(selected => {
+                if (planning.includes(selected.animeENName[0]) || planning.includes(selected.animeJPName[0])) {
+                    settingFiltered.push(selected);
+                }
+            });
+        }
+        //console.log(settingFiltered);
+    }
+    else{
+        settingFiltered = artistSongList;
+    }
+
+    let filteredType = [];
+
+    settingFiltered.forEach(obj => {
+        if(gameSettings.op == true && obj.songType.startsWith("Opening")) filteredType.push(obj);
+        else if (gameSettings.ed == true && obj.songType.startsWith("Ending")) filteredType.push(obj);
+        else if (gameSettings.ins == true && obj.songType.startsWith("Insert")) filteredType.push(obj);
     });
 
+    //console.log(filteredType);
+
+    settingFiltered = filteredType;
+    
     settingFiltered = settingFiltered.filter(obj => {
         if (obj.songDifficulty) {
             return obj.songDifficulty >= gameSettings.minDiff && obj.songDifficulty <= gameSettings.maxDiff;
@@ -582,6 +718,17 @@ function processsettings(){
         }
     });
 
+    settingFiltered.forEach(song1 => {
+        settingFiltered.forEach(song2 => {
+            if (song1 !== song2 && song1.songArtist === song2.songArtist && song1.songName === song2.songName && (song1.animeJPName[0] === song2.animeJPName[0] || song1.animeENName[0] === song2.animeENName[0])) {
+                let index = settingFiltered.indexOf(song2);
+                settingFiltered.splice(index, 1);
+            }
+        });
+    });
+
+    if(settingFiltered.length == 0) finished();
+
     if(settingFiltered.length > gameSettings.songNumber){
         for(let i = 0; i < gameSettings.songNumber; i++){
             let randomIndex = Math.floor(Math.random() * settingFiltered.length);
@@ -602,6 +749,8 @@ function processsettings(){
 
 function playMusic() {
 
+    if(isreset) return;
+
     $('#gaCurrentSongCount').text(currentSongIndex + 1);
     document.getElementById("gaAnswerInput").value = "";
     $("#gaAnswerInputContainer").css("box-shadow", "none");
@@ -612,7 +761,7 @@ function playMusic() {
     if (currentSongIndex >= selectedAnime.length) finished();
 
     audio = new Audio();
-    audio.src = selectedAnime[currentSongIndex].audio;
+    if(selectedAnime[currentSongIndex]) audio.src = selectedAnime[currentSongIndex].audio;
     audio.onloadedmetadata = function() {
         randomTime = Math.random() * (audio.duration - gameSettings.guessTime);
         audio.currentTime = randomTime;
@@ -634,6 +783,7 @@ function playMusic() {
                 if (currentSongIndex >= selectedAnime.length) finished();
                 pauseTime = setTimeout(function() {
                     audio.pause();
+                    if(isreset) return;
                     setTimeout(playMusic, 200);
                 }, 5000);
             }
@@ -678,18 +828,17 @@ function processAnswer() {
     let answered = false;
     answer = answer.toLowerCase();
     let found = false;
+
+    //console.log(selectedAnime[currentSongIndex]);
   
-    artistSongList.forEach(song => {
-        let animeENNameLower = song.animeENName.map(name => name.toLowerCase());
-        let animeJPNameLower = song.animeJPName.map(name => name.toLowerCase());
-      
-        if (!answered && animeENNameLower.includes(answer) || !answered && animeJPNameLower.includes(answer)) {
-            point++;
-            answered = true;
-            found = true;
-        }
-    });
-  
+    let animeENNameLower = selectedAnime[currentSongIndex].animeENName.map(name => name.toLowerCase());
+    let animeJPNameLower = selectedAnime[currentSongIndex].animeJPName.map(name => name.toLowerCase());
+
+    if(!answered && animeENNameLower.includes(answer) || !answered && animeJPNameLower.includes(answer)){
+        point++;
+        answered = true;
+        found = true;
+    }
     if (found) {
         $('#gaScoreText').text(point);
         $("#gaStandingContainer").css("box-shadow", "0 0 10px 2px rgb(189 247 255)");
@@ -701,10 +850,107 @@ function processAnswer() {
 function finished(){
     document.querySelector('#gcInput').value = "";
 
-    audio.pause();
+    if(audio) audio.pause();
 
     $("#gameArtist").addClass("hidden");
     $("#quizPage").removeClass("hidden");
+}
+
+function getAnilist(){
+    let username = $('#aniListUserNameInput').val();
+
+    if(!username) return;
+
+    const API_URL = 'https://graphql.anilist.co';
+
+    const query = `
+        query {
+            MediaListCollection(userName: "${username}", type: ANIME) {
+                lists {
+                    entries {
+                        media {
+                            id
+                            title {
+                                romaji
+                                english
+                                native
+                            }
+                        }
+                        progress
+                        status
+                        score
+                    }
+                }
+            }
+        }
+    `;
+
+    fetch(API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            query: query,
+        }),
+    })
+        .then(res => res.json())
+        .then(data => processAnilist(data.data.MediaListCollection.lists))
+        .catch(error => console.error(error));
+}
+
+function processAnilist(anilist) {
+
+    //console.log(anilist);
+
+    completed = [];
+    dropped = [];
+    planning = [];
+    onHold = [];
+    watching = [];
+
+    anilist.forEach(list => {
+        list.entries.forEach(entry => {
+            switch (entry.status) {
+                case "COMPLETED":
+                    if(entry.media.title.romaji) completed.push(entry.media.title.romaji);
+                    if(entry.media.title.english) completed.push(entry.media.title.english);
+                    break;
+                case "DROPPED":
+                    if(entry.media.title.romaji) dropped.push(entry.media.title.romaji);
+                    if(entry.media.title.english) dropped.push(entry.media.title.english);
+                    break;
+                case "PLANNING":
+                    if(entry.media.title.romaji) planning.push(entry.media.title.romaji);
+                    if(entry.media.title.english) planning.push(entry.media.title.english);
+                    break;
+                case "PAUSED":
+                    if(entry.media.title.romaji) onHold.push(entry.media.title.romaji);
+                    if(entry.media.title.english) onHold.push(entry.media.title.english);
+                    break;
+                case "CURRENT":
+                    if(entry.media.title.romaji) watching.push(entry.media.title.romaji);
+                    if(entry.media.title.english) watching.push(entry.media.title.english);
+                    break;
+                default:
+                    break;
+            }
+        });
+    });
+
+    //console.log(watching);
+    //console.log(completed);
+    //console.log(onHold);
+    //console.log(dropped);
+    //console.log(planning);
+
+    maxArtist = $('#gaMaxArtistText').val();
+
+    currentSongIndex = 0;
+    point = 0;
+    $('#gaScoreText').text(point);
+    anisongDB(commandArtist);
 }
 
 new Listener("get all song names", (payload) => {
