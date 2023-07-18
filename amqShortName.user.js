@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Short Name
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  Make that you can easily add custom short answer to write a longer anime title.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -24,15 +24,24 @@ const replace = {
 function replaceTitle(answer) {
     for (let word in replace) {
         if(word == answer.toLowerCase()){
-            socket.sendCommand({
-                type: "quiz",
-                command: "quiz answer",
-                data: {
-                    answer: replace[word],
-                    isPlaying: quizVideoController.currentVideoPlaying(),
-                    volumeAtMax: getVolumeAtMax(),
-                },
-            });
+            if(quiz.gameMode === 'Ranked'){
+                displayHtmlMessage(
+                    "AMQ Short Name",
+                    "Using this script for malicious purposes is illegal. That's why it's disabled for Ranked",
+                    "Close"
+                );
+            }
+            else{
+                socket.sendCommand({
+                    type: "quiz",
+                    command: "quiz answer",
+                    data: {
+                        answer: replace[word],
+                        isPlaying: quizVideoController.currentVideoPlaying(),
+                        volumeAtMax: getVolumeAtMax(),
+                    },
+                });
+            }
         }
     }
 }
