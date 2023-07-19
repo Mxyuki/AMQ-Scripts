@@ -2,15 +2,18 @@
 
 /* MelodyElodie script edited by Mxyuki */
 
-/* Mxyuki | 0.3 */
+/* Mxyuki | 0.4 */
 
  :root {
      
     /* Change the URL in quotes to whatever you want the bg to be. */
     /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/916779647738454046/unknown.png?width=1248&height=702);*/
     /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1052803852849647626/image.png?width=1248&height=702);*/
-    --bg: url(https://media.discordapp.net/attachments/553924474173653002/951127589026664508/FNXfXl8VUAIeL24.png);
+    /*--bg: url(https://media.discordapp.net/attachments/553924474173653002/951127589026664508/FNXfXl8VUAIeL24.png);*/
+      /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1109294041432084501/image.png);*/
+     /*--bg: url(https://media.discordapp.net/attachments/952427961510940712/1072727414137946152/image.png);*/
     /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1049876236035440640/image.png);*/
+     --bg: url(https://i.imgur.com/nOFxsuC.jpg);
     /* Optional: if you want a different background for chat. Phone wallpapers tend to work best. */
     --chatbg: rgba(0, 0, 0, 0.1);
 }
@@ -36,7 +39,7 @@
 }
 #qpVideoSoundOnly{
     height: 100%;
-    background-image: url(https://media.discordapp.net/attachments/553924474173653002/1063585001339371672/Ina3.png);
+    background-image: url(https://i.imgur.com/6hGcBTJ.png);
     background-size: cover;
     color: rgba(0,0,0,0);
     z-index: 100;
@@ -93,12 +96,12 @@
     
 }
 #xpBarInner {
-    background: #C9C0C5;
+    background: #2f5093;
     box-shadow: none;
 /*Change Colour of XP bar*/
 }
 .levelText {
-    color: #C88D91;
+    color: #a9cfe2;
 /*Change Colour of text.*/
 }
 
@@ -190,7 +193,7 @@ width: 100%;
 	background-color: rgba(0, 0, 0, 0);
 }
 #gameChatContainer {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.6);
 }    
 #qpAnimeNameHider {
     background-color: #625d6000;
@@ -337,6 +340,7 @@ width: 100%;
 .brShowEntry, .brMapObject {
     background-color: rgba(198, 188, 196);
     border: none;
+    box-shadow: 1px 0px 10px rgb(0 0 0 / 49%);
 }
 .topMenuBar {
     background-color: transparent;
@@ -415,16 +419,16 @@ div#startPageLogoContainer {
 }
 
 .qpsPlayerName.self {
-    color: #af7aff;
+    color: #a9cfe2;
     text-shadow: 0 0 10px #563269;
 }
 
 .progress-bar {
-    background-color: #a577bf;
+    background-color: #a9cfe2;
 }
 
 .fa-friend {
-    color: #552788;
+    color: #a9cfe2;
 }
 
 
@@ -698,8 +702,8 @@ div#popoutMessageContainer.floatingContainer.popoutMessage.noShadow {
 }
 
 #qpVideoProgressBar{
-    background-color: #c9c0c5;
-    width: 50%;
+    background-color: #a9cfe2;
+    width: 67.5%;
 }
 #qpAnswerStateContainerOuter{
     border-radius: 0px;
@@ -720,7 +724,7 @@ div#popoutMessageContainer.floatingContainer.popoutMessage.noShadow {
     position: absolute;
     width: 35px;
     right: -12px;
-    background-color: #c9c0c5;
+    background-color: #719db4;
     font-size: 12px;
     height: 100%;
     transform: skewX(0deg);
@@ -836,8 +840,64 @@ div.modal-content {
     right: 86px;
 }
 #avatarUserImg{
-    content: url("https://i.imgur.com/DuucUb4.png");
+    content: url("https://i.imgur.com/Qrn1yxk.png");
 }
 .isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImg{
-    content:url("https://i.imgur.com/DuucUb4.png");
+    content:url("https://i.imgur.com/Qrn1yxk.png");
+}
+
+#mmSocialButtonOnlineContainer {
+    right: 35px;
+}
+
+#gameChatPage .col-xs-9{
+    background-color: rgba(0,0,0,0);
+    background-image: none;
+}
+
+#brMap{
+    background-color: rgba(0,0,0,0);
+    border: 2px solid #585858;
+}
+
+#qpInfoHider {
+    position: absolute;
+    height: 0%;
+    width: 0%;
+    top: 0;
+    left: 0;
+    border-radius: 0px;
+    background-color: #42424200;
+    font-size: 0px;
+}
+
+.lbmBoard {
+    height: 500px;
+}
+
+#leaderboardModal .modal-body {
+    height: 600px;
+}
+
+.qpSideContainer {
+    max-width: 245px;
+}
+
+.qpLiftContainer {
+    top: -25px;
+}
+
+.qpLifeActiveOverlay {
+    background-color: #a9cfe2;
+    -webkit-box-shadow: inset 0 0 5px #fff, inset 0 0 10px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 0 15px #a9cfe2;
+    box-shadow: inset 0 0 5px #fff, inset 0 0 10px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 0 15px #d4f2fd;
+}
+
+.qpVoteSkip.toggled {
+    background-color: #719db4;
+   
+}
+
+.swRhythmIcon {
+    z-index: 9999;
 }
