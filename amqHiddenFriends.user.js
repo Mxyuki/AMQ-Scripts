@@ -33,7 +33,6 @@ new Listener("all online users", (payload) => {
     onlinePlayer = payload;
     let list = Object.keys(socialTab.offlineFriends).filter((name) => onlinePlayer.includes(name));
     if(isCommand){
-        console.log(list);
         if(list.length > 0){
             list.forEach((hiddenPlayer) => {
                 gameChat.systemMessage(`${hiddenPlayer} is hiding.`);
