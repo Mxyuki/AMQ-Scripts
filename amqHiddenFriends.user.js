@@ -8,9 +8,8 @@
 // @icon         https://i.imgur.com/syptORo.png
 // ==/UserScript==
 
-// Global variables
-let friendList = []; // Store the list of friends retrieved from login
-let onlinePlayer = []; // Store the list of all online players
+let friendList = [];
+let onlinePlayer = [];
 
 // Wait for the game to load before setting up the script
 if (document.querySelector("#startPage")) return;
@@ -28,36 +27,23 @@ chatBox.addEventListener("keydown", function (event) {
     }
 });
 
-// Function to check for hidden friends
+// Function to check for hidden friends and change their statue in the friend list
 function hidingFriends() {
-    // Open and close the social tab to update the onlinePlayer array
     document.getElementById("mainMenuSocailButton").click();
     document.getElementById("mainMenuSocailButton").click();
-
-    // Delay before processing the online players
     setTimeout(function () {
-        // Loop through each online player
         onlinePlayer.forEach((name) => {
-            // Find the friend from the friendList by name
             const friend = friendList.find((friend) => friend.name === name);
-
-            // Check if the player is a friend and is offline (hiding)
             if (friend && !friend.online) {
-                // Display a system message indicating the friend is hiding
                 gameChat.systemMessage(`${name} is hiding.`);
-
-                // Find elements with the friend's name in the stPlayerNameContainer class
                 const playerNameContainers = document.querySelectorAll(".stPlayerNameContainer");
                 playerNameContainers.forEach((container) => {
                     const playerNameElement = container.querySelector("h4");
                     if (playerNameElement && playerNameElement.innerText === name) {
-                        // Change the background color of the social status circle to light blue
                         const socialStatusCircle = container.closest("li").querySelector(".socialTabPlayerSocialStatusInnerCircle");
                         if (socialStatusCircle) {
                             socialStatusCircle.classList.remove("socialTabPlayerSocialStatusInnerCircleColorOffline");
                             socialStatusCircle.style.backgroundColor = "lightblue";
-
-                            // Change the status text to "Hiding"
                             const statusElement = socialStatusCircle.closest("li").querySelector("h3");
                             if (statusElement) {
                                 statusElement.textContent = "Hiding";
