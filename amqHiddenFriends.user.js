@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Hidden Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
+// @version      1.1
 // @description  By doing /HF in game chat, it will inform you which of your friends are invisible to you, and when opening the friend list hiding friend while have a Blue statue with written hidden next to them.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -51,6 +51,7 @@ new Listener("all online users", (payload) => {
         let friendName = nameElement.textContent.trim();
         if (list.includes(friendName)) {
             statusElement.textContent = "Hidden";
+            statusElement.classList.add("hiddenFriendText");
             statusCircleElement.classList.remove("socialTabPlayerSocialStatusInnerCircleColorOffline");
             statusCircleElement.classList.add("hiddenFriend");
         } else {
@@ -58,6 +59,7 @@ new Listener("all online users", (payload) => {
                 statusCircleElement.classList.remove("hiddenFriend");
                 statusCircleElement.classList.add("socialTabPlayerSocialStatusInnerCircleColorOffline");
                 statusElement.textContent = "Offline";
+                statusElement.classList.remove("hiddenFriendText");
             }
         }
     });
@@ -71,6 +73,9 @@ AMQ_addStyle(`
     .hiddenFriend {
         background-color: lightblue;
     }
+    #friendOfflineList .stPlayerName .hiddenFriendText {
+        color: lightblue;
+    }
 `);
 
 AMQ_addScriptData({
@@ -79,9 +84,9 @@ AMQ_addScriptData({
     description: `
         <p>This script let you know who in your friends are hiding from you.</p>
         <p>Opening the friend list will display your friends that are hidden like this :</p>
-        <img src="https://i.imgur.com/cLnMK0H.png">
+        <img src="https://i.imgur.com/O4OvR8S.png" style="max-width: 250px">
         <p>Doing ${command} in chat will display all your hidden friends in chat like this :</p>
-        <img src="https://i.imgur.com/H6HCnIL.png">
+        <img src="https://i.imgur.com/H6HCnIL.png" style="max-width: 250px">
         <p>And if noone is hiding and you do ${command} it will tell you that no one is hiding.</p>
     `
 });
