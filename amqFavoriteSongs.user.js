@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         AMQ Favorite Songs
+// @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
+// @version      1.0.1
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -133,14 +133,14 @@ function setup(){
             previousSongIndex = prePreviousSongIndex;
             const fsPlayer = document.getElementById('fsPlayer');
             fsPlayer.src = favSongs[prePreviousSongIndex]["0"];
-    
+
             const fsInfoRow = document.getElementById('fsInfoRow');
             const { songName, artist, type } = favSongs[prePreviousSongIndex];
             fsInfoRow.innerHTML = `
                 <p class="fsSongInfo">${songName} by ${artist}</p>
                 <p class="fsSongInfo">${type}</p>
             `;
-    
+
             const fsPlayButton = $("#fsPlayButton");
             if (fsPlayButton.find('i').hasClass('fa-pause')) {
                 const fsPlayer = document.getElementById('fsPlayer');
@@ -157,6 +157,7 @@ function setup(){
     $("#fsVolumeSlider").on("input", function() {
         const fsPlayer = document.getElementById('fsPlayer');
         fsPlayer.volume = $(this).val();
+        savedVolume = $(this).val();
         localStorage.setItem("fsVolume", JSON.stringify($(this).val()));
     });
 
@@ -240,23 +241,23 @@ function updateClass(isFaved){
 
 function updateTable() {
     const tableBody = $("#favSongsList tbody");
-  
+
     tableBody.empty();
-  
+
     favSongs.forEach((song, index) => {
       const mp3Link = song["0"];
       const mp3Cell = $("<td>").text("mp3").addClass("mp3-link").attr("data-link", mp3Link);
       mp3Cell.click(() => {
         window.open(mp3Link, "_blank");
       });
-  
+
       const trashIcon = $("<i>").addClass("fa fa-trash delete-icon");
       trashIcon.click(() => {
         favSongs.splice(index, 1);
         updateTable();
         saveSettings();
       });
-  
+
       const row = $("<tr>").append(
         $("<td>").text(song.romaji || song.english || "N/A"), // Anime Name
         $("<td>").text(song.songName || "N/A"), // Song Name
@@ -272,7 +273,7 @@ function updateTable() {
 function getRandomSong() {
     prePreviousSongIndex = previousSongIndex;
     let numSongs = favSongs.length;
-  
+
     if (numSongs === 0) {
       return;
     }
@@ -283,13 +284,13 @@ function getRandomSong() {
       do {
         randomIndex = Math.floor(Math.random() * numSongs);
       } while (randomIndex === previousSongIndex);
-  
+
       previousSongIndex = randomIndex;
     }
     const fsPlayer = document.getElementById('fsPlayer');
     fsPlayer.volume = savedVolume;
     fsPlayer.src = favSongs[previousSongIndex]["0"];
-  
+
     const fsInfoRow = document.getElementById('fsInfoRow');
     const { songName, artist, romaji, type } = favSongs[previousSongIndex];
     fsInfoRow.innerHTML = `
