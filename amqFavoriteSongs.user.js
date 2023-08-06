@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.1
+// @version      1.0.2
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
+// @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
+// @description  I still tried to make that it is kinda user friendly if some people try to use it.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
@@ -367,19 +369,14 @@ AMQ_addStyle(`
         width: 15vh;
     }
 
-    /* For Chrome, Safari, and Opera */
-    #fsVolumeSlider::-webkit-slider-thumb {
-        background-color: #ff0000; /* Change to your desired color */
+    .modal-body:is(:has(#fsPlayer))::-webkit-scrollbar {
+        width: 12px;
+        background-color: rgba(0,0,0,0);
     }
 
-    /* For Firefox */
-    #fsVolumeSlider::-moz-range-thumb {
-        background-color: #ff0000; /* Change to your desired color */
-    }
-
-    /* For IE and Edge */
-    #fsVolumeSlider::-ms-thumb {
-        background-color: #ff0000; /* Change to your desired color */
+    .modal-body:is(:has(#fsPlayer))::-webkit-scrollbar-thumb {
+        background-color: #212121;
+        border-radius: 12px;
     }
 `);
 
