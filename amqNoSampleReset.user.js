@@ -8,7 +8,7 @@
 // @icon         https://i.imgur.com/syptORo.png
 // ==/UserScript==
 
-if(document.getElementById("startPage"))return;
+if(document.getElementById("loginPage"))return;
 
 new Listener("answer results",(payload)=>{
     let endTime= parseFloat(quizVideoController.moePlayers[quizVideoController.currentMoePlayerId].$player[0].currentTime.toFixed(2));
