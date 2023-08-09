@@ -4,7 +4,9 @@
 // @version      0.5
 // @description  Press [Alt + T] to activate. Will send your answer at each letter you write when you are in team.
 // @author       Mxyuki
-// @match        https://animemusicquiz.com/
+// @match        https://animemusicquiz.com/*
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAutoSendAnswer.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAutoSendAnswer.user.js
 // ==/UserScript==
 if (document.getElementById("loginPage")) return
 
