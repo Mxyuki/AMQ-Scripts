@@ -7,7 +7,7 @@
 // @match        https://animemusicquiz.com/*
 // ==/UserScript==
 
-if (document.querySelector("#startPage")) return;
+if (document.querySelector("#loginPage")) return;
 
 let selfColor = "#39393B";
 let otherColor = "#53505a";
