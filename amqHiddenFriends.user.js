@@ -14,7 +14,7 @@ let isCommand = false;
 
 let command = "/HF";
 
-if (document.querySelector("#startPage")) return;
+if (document.querySelector("#loginPage")) return;
 
 let chatBox = document.getElementById("gcInput");
 chatBox.addEventListener("keydown", function (event) {
