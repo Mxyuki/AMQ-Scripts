@@ -10,7 +10,7 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAnisongSearch.user.js
 // ==/UserScript==
 
-if (document.querySelector("#startPage")) return;
+if (document.querySelector("#loginPage")) return;
 let loadInterval = setInterval(() => {
     if (document.querySelector("#loadingScreen").classList.contains("hidden")) {
         setup();
