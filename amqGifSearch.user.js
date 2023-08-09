@@ -14,7 +14,7 @@ const SEARCH_BAR_ID = 'gcGifTextbox';
 const SEARCH_BUTTON_ID = 'search-button';
 const GIF_CONTAINER_ID = 'gif-container';
 
-if (document.querySelector("#startPage")) return;
+if (document.querySelector("#loginPage")) return;
 
 $('.gcInputContainer').append('<div id="gcGifSearcherContainer"></div>');
 $('#gcGifSearcherContainer').append('<div id="gcGifSearcherButton" class="clickAble"></div>');
