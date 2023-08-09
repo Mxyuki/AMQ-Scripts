@@ -9,7 +9,7 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqPlayButtonChange.user.js
 // ==/UserScript==
 
-if (document.getElementById("startPage")) return;
+if (document.getElementById("loginPage")) return;
 
 const mpPlayButton = document.getElementById('mpPlayButton');
 
