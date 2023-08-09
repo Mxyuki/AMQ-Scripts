@@ -31,7 +31,7 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqBRPlus.user.js
 // ==/UserScript==
 
-if (document.getElementById("#loginPage")) return;
+if (document.getElementById("loginPage")) return;
 
 let loadInterval = setInterval(() => {
     if (document.getElementById("loadingScreen").classList.contains("hidden")) {
