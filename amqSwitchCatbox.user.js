@@ -8,7 +8,7 @@
 // @icon         https://i.imgur.com/syptORo.png
 // ==/UserScript==
 
-if (document.querySelector("#startPage")) return;
+if (document.querySelector("#loginPage")) return;
 
 let catbox = false;
 let fileName;
