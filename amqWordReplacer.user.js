@@ -9,7 +9,7 @@
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // ==/UserScript==
 
-if (document.getElementById("startPage")) return;
+if (document.getElementById("loginPage")) return;
 
 // To add a new custom word just add one under the other ones: "wordReplaced": "new word",
 
