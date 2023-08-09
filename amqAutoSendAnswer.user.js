@@ -6,7 +6,7 @@
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/
 // ==/UserScript==
-if (document.getElementById("loginPage")) return
+if (document.getElementById("#loginPage")) return
 
 let isAutoSend = false;
 
