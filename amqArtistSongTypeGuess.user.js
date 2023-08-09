@@ -7,6 +7,8 @@
 // @match        https://animemusicquiz.com/
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqArtistSongTypeGuess.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqArtistSongTypeGuess.user.js
 // ==/UserScript==
 
 if (document.getElementById("loginPage")) return;
