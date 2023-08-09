@@ -11,7 +11,7 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // ==/UserScript==
 
-if (document.getElementById("startPage")) return;
+if (document.getElementById("loginPage")) return;
 
 let loadInterval = setInterval(() => {
     if (document.getElementById("loadingScreen").classList.contains("hidden")) {
