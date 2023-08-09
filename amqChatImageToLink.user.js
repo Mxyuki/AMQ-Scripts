@@ -9,7 +9,7 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqChatImageToLink.user.js
 // ==/UserScript==
 
-if (document.querySelector("#startPage")) return;
+if (document.querySelector("#loginPage")) return;
 
 const textarea = document.getElementById('gcInput');
 
