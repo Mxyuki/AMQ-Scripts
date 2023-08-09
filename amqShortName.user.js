@@ -8,7 +8,7 @@
 // @icon         https://i.imgur.com/syptORo.png
 // ==/UserScript==
 
-if (document.getElementById("startPage")) return;
+if (document.getElementById("loginPage")) return;
 
 // Add the custom one you want here like that :
 // "Short Name": "Long Name"
