@@ -5,6 +5,8 @@
 // @description  When a link finishing by .png of .jpg is sent in the chat show the image directly in the chat
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqChatImage.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqChatImage.user.js
 // ==/UserScript==
 
 if (document.getElementById("loginPage")) return;
