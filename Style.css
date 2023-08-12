@@ -2,17 +2,15 @@
 
 /* MelodyElodie script edited by Mxyuki */
 
-/* Mxyuki | 0.4 */
+/* Mxyuki | 0.5 */
 
  :root {
      
     /* Change the URL in quotes to whatever you want the bg to be. */
-    /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/916779647738454046/unknown.png?width=1248&height=702);*/
-    /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1052803852849647626/image.png?width=1248&height=702);*/
+    /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/916779647738454046/unknown.png);*/
+    /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1052803852849647626/image.png);*/
     /*--bg: url(https://media.discordapp.net/attachments/553924474173653002/951127589026664508/FNXfXl8VUAIeL24.png);*/
-      /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1109294041432084501/image.png);*/
-     /*--bg: url(https://media.discordapp.net/attachments/952427961510940712/1072727414137946152/image.png);*/
-    /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1049876236035440640/image.png);*/
+    /*--bg: url(https://media.discordapp.net/attachments/553924629551644703/1109294041432084501/image.png);*/
      --bg: url(https://i.imgur.com/nOFxsuC.jpg);
     /* Optional: if you want a different background for chat. Phone wallpapers tend to work best. */
     --chatbg: rgba(0, 0, 0, 0.1);
@@ -888,7 +886,7 @@ div.modal-content {
 }
 
 .qpLifeActiveOverlay {
-    background-color: #a9cfe2;
+    background-color: #a9cfe2;  
     -webkit-box-shadow: inset 0 0 5px #fff, inset 0 0 10px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 0 15px #a9cfe2;
     box-shadow: inset 0 0 5px #fff, inset 0 0 10px #fff, 0 0 3px #fff, 0 0 5px #fff, 0 0 15px #d4f2fd;
 }
@@ -900,4 +898,46 @@ div.modal-content {
 
 .swRhythmIcon {
     z-index: 9999;
+}
+
+/* EDIT THE LOGIN PAGE */
+
+#lpTopMainContainer{
+    background-image: url('https://i.imgur.com/nOFxsuC.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 100%;
+}
+
+#lpQuickPlayButton {
+    width: 0px;
+    height: 0px;
+}
+
+#lpQuickPlayButton h1{
+    font-size: 0px;
+}
+
+#lpLoginBox {
+    margin-top: -80vh;
+}
+
+
+.form-control {
+    height: 3.2vh;
+}
+
+#lpLogo {
+    margin-top: -15vh;
+}
+
+#lpInfoContainerTitle{
+    margin-top: -3vh;
+    color: rgba(0, 0, 0, 0);
+    text-shadow: none;
+}
+
+#lpInfoContainerTitle::after {
+    content: " The Worst Anime Music Quiz!";
+    color: #fff;
 }
