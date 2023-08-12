@@ -839,10 +839,10 @@ div.modal-content {
 #gcEmojiPickerOuterContainer, #gcGifSearchOuterContainer{
     right: 86px;
 }
-#avatarUserImg{
+#avatarUserImgContainer{
     content: url("https://i.imgur.com/Qrn1yxk.png");
 }
-.isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImg{
+.isSelf > .lobbyAvatarImgContainer > .lobbyAvatarImgContainerInner{
     content:url("https://i.imgur.com/Qrn1yxk.png");
 }
 
