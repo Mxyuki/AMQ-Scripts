@@ -903,7 +903,7 @@ div.modal-content {
 /* EDIT THE LOGIN PAGE */
 
 #lpTopMainContainer{
-    background-image: url('https://i.imgur.com/nOFxsuC.jpg');
+    background-image:var(--bg);
     background-size: cover;
     background-position: center;
     height: 100%;
