@@ -1,17 +1,21 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.2
+// @version      1.1.0
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
+// @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
 // @description  I still tried to make that it is kinda user friendly if some people try to use it.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
 // ==/UserScript==
 
 let loadInterval = setInterval(() => {
+    if (!document.getElementById("loadingScreen")) return;
     if (document.getElementById("loadingScreen").classList.contains("hidden")) {
         setup();
         clearInterval(loadInterval);
@@ -85,6 +89,16 @@ function setup(){
                             <input type="range" id="fsVolumeSlider" min="0" max="1" step="0.01" value="1">
                         </div>
 
+                        <div id="fsButton">
+                            <div id="fsImportExportButtons">
+                                <button id="fsImport">Import</button>
+                                <button id="fsExport">Export</button>
+                            </div>
+                            <div id="fsClearButtonContainer">
+                                <button id="fsClear">Clear</button>
+                            </div>
+                        </div>
+
                         <div id="favSongsList">
                             <table class="table">
                                 <thead>
@@ -92,7 +106,7 @@ function setup(){
                                         <th style="font-weight: bold;">Anime Name</th>
                                         <th style="font-weight: bold;">Song Name</th>
                                         <th style="font-weight: bold;">Artist</th>
-                                        <th style="font-weight: bold;">Type</th>
+                                        <th style="font-weight: bold; min-width: 70px;">Type</th>
                                         <th style="font-weight: bold;">mp3</th>
                                         <th style="font-weight: bold;"><i class="fa fa-trash trash-top"></i></th>
                                     </tr>
@@ -151,6 +165,51 @@ function setup(){
         }
     });
 
+    document.getElementById("fsExport").addEventListener("click", () => {
+        exportData();
+    });
+
+    document.getElementById("fsImport").addEventListener("click", () => {
+        let input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.addEventListener("change", (event) => {
+            let file = event.target.files[0];
+            let reader = new FileReader();
+            reader.onload = (e) => {
+                let importedData = e.target.result;
+                processImport(importedData);
+            };
+            reader.readAsText(file);
+        });
+        input.click();
+    });
+
+    document.getElementById("fsImport").addEventListener("drop", (event) => {
+        event.preventDefault();
+        let file = event.dataTransfer.files[0];
+        let reader = new FileReader();
+        reader.onload = (e) => {
+            let importedData = e.target.result;
+            processImport(importedData);
+        };
+        reader.readAsText(file);
+    });
+
+    document.getElementById("fsImport").addEventListener("dragover", (event) => {
+        event.preventDefault();
+    });
+
+    document.getElementById("fsClear").addEventListener("click", () => {
+        let confirmClear = confirm("Are you sure you want to clear your Favorite Song list?");
+        if (confirmClear) {
+            favSongs = [];
+            updateTable();
+            saveSettings();
+            alert("Favorite List cleared!");
+        }
+    });
+
     fsPlayer.addEventListener('ended', function() {
         getRandomSong();
         fsPlayer.play();
@@ -203,31 +262,35 @@ function favoriteSong(){
             updateClass(true);
         }
 
-        favSongs.sort((a, b) => {
-            const typeOrder = { "OP": 1, "ED": 2, "INS": 3 };
-            const typeA = a.type.split(" ")[0];
-            const typeB = b.type.split(" ")[0];
-            const numberA = parseInt(a.type.split(" ")[1]);
-            const numberB = parseInt(b.type.split(" ")[1]);
 
-            if (typeOrder[typeA] !== typeOrder[typeB]) {
-                return typeOrder[typeA] - typeOrder[typeB];
-            } else if (!isNaN(numberA) && !isNaN(numberB)) {
-                return numberA - numberB;
-            } else {
-                return a.romaji.localeCompare(b.romaji);
-            }
-        });
-
-        favSongs.sort((a, b) => {
-            if (a.romaji !== b.romaji) {
-                return a.romaji.localeCompare(b.romaji);
-            }
-        });
-
+        filterOrder();
         updateTable();
         saveSettings();
     }
+}
+
+function filterOrder() {
+    favSongs.sort((a, b) => {
+        const typeOrder = { "OP": 1, "ED": 2, "INS": 3 };
+        const typeA = a.type.split(" ")[0];
+        const typeB = b.type.split(" ")[0];
+        const numberA = parseInt(a.type.split(" ")[1]);
+        const numberB = parseInt(b.type.split(" ")[1]);
+
+        if (typeOrder[typeA] !== typeOrder[typeB]) {
+            return typeOrder[typeA] - typeOrder[typeB];
+        } else if (!isNaN(numberA) && !isNaN(numberB)) {
+            return numberA - numberB;
+        } else {
+            return a.romaji.localeCompare(b.romaji);
+        }
+    });
+
+    favSongs.sort((a, b) => {
+        if (a.romaji !== b.romaji) {
+            return a.romaji.localeCompare(b.romaji);
+        }
+    });
 }
 
 function updateClass(isFaved){
@@ -299,6 +362,81 @@ function getRandomSong() {
       <p class="fsSongInfo">${songName} by ${artist}</p>
       <p class="fsSongInfo">${romaji} • ${type}</p>
     `;
+}
+
+function exportData() {
+    let json = JSON.stringify(favSongs, null, 2);
+    let blob = new Blob([json], { type: "application/json" });
+    let url = URL.createObjectURL(blob);
+
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "FavoriteSong.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function processImport(data) {
+    try {
+        let importedData = JSON.parse(data);
+        if (Array.isArray(importedData)) {
+            importedData.forEach(item => {
+                if ((item.audio && item.animeJPName) || (item[0] && item.romaji)) {
+                    if (item.audio && item.animeJPName) {
+                        if (item.songType) {
+                            if (item.songType.startsWith("Opening")) {
+                                item.songType = "OP " + item.songType.split("Opening")[1].trim();
+                            } else if (item.songType.startsWith("Ending")) {
+                                item.songType = "ED " + item.songType.split("Ending")[1].trim();
+                            } else if (item.songType === "Insert Song") {
+                                item.songType = "INS";
+                            }
+                        }
+                        if (item.audio.startsWith("https://files.catbox.moe/")) {
+                            item.audio = item.audio.replace("https://files.catbox.moe/", "https://nl.catbox.moe/");
+                        }
+                        if (!favSongs.some(song => song[0] === item.audio)) {
+                            favSongs.push({
+                                0: item.audio,
+                                romaji: item.animeJPName,
+                                english: item.animeENName || item.animeAltName,
+                                songName: item.songName,
+                                artist: item.songArtist,
+                                type: item.songType
+                            });
+                        }
+                    } else if (item[0] && item.romaji) {
+                        if (item.type && (item.type.startsWith("Opening") || item.type.startsWith("Ending"))) {
+                            item.type = item.type.replace("Opening", "OP").replace("Ending", "ED");
+                        }
+                        if (item[0].startsWith("https://files.catbox.moe/")) {
+                            item[0] = item[0].replace("https://files.catbox.moe/", "https://nl.catbox.moe/");
+                        }
+                        if (!favSongs.some(song => song[0] === item[0])) {
+                            favSongs.push({
+                                0: item[0],
+                                romaji: item.romaji,
+                                english: item.english,
+                                songName: item.songName,
+                                artist: item.artist,
+                                type: item.type
+                            });
+                        }
+                    }
+                }
+            });
+
+            alert("Import successful!");
+        } else {
+            alert("Invalid data format!");
+        }
+    } catch (error) {
+        alert("Error processing imported data: " + error);
+    }
+    filterOrder();
+    saveSettings();
+    updateTable();
 }
 
 //LISTENERS
@@ -378,6 +516,34 @@ AMQ_addStyle(`
         background-color: #212121;
         border-radius: 12px;
     }
+
+    #fsButton {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #fsImportExportButtons {
+        display: flex;
+        gap: 10px; /* Adjust the gap as needed */
+    }
+
+    #fsClearButtonContainer {
+        text-align: right;
+    }
+
+    #fsClear {
+        background-color: #d98282;
+        color: #fff;
+        border-radius: 4px;
+        border: none;
+    }
+
+    #fsImport, #fsExport {
+        background-color: #7e95c8;
+        color: #fff;
+        border-radius: 4px;
+        border: none;
+    }
 `);
 
 AMQ_addScriptData({
@@ -391,5 +557,11 @@ AMQ_addScriptData({
         <img src="https://i.imgur.com/3cY1Ly3.png" style="max-width: 250px">
         <p>In this page you will have the Radio Player and the list of all your liked song which you can removed them from here.</p>
         <img src="https://i.imgur.com/QlFrkOQ.png" style="max-width: 250px">
+        <p>The Export button will let you Export in json file all the songs you have in Favorite.</p>
+        <p>The Import button will let you Import in your list song that you exported from the Script or song from an AnisongDB json file.</p>
+        <p>You can either click on the Import Button or Drop the Json file on the button to import.</p>
+        <img src="https://i.imgur.com/zeq26uO.png" style="max-width: 250px">
+        <p>The clear button will remove all the song that you Favorited, so be sure to Export them before if you want to keep them.</p>
+        <img src="https://i.imgur.com/piw7OvR.png" style="max-width: 250px">
     `
 });
