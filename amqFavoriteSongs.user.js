@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1.1
+// @version      1.2.0
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -28,11 +28,13 @@ let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
 
 let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
+let orderType = "random";
 
 let favSongs = savedData.favSongs;
 let currentInfo = null;
 let previousSongIndex = -1;
 let prePreviousSongIndex = -1;
+let semiRandomPlayedSongs = [];
 
 //FUNCTIONS
 function setup(){
@@ -89,6 +91,22 @@ function setup(){
                             <input type="range" id="fsVolumeSlider" min="0" max="1" step="0.01" value="1">
                         </div>
 
+                        <div id="fsOptions">
+                            <label>
+                                <input type="checkbox" id="fsRandom" name="fsOrder" value="random">
+                                Random
+                            </label>
+                            <label>
+                                <input type="checkbox" id="fsSemiRandom" name="fsOrder" value="semi-random">
+                                SemiRandom
+                            </label>
+                            <label>
+                                <input type="checkbox" id="fsOrder" name="fsOrder" value="order">
+                                Order
+                            </label>
+                        </div>
+
+
                         <div id="fsButton">
                             <div id="fsImportExportButtons">
                                 <button id="fsImport">Import</button>
@@ -136,7 +154,7 @@ function setup(){
     });
 
     $("#fsNextSongButton").click(function () {
-        getRandomSong();
+        getRandomSong(orderType);
         const fsPlayButton = $("#fsPlayButton");
         if (fsPlayButton.find('i').hasClass('fa-pause')) {
             const fsPlayer = document.getElementById('fsPlayer');
@@ -210,8 +228,30 @@ function setup(){
         }
     });
 
-    fsPlayer.addEventListener('ended', function() {
-        getRandomSong();
+    let fsRandomCheckbox = document.getElementById("fsRandom");
+    let fsSemiRandomCheckbox = document.getElementById("fsSemiRandom");
+    let fsOrderCheckbox = document.getElementById("fsOrder");
+
+    fsRandomCheckbox.checked = true;
+
+    fsRandomCheckbox.addEventListener("click", () => {
+        handleCheckboxSelection(fsRandomCheckbox);
+        orderType = "random";
+    });
+
+    fsSemiRandomCheckbox.addEventListener("click", () => {
+        handleCheckboxSelection(fsSemiRandomCheckbox);
+        orderType = "semiRandom";
+    });
+
+    fsOrderCheckbox.addEventListener("click", () => {
+        handleCheckboxSelection(fsOrderCheckbox);
+        orderType = "order";
+    });
+
+    
+    document.getElementById('fsPlayer').addEventListener('ended', function() {
+        getRandomSong(orderType);
         fsPlayer.play();
     });
 
@@ -223,7 +263,7 @@ function setup(){
     });
 
     updateTable();
-    getRandomSong();
+    getRandomSong(orderType);
 }
 
 $("#optionsContainer > ul").prepend($(`<li class="clickAble" data-toggle="modal" data-target="#favSong">Fav. Songs</li>`));
@@ -335,26 +375,47 @@ function updateTable() {
     });
 }
 
-function getRandomSong() {
+function getRandomSong(orderType) {
     prePreviousSongIndex = previousSongIndex;
     let numSongs = favSongs.length;
 
     if (numSongs === 0) {
-      return;
+        return;
     }
-    if (numSongs === 1) {
-      previousSongIndex = 0;
-    } else {
-      let randomIndex;
-      do {
-        randomIndex = Math.floor(Math.random() * numSongs);
-      } while (randomIndex === previousSongIndex);
 
-      previousSongIndex = randomIndex;
+    if (orderType === "random") {
+        if (numSongs === 1) {
+            previousSongIndex = 0;
+        } else {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * numSongs);
+            } while (randomIndex === previousSongIndex);
+
+            previousSongIndex = randomIndex;
+        }
+    } else if (orderType === "semiRandom") {
+        let availableSongs = Array.from({ length: numSongs }, (_, i) => i)
+            .filter(index => index !== previousSongIndex && index !== prePreviousSongIndex)
+            .filter(index => !semiRandomPlayedSongs.includes(index));
+
+        if (availableSongs.length === 0) {
+            // All songs have been played, reset the list
+            semiRandomPlayedSongs = [];
+            availableSongs = Array.from({ length: numSongs }, (_, i) => i);
+        }
+
+        let randomIndex = availableSongs[Math.floor(Math.random() * availableSongs.length)];
+        semiRandomPlayedSongs.push(randomIndex);
+        previousSongIndex = randomIndex;
+    } else if (orderType === "order") {
+        previousSongIndex++;
+        if(previousSongIndex >= favSongs.length) previousSongIndex = 0;
     }
+
     const fsPlayer = document.getElementById('fsPlayer');
     fsPlayer.volume = savedVolume;
-    fsPlayer.src = favSongs[previousSongIndex]["0"];
+    fsPlayer.src = favSongs[previousSongIndex][0];
 
     const fsInfoRow = document.getElementById('fsInfoRow');
     const { songName, artist, romaji, type } = favSongs[previousSongIndex];
@@ -439,6 +500,28 @@ function processImport(data) {
     updateTable();
 }
 
+function handleCheckboxSelection(checkbox) {
+
+    let fsRandomCheckbox = document.getElementById("fsRandom");
+    let fsSemiRandomCheckbox = document.getElementById("fsSemiRandom");
+    let fsOrderCheckbox = document.getElementById("fsOrder");
+
+    if (!checkbox.checked) {
+        checkbox.checked = true; // Ensure at least one checkbox is always selected
+    }
+    // Uncheck the other checkboxes
+    if (checkbox === fsRandomCheckbox) {
+        fsSemiRandomCheckbox.checked = false;
+        fsOrderCheckbox.checked = false;
+    } else if (checkbox === fsSemiRandomCheckbox) {
+        fsRandomCheckbox.checked = false;
+        fsOrderCheckbox.checked = false;
+    } else if (checkbox === fsOrderCheckbox) {
+        fsRandomCheckbox.checked = false;
+        fsSemiRandomCheckbox.checked = false;
+    }
+}
+
 //LISTENERS
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
@@ -461,6 +544,18 @@ AMQ_addStyle(`
     }
     .unfaved {
         color: #fff;
+    }
+
+    #fsPlayButton:hover {
+        box-sahdow: none;
+    }
+
+    #fsNextSongButton:hover {
+        box-sahdow: none;
+    }
+
+    #fsPrevSongButton:hover {
+        box-sahdow: none;
     }
 
     #fsVideo {
@@ -556,13 +651,17 @@ AMQ_addScriptData({
         <p>You can then access the Fav Songs page by clicking here :</p>
         <img src="https://i.imgur.com/3cY1Ly3.png" style="max-width: 250px">
         <p>In this page you will have the Radio Player and the list of all your liked songs which can be removed from here.</p>
-        <img src="https://i.imgur.com/Tcxe6H5.png" style="max-width: 250px">
+        <img src="https://i.imgur.com/4j6YWuB.png" style="max-width: 250px">
         <p>The Export button will let you Export in json file all the songs you have in Favorite.</p>
         <p>The Import button will let you Import in your list song that you exported from the Script or song from an AnisongDB json file.</p>
         <p>You can either click on the Import Button or Drop the Json file on the button to import.</p>
         <img src="https://i.imgur.com/zeq26uO.png" style="max-width: 250px">
         <p>The clear button will remove all the song that you Favorited, so be sure to Export them before if you want to keep them.</p>
         <img src="https://i.imgur.com/piw7OvR.png" style="max-width: 250px">
+        <p>Random = Full Random song from the list it just can't be two time in a row the same song.</p>
+        <p>SemiRandom = Full Random song from the list it just can't be a song that already been played until all songs from the list as been played.</p>
+        <p>Order = Will play the songs in the order of the List.</p>
+        <img src="https://i.imgur.com/re8kRvm.png" style="max-width: 250px">
         <p>If you find some bugs tell me on discord : .micookie</p>
     `
 });
