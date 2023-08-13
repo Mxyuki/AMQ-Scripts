@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1.0
+// @version      1.1.1
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -555,13 +555,14 @@ AMQ_addScriptData({
         <img src="https://i.imgur.com/FfpPvua.png" style="max-width: 250px">
         <p>You can then access the Fav Songs page by clicking here :</p>
         <img src="https://i.imgur.com/3cY1Ly3.png" style="max-width: 250px">
-        <p>In this page you will have the Radio Player and the list of all your liked song which you can removed them from here.</p>
-        <img src="https://i.imgur.com/QlFrkOQ.png" style="max-width: 250px">
+        <p>In this page you will have the Radio Player and the list of all your liked songs which can be removed from here.</p>
+        <img src="https://i.imgur.com/Tcxe6H5.png" style="max-width: 250px">
         <p>The Export button will let you Export in json file all the songs you have in Favorite.</p>
         <p>The Import button will let you Import in your list song that you exported from the Script or song from an AnisongDB json file.</p>
         <p>You can either click on the Import Button or Drop the Json file on the button to import.</p>
         <img src="https://i.imgur.com/zeq26uO.png" style="max-width: 250px">
         <p>The clear button will remove all the song that you Favorited, so be sure to Export them before if you want to keep them.</p>
         <img src="https://i.imgur.com/piw7OvR.png" style="max-width: 250px">
+        <p>If you find some bugs tell me on discord : .micookie</p>
     `
 });
