@@ -1,5 +1,7 @@
 # There is a lot of useless script in here but i made them for fun.
 
+# I haven't updated it in a while, i will one day update it.
+
 # How to use it
 
 You must add the extension **Tampermonkey** to your browser. 
