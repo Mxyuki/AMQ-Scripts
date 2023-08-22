@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.0
+// @version      1.2.1
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -169,10 +169,10 @@ function setup(){
             fsPlayer.src = favSongs[prePreviousSongIndex]["0"];
 
             const fsInfoRow = document.getElementById('fsInfoRow');
-            const { songName, artist, type } = favSongs[prePreviousSongIndex];
+            const { songName, artist, romaji, type } = favSongs[prePreviousSongIndex];
             fsInfoRow.innerHTML = `
                 <p class="fsSongInfo">${songName} by ${artist}</p>
-                <p class="fsSongInfo">${type}</p>
+                <p class="fsSongInfo">${romaji} • ${type}</p>
             `;
 
             const fsPlayButton = $("#fsPlayButton");
