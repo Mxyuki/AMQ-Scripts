@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.1
+// @version      1.2.2
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -274,7 +274,7 @@ function saveSettings() {
 
 function favoriteSong(){
     if (currentInfo != null) {
-        let link = currentInfo.urlMap.catbox[0];
+        let link = currentInfo.videoTargetMap.catbox[0];
         if (link.includes("files.")) {
             link = link.replace("files.", "nl.");
         }
@@ -525,7 +525,7 @@ function handleCheckboxSelection(checkbox) {
 //LISTENERS
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
-    let link = currentInfo.urlMap.catbox[0];
+    let link = currentInfo.videoTargetMap.catbox[0];
     if (link.includes("files.")) {
         link = link.replace("files.", "nl.");
     }
