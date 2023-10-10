@@ -275,9 +275,7 @@ function saveSettings() {
 function favoriteSong(){
     if (currentInfo != null) {
         let link = currentInfo.videoTargetMap.catbox[0];
-        if (link.includes("files.")) {
-            link = link.replace("files.", "nl.");
-        }
+        link = "https://nl.catbox.moe/" + link;
         let favedIndex = favSongs.findIndex(song => song["0"] === link);
         if (favedIndex !== -1) {
             favSongs.splice(favedIndex, 1);
