@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.2
+// @version      1.2.3
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -472,6 +472,12 @@ function processImport(data) {
                         if (item[0].startsWith("https://files.catbox.moe/")) {
                             item[0] = item[0].replace("https://files.catbox.moe/", "https://nl.catbox.moe/");
                         }
+                        else if (item[0].startsWith("https://ladist1.catbox.moe/")) {
+                            item[0] = item[0].replace("https://ladist1.catbox.moe/", "https://nl.catbox.moe/");
+                        }
+                        else if (item[0].startsWith("https://abdist1.catbox.moe/")) {
+                            item[0] = item[0].replace("https://abdist1.catbox.moe/", "https://nl.catbox.moe/");
+                        }
                         if (!favSongs.some(song => song[0] === item[0])) {
                             favSongs.push({
                                 0: item[0],
@@ -524,9 +530,7 @@ function handleCheckboxSelection(checkbox) {
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
     let link = currentInfo.videoTargetMap.catbox[0];
-    if (link.includes("files.")) {
-        link = link.replace("files.", "nl.");
-    }
+    link = "https://nl.catbox.moe/" + link;
     let faved = favSongs.findIndex(song => song["0"] === link);
 
     if(faved === -1) faved = false;
