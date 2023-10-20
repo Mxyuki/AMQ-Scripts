@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Toggle Chat
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.2
+// @version      0.3
 // @description  Make an Ingame button at the top left of the chat to Toggle the chat.
 // @description  If there is a message in the chat a Blue Box Shaddow will appear to tell you.
 // @description  I made it for my screen that is a 2560x1440 but it should work for a 1920x1080 too.
@@ -64,11 +64,12 @@ newButton.css({
 $('#qpOptionContainer').append(newButton);
 
 const mutationCallback = function(mutationsList, observer) {
+    console.log("a");
     mutationsList.forEach((mutation) => {
         const CHfa = $('#CHfa');
         const gameChatContainer = $('#gameChatContainer');
         const CHbutton = $('#CHbutton');
-        if (!$(mutation.target).hasClass('hidden')) {
+        if ($(mutation.target).hasClass('hidden')) {
             CHfa.removeClass();
             CHfa.addClass('fa fa-chevron-right');
             gameChatContainer.removeClass('hidden');
@@ -79,13 +80,13 @@ const mutationCallback = function(mutationsList, observer) {
     });
 };
 
-const lobbyPage = $('#lobbyPage');
+const gameChatPage = $('#gameChatPage');
 const observer = new MutationObserver(mutationCallback);
 const config = {
     attributes: true,
     attributeFilter: ['class'],
 };
-observer.observe(lobbyPage[0], config);
+observer.observe(gameChatPage[0], config);
 
 
 new Listener("Game Chat Message", (a) => {
