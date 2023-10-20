@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.3
+// @version      1.2.4
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -275,35 +275,41 @@ function saveSettings() {
 function favoriteSong(){
     if (currentInfo != null) {
         let link = currentInfo.videoTargetMap.catbox[0];
-        link = "https://nl.catbox.moe/" + link;
-        let favedIndex = favSongs.findIndex(song => song["0"] === link);
-        if (favedIndex !== -1) {
-            favSongs.splice(favedIndex, 1);
-            updateClass(false);
-        } else {
-            const typeMap = {
-                1: "OP",
-                2: "ED",
-                3: "INS"
-            };
-            let type = typeMap[currentInfo.type] || "";
-            if (type === "OP" || type === "ED") type += " " + currentInfo.typeNumber;
-            const songData = {
-                romaji: currentInfo.animeNames.romaji,
-                english: currentInfo.animeNames.english,
-                0: link,
-                songName: currentInfo.songName,
-                artist: currentInfo.artist,
-                type: type
-            };
-            favSongs.push(songData);
-            updateClass(true);
+        if(link == undefined){
+            console.error("Mp3 link missing, can't favorite.");
+            return;
         }
+        else{
+            link = "https://nl.catbox.moe/" + link;
+            let favedIndex = favSongs.findIndex(song => song["0"] === link);
+            if (favedIndex !== -1) {
+                favSongs.splice(favedIndex, 1);
+                updateClass(false);
+            } else {
+                const typeMap = {
+                    1: "OP",
+                    2: "ED",
+                    3: "INS"
+                };
+                let type = typeMap[currentInfo.type] || "";
+                if (type === "OP" || type === "ED") type += " " + currentInfo.typeNumber;
+                const songData = {
+                    romaji: currentInfo.animeNames.romaji,
+                    english: currentInfo.animeNames.english,
+                    0: link,
+                    songName: currentInfo.songName,
+                    artist: currentInfo.artist,
+                    type: type
+                };
+                favSongs.push(songData);
+                updateClass(true);
+            }
 
 
-        filterOrder();
-        updateTable();
-        saveSettings();
+            filterOrder();
+            updateTable();
+            saveSettings();
+        }
     }
 }
 
@@ -530,13 +536,19 @@ function handleCheckboxSelection(checkbox) {
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
     let link = currentInfo.videoTargetMap.catbox[0];
-    link = "https://nl.catbox.moe/" + link;
-    let faved = favSongs.findIndex(song => song["0"] === link);
+    if(link == undefined){
+        console.error("Mp3 link missing.");
+    }
+    else{
+        link = "https://nl.catbox.moe/" + link;
 
-    if(faved === -1) faved = false;
-    else faved = true;
+        let faved = favSongs.findIndex(song => song["0"] === link);
 
-    updateClass(faved);
+        if(faved === -1) faved = false;
+        else faved = true;
+
+        updateClass(faved);
+    }
 }).bindListener();
 
 //STYLE
