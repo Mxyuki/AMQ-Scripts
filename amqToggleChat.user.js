@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         AMQ Hide Chat
+// @name         AMQ T Chat
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      0.1
 // @description  Make an Ingame button at the top left of the chat to Toggle the chat.
