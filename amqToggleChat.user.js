@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Toggle Chat
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.1
+// @version      0.2
 // @description  Make an Ingame button at the top left of the chat to Toggle the chat.
 // @description  If there is a message in the chat a Blue Box Shaddow will appear to tell you.
 // @description  I made it for my screen that is a 2560x1440 but it should work for a 1920x1080 too.
@@ -29,7 +29,6 @@ const chevronIcon = $('<i/>', {
 newButton.append(chevronIcon);
 
 newButton.on('click', function() {
-    console.log($('#gameChatPage > .col-xs-9'));
     const CHfa = $('#CHfa');
     const gameChatContainer = $('#gameChatContainer');
     const CHbutton = $('#CHbutton');
@@ -48,7 +47,6 @@ newButton.on('click', function() {
         $('.gamePage').css('width', '133.5%');
         isHidden = !isHidden;
     }
-    console.log(isHidden);
 });
 
 newButton.css({
@@ -64,6 +62,31 @@ newButton.css({
 });
 
 $('#qpOptionContainer').append(newButton);
+
+const mutationCallback = function(mutationsList, observer) {
+    mutationsList.forEach((mutation) => {
+        const CHfa = $('#CHfa');
+        const gameChatContainer = $('#gameChatContainer');
+        const CHbutton = $('#CHbutton');
+        if (!$(mutation.target).hasClass('hidden')) {
+            CHfa.removeClass();
+            CHfa.addClass('fa fa-chevron-right');
+            gameChatContainer.removeClass('hidden');
+            $('.gamePage').css('width', '100%');
+            CHbutton.css('box-shadow', 'none');
+            isHidden = false;
+        }
+    });
+};
+
+const lobbyPage = $('#lobbyPage');
+const observer = new MutationObserver(mutationCallback);
+const config = {
+    attributes: true,
+    attributeFilter: ['class'],
+};
+observer.observe(lobbyPage[0], config);
+
 
 new Listener("Game Chat Message", (a) => {
 	if(isHidden){
