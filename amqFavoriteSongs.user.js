@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.4
+// @version      1.3.0
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
@@ -92,18 +92,25 @@ function setup(){
                         </div>
 
                         <div id="fsOptions">
-                            <label>
-                                <input type="checkbox" id="fsRandom" name="fsOrder" value="random">
-                                Random
-                            </label>
-                            <label>
-                                <input type="checkbox" id="fsSemiRandom" name="fsOrder" value="semi-random">
-                                SemiRandom
-                            </label>
-                            <label>
-                                <input type="checkbox" id="fsOrder" name="fsOrder" value="order">
-                                Order
-                            </label>
+                            <div id="fsOrderingType">
+                                <label>
+                                    <input type="checkbox" id="fsRandom" name="fsOrder" value="random">
+                                    Random
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="fsSemiRandom" name="fsOrder" value="semi-random">
+                                    SemiRandom
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="fsOrder" name="fsOrder" value="order">
+                                    Order
+                                </label>
+                            </div>
+                            <div id"fsSongNumberContainer">
+                                <label id="fsSongNumber">
+                                    0 Songs
+                                </label>
+                            </div>
                         </div>
 
 
@@ -228,6 +235,8 @@ function setup(){
         }
     });
 
+    $("#fsSongNumber").html(favSongs.length + " Songs");
+
     let fsRandomCheckbox = document.getElementById("fsRandom");
     let fsSemiRandomCheckbox = document.getElementById("fsSemiRandom");
     let fsOrderCheckbox = document.getElementById("fsOrder");
@@ -249,7 +258,7 @@ function setup(){
         orderType = "order";
     });
 
-    
+
     document.getElementById('fsPlayer').addEventListener('ended', function() {
         getRandomSong(orderType);
         fsPlayer.play();
@@ -305,7 +314,7 @@ function favoriteSong(){
                 updateClass(true);
             }
 
-
+            $("#fsSongNumber").html(favSongs.length + " Songs");
             filterOrder();
             updateTable();
             saveSettings();
@@ -652,6 +661,20 @@ AMQ_addStyle(`
         color: #fff;
         border-radius: 4px;
         border: none;
+    }
+
+    #fsOptions {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #fsOrderingType {
+        display: flex;
+        gap: 10px; /* Adjust the gap as needed */
+    }
+
+    #fsSongNumberContainer {
+        text-align: right;
     }
 `);
 
