@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.0
+// @version      1.3.1
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
-// @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.moe file so if you want to use it you may want to change it to your taste.
+// @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
 // @description  I still tried to make that it is kinda user friendly if some people try to use it.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
@@ -289,7 +289,7 @@ function favoriteSong(){
             return;
         }
         else{
-            link = "https://nl.catbox.moe/" + link;
+            link = "https://nl.catbox.video/" + link;
             let favedIndex = favSongs.findIndex(song => song["0"] === link);
             if (favedIndex !== -1) {
                 favSongs.splice(favedIndex, 1);
@@ -468,7 +468,10 @@ function processImport(data) {
                             }
                         }
                         if (item.audio.startsWith("https://files.catbox.moe/")) {
-                            item.audio = item.audio.replace("https://files.catbox.moe/", "https://nl.catbox.moe/");
+                            item.audio = item.audio.replace("https://files.catbox.moe/", "https://nl.catbox.video/");
+                        }
+                        else if (item.audio.startsWith("https://nl.catbox.moe/")) {
+                            item.audio = item.audio.replace("https://nl.catbox..moe/", "https://nl.catbox.video/");
                         }
                         if (!favSongs.some(song => song[0] === item.audio)) {
                             favSongs.push({
@@ -485,13 +488,13 @@ function processImport(data) {
                             item.type = item.type.replace("Opening", "OP").replace("Ending", "ED");
                         }
                         if (item[0].startsWith("https://files.catbox.moe/")) {
-                            item[0] = item[0].replace("https://files.catbox.moe/", "https://nl.catbox.moe/");
+                            item[0] = item[0].replace("https://files.catbox.moe/", "https://nl.catbox.video/");
                         }
-                        else if (item[0].startsWith("https://ladist1.catbox.moe/")) {
-                            item[0] = item[0].replace("https://ladist1.catbox.moe/", "https://nl.catbox.moe/");
+                        else if (item[0].startsWith("https://ladist1.catbox.video/")) {
+                            item[0] = item[0].replace("https://ladist1.catbox.video/", "https://nl.catbox.videoe/");
                         }
-                        else if (item[0].startsWith("https://abdist1.catbox.moe/")) {
-                            item[0] = item[0].replace("https://abdist1.catbox.moe/", "https://nl.catbox.moe/");
+                        else if (item[0].startsWith("https://abdist1.catbox.video/")) {
+                            item[0] = item[0].replace("https://abdist1.catbox.video/", "https://nl.catbox.video/");
                         }
                         if (!favSongs.some(song => song[0] === item[0])) {
                             favSongs.push({
@@ -549,7 +552,7 @@ new Listener("answer results", (payload) => {
         console.error("Mp3 link missing.");
     }
     else{
-        link = "https://nl.catbox.moe/" + link;
+        link = "https://nl.catbox.video/" + link;
 
         let faved = favSongs.findIndex(song => song["0"] === link);
 
