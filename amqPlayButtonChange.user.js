@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ PlayButton Change
-// @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.3
-// @description  Change how the Solo, Multi and Nexus button are displayed
+// @namespace    http://tampermonkey.net/
+// @version      0.4
+// @description  Change how the Solo, Multi and Nexus button are diplayed
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqPlayButtonChange.user.js
@@ -21,20 +21,22 @@ mpPlayButton.removeChild(h1Element);
 
 const soloButton = createButton('Solo', () => hostModal.displayHostSolo());
 const multiButton = createButton('Multi', () => viewChanger.changeView('roomBrowser'));
+const jamButton = createButton('Jam', () => roomBrowser.fireJoinJamGame());
 const nexusButton = createButton('Nexus', () => viewChanger.changeView('nexus'));
 
-mpPlayButton.append(soloButton, multiButton, nexusButton);
+mpPlayButton.append(soloButton, multiButton, jamButton, nexusButton);
 mpPlayButton.style.display = 'flex';
 mpPlayButton.style.justifyContent = 'space-between';
 
 addButtonHoverStyles(soloButton, 'https://i.imgur.com/ycmLeXE.png');
 addButtonHoverStyles(multiButton, 'https://i.imgur.com/D5PGM29.png');
+addButtonHoverStyles(jamButton, 'https://i.imgur.com/osIBq9C.png');
 addButtonHoverStyles(nexusButton, 'https://i.imgur.com/idgLUtS.png');
 
 const styleElement = document.querySelector('style');
 const styleSheet = styleElement.sheet;
 
-styleSheet.insertRule('.miyuButton { width: 33.33%; background-color: transparent; border: none; }', styleSheet.cssRules.length);
+styleSheet.insertRule('.miyuButton { width: 25%; background-color: transparent; border: none; }', styleSheet.cssRules.length);
 styleSheet.insertRule('#mainMenu.button { display: flex; }', styleSheet.cssRules.length);
 
 mpPlayButton.style.backgroundSize = 'cover';
@@ -57,9 +59,10 @@ function createButton(text, onclick) {
 
 function addButtonHoverStyles(button, hoverUrl) {
   button.addEventListener('mouseover', () => {
-    mpPlayButton.style.background = `url("${hoverUrl}")`;
+      mpPlayButton.style.backgroundSize = "cover";
+      mpPlayButton.style.background = `url("${hoverUrl}")`;
   });
   button.addEventListener('mouseout', () => {
-    mpPlayButton.style.background = '';
+      mpPlayButton.style.background = '';
   });
 }
