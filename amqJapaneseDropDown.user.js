@@ -9,8 +9,8 @@
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
-// @downloadURL  https://raw.githubusercontent.com/Mxyuki/AMQ-Scripts/main/amqjapaneseDropDown.user.js
-// @updateURL    https://raw.githubusercontent.com/Mxyuki/AMQ-Scripts/main/amqjapaneseDropDown.user.js
+// @downloadURL  https://raw.githubusercontent.com/Mxyuki/AMQ-Scripts/main/amqJapaneseDropDown.user.js
+// @updateURL    https://raw.githubusercontent.com/Mxyuki/AMQ-Scripts/main/amqJapaneseDropDown.user.js
 // ==/UserScript==
 
 (function() {
