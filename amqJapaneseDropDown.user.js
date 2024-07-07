@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name         AMQ Japanese DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
-// @description  Make AMQ playable using Japanese characters.
+// @version      1.1
+// @description  Make AMQ playable using Japanese characters
 // @description  I scraped ANN for the titles, and there might be Missing anime because the names didn't matched title in amq, or some didn't got scrapped for some reason.
-// @description  Most scrapped info from ANN are accessible here: https://github.com/Mxyuki/amqJP
-// @description  If you want to upgrade it feel free to use anything i put here.
+// @description  Most scrapped info from ANN are accessible here https://github.com/Mxyuki/amqJP
+// @description  If you want to upgrade it feel free to use anything i put here
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
-// @downloadURL  https://raw.githubusercontent.com/Mxyuki/amq-scripts/main/amqJapaneseDropDown.user.js
-// @updateURL    https://raw.githubusercontent.com/Mxyuki/amq-scripts/main/amqJapaneseDropDown.user.js
+// @downloadURL  https://raw.githubusercontent.com/kempanator/amq-scripts/main/amqjapaneseDropDown.user.js
+// @updateURL    https://raw.githubusercontent.com/kempanator/amq-scripts/main/amqjapaneseDropDown.user.js
 // ==/UserScript==
 
 (function() {
@@ -106,8 +106,8 @@
                     let found = false;
                     for (let item of jsonData) {
                         if (item.main_title === animeName) {
+                             $('#qpAnimeName').text(item.japanese_title);
                             fitTextToContainer($("#qpAnimeName"), $("#qpAnimeNameContainer"), 25, 11);
-                            console.log(`Japanese title for ${animeName}: ${item.japanese_title}`);
                             found = true;
                             break;
                         }
