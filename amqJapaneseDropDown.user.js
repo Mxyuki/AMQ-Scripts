@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Japanese DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1
+// @version      1.2
 // @description  Make AMQ playable using Japanese characters
 // @description  I scraped ANN for the titles, and there might be Missing anime because the names didn't matched title in amq, or some didn't got scrapped for some reason.
 // @description  Most scrapped info from ANN are accessible here https://github.com/Mxyuki/amqJP
@@ -9,14 +9,14 @@
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
-// @downloadURL  https://raw.githubusercontent.com/kempanator/amq-scripts/main/amqjapaneseDropDown.user.js
-// @updateURL    https://raw.githubusercontent.com/kempanator/amq-scripts/main/amqjapaneseDropDown.user.js
+// @downloadURL  https://raw.githubusercontent.com/Mxyuki/AMQ-Scripts/main/amqjapaneseDropDown.user.js
+// @updateURL    https://raw.githubusercontent.com/Mxyuki/AMQ-Scripts/main/amqjapaneseDropDown.user.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    const githubJsonUrl = 'https://raw.githubusercontent.com/Mxyuki/amqJP/main/perfectMatch.json';
+    const githubJsonUrl = 'https://raw.githubusercontent.com/Mxyuki/amqJP/main/dropDown.json';
 
     async function convertJapaneseToMain(japaneseTitle) {
         try {
