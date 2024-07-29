@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Japanese DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2
+// @version      1.3
 // @description  Make AMQ playable using Japanese characters
 // @description  I scraped ANN for the titles, and there might be Missing anime because the names didn't matched title in amq, or some didn't got scrapped for some reason.
 // @description  Most scrapped info from ANN are accessible here https://github.com/Mxyuki/amqJP
@@ -17,24 +17,30 @@
     'use strict';
 
     const githubJsonUrl = 'https://raw.githubusercontent.com/Mxyuki/amqJP/main/dropDown.json';
+    let jsonData = null;
 
-    async function convertJapaneseToMain(japaneseTitle) {
+    async function fetchJsonData() {
         try {
             let response = await fetch(githubJsonUrl);
             if (!response.ok) {
                 throw new Error('Network response was not ok ' + response.statusText);
             }
-            let data = await response.json();
-            for (let item of data) {
-                if (item.japanese_title === japaneseTitle) {
-                    return item.main_title;
-                }
-            }
-            return japaneseTitle;
+            jsonData = await response.json();
         } catch (error) {
-            console.error('Failed to fetch and convert Japanese title:', error);
-            return japaneseTitle;
+            console.error('Failed to fetch JSON data:', error);
         }
+    }
+
+    async function convertJapaneseToMain(japaneseTitle) {
+        if (!jsonData) {
+            await fetchJsonData();
+        }
+        for (let item of jsonData) {
+            if (item.japanese_title === japaneseTitle) {
+                return item.main_title;
+            }
+        }
+        return japaneseTitle;
     }
 
     let originalSubmitAnswer = QuizTypeAnswerInputController.prototype.submitAnswer;
@@ -49,22 +55,16 @@
         if (this.version === null) {
             let retriveListListener = new Listener("get all song names", async function (payload) {
                 this.version = payload.version;
-                try {
-                    let response = await fetch(githubJsonUrl);
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    let data = await response.json();
-                    if (Array.isArray(data)) {
-                        this.list = data.map(item => item.japanese_title);
-                    } else {
-                        console.error('Invalid data format:', data);
-                        return;
-                    }
-                    this.newList();
-                } catch (error) {
-                    console.error('Failed to fetch song names from GitHub', error);
+                if (!jsonData) {
+                    await fetchJsonData();
                 }
+                if (Array.isArray(jsonData)) {
+                    this.list = jsonData.map(item => item.japanese_title);
+                } else {
+                    console.error('Invalid data format:', jsonData);
+                    return;
+                }
+                this.newList();
                 retriveListListener.unbindListener();
             }.bind(this));
             retriveListListener.bindListener();
@@ -96,28 +96,22 @@
     new Listener("answer results", async (payload) => {
         let name = payload.songInfo.altAnimeNames;
         if (Array.isArray(name)) {
-            try {
-                let response = await fetch(githubJsonUrl);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                let jsonData = await response.json();
-                for (let animeName of name) {
-                    let found = false;
-                    for (let item of jsonData) {
-                        if (item.main_title === animeName) {
-                             $('#qpAnimeName').text(item.japanese_title);
-                            fitTextToContainer($("#qpAnimeName"), $("#qpAnimeNameContainer"), 25, 11);
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found) {
+            if (!jsonData) {
+                await fetchJsonData();
+            }
+            for (let animeName of name) {
+                let found = false;
+                for (let item of jsonData) {
+                    if (item.main_title === animeName) {
+                         $('#qpAnimeName').text(item.japanese_title);
+                        fitTextToContainer($("#qpAnimeName"), $("#qpAnimeNameContainer"), 25, 11);
+                        found = true;
                         break;
                     }
                 }
-            } catch (error) {
-                console.error('Failed to fetch and process answer results:', error);
+                if (found) {
+                    break;
+                }
             }
         }
     }).bindListener();
