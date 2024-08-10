@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Command DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
+// @version      1.0.1
 // @description  Adds a dropdown to help select commands in Anime Music Quiz chat box.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -106,7 +106,7 @@
         dropdown.style.position = 'absolute';
         dropdown.style.backgroundColor = DROPDOWN_BG_COLOR;
         dropdown.style.border = '1px solid #ccc';
-        dropdown.style.borderRadius = '8px';
+        dropdown.style.borderRadius = '8px 8px 0px 0px';
         dropdown.style.listStyle = 'none';
         dropdown.style.padding = '5px';
         dropdown.style.margin = '0';
