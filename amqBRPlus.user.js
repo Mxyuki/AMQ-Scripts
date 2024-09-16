@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.7.3
+// @version      1.8.0
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -25,6 +25,7 @@
 // @description  The pages are resizable, and titles language adapt based on the one you have in settings.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
+// @grant        GM_xmlhttpRequest
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqBRPlus.user.js
@@ -83,7 +84,12 @@ function displayPicked(){
         const brpTable = document.getElementById('brpTable');
         const tr = document.createElement('tr');
         tr.classList.add('brpPickedSong');
-        tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${pickedShow[i].name}</p><i class="fa fa-search brpAnisongSearch" aria-hidden="true"></i></td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        if(pickedShow[i].type == null){
+            tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${pickedShow[i].name}</p><i class="fa fa-search brpAnisongSearch" aria-hidden="true"></i></td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        }
+        else{
+            tr.innerHTML = `<td class="brpPickedName"><i class="fa fa-minus brpRemove" aria-hidden="true"></i><p>${pickedShow[i].name + " (" + pickedShow[i].type + ")"}</p><i class="fa fa-search brpAnisongSearch" aria-hidden="true"></i></td><td class="brpPickedANNID" style="text-align: center;">${pickedShow[i].id}</td>`;
+        }
         brpTable.appendChild(tr);
 
         tr.querySelector('.brpRemove').addEventListener('click', function() {
@@ -718,24 +724,68 @@ function setup(){
 
 }
 
-new Listener("new collected name entry", (payload) => {
-    if(language == 0){
-        if(payload.eng){
-            pickedShow.push({id: payload.id, name: payload.eng});
-        }
-        else if(payload.jap){
-            pickedShow.push({id: payload.id, name: payload.jap});
-        }
+new Listener("new collected name entry", async (payload) => {
+    let name;
+    if (language == 0) {
+        name = payload.eng ? payload.eng : payload.jap;
+    } else {
+        name = payload.jap ? payload.jap : payload.eng;
     }
-    else{
-        if(payload.jap){
-            pickedShow.push({id: payload.id, name: payload.jap});
-        }
-        else if(payload.eng){
-            pickedShow.push({id: payload.id, name: payload.eng});
-        }
-    }
+
+    socket.sendCommand({type: "library", command: "get anime extended info", data: {annId: payload.id}});
+
+    pickedShow.push({ id: payload.id, name: name, type: null});
+
     displayPicked();
+}).bindListener();
+
+new Listener("get anime extended info", (payload) => {
+
+    if (payload.aniListId === null) {
+        return;
+    }
+
+    let type = null;
+    const query = `
+    query ($id: Int) {
+        Media(id: $id) {
+            format
+        }
+    }`;
+
+    const apiUrl = 'https://graphql.anilist.co';
+
+    GM_xmlhttpRequest({
+        method: 'POST',
+        url: apiUrl,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: JSON.stringify({
+            query: query,
+            variables: {
+                id: payload.aniListId,
+            },
+        }),
+        onload: function(response) {
+            if (response.status === 200) {
+                const result = JSON.parse(response.responseText);
+                type = result.data.Media.format;
+                for (let i = 0; i < pickedShow.length; i++) {
+                    if (pickedShow[i].id === payload.annId) {
+                        pickedShow[i].type = type;
+                        displayPicked();
+                        break;
+                    }
+                }
+            } else {
+                console.error('Error fetching anime format:', response);
+            }
+        },
+        onerror: function(error) {
+            console.error('Request failed', error);
+        },
+    });
 }).bindListener();
 
 new Listener("drop name entry", (payload) => {
