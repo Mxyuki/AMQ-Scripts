@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.8.0
+// @version      1.8.1
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -45,6 +45,7 @@ let tileShow = [];
 let pickedShow = [];
 
 let isDisplayed = false;
+let isTypeDisplay = false;
 
 let language;
 
@@ -419,16 +420,22 @@ function setup(){
             isDisplayed = !isDisplayed
             isDisplayed ? showName() : hideName();
         }),
+
         $(`<button class="btn btn-primary brpRight brpButton">Share</button>`).click(function () {
             share();
         }),
-        $(`<button class="btn btn-primary brpRight brpButton">Tile List</button>`).click(function () {
+
+        /*$(`<button class="btn btn-primary brpRight brpButton">Tile List</button>`).click(function () {
             if (brpTileListWindow.isVisible()) {
                 brpTileListWindow.close();
             }
             else {
                 brpTileListWindow.open();
             }
+        }),*/
+
+        $(`<button class="btn btn-primary brpRight brpButton">Type</button>`).click(function () {
+            isTypeDisplay = !isTypeDisplay;
         })
 
     );
@@ -732,7 +739,9 @@ new Listener("new collected name entry", async (payload) => {
         name = payload.jap ? payload.jap : payload.eng;
     }
 
-    socket.sendCommand({type: "library", command: "get anime extended info", data: {annId: payload.id}});
+    if(isTypeDisplay == true){
+        socket.sendCommand({type: "library", command: "get anime extended info", data: {annId: payload.id}});
+    }
 
     pickedShow.push({ id: payload.id, name: name, type: null});
 
@@ -740,6 +749,8 @@ new Listener("new collected name entry", async (payload) => {
 }).bindListener();
 
 new Listener("get anime extended info", (payload) => {
+
+    if(isTypeDisplay == false) return;
 
     if (payload.aniListId === null) {
         return;
