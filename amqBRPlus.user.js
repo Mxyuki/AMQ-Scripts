@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.8.1
+// @version      1.8.2
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -397,7 +397,17 @@ function setup(){
         height: 40,
         position: {
             x: 0,
-            y: 20
+            y: 5
+        },
+        id: "brpSearchBar"
+    });
+
+    brpWindow.addPanel({
+        width: 1.0,
+        height: 35,
+        position: {
+            x: 0,
+            y: 60
         },
         id: "brpOption"
     });
@@ -407,14 +417,16 @@ function setup(){
         height: "calc(100% - 75px)",
         position: {
             x: 0,
-            y: 70
+            y: 110
         },
         id: "brpPickedList"
     });
 
     brpWindow.panels[0].panel.append(
+        $(`<input type="text" id="brpSearch" class="brpLeft brpTextBox brpOptionPanel" placeholder="Search Anime"></input>`)
+    );
 
-        $(`<input type="text" id="brpSearch" class="brpLeft brpTextBox brpOptionPanel" placeholder="Search Anime"></input>`),
+    brpWindow.panels[1].panel.append(
 
         $(`<button class="btn btn-primary brpRight brpButton">Display</button>`).click(function () {
             isDisplayed = !isDisplayed
@@ -425,14 +437,14 @@ function setup(){
             share();
         }),
 
-        /*$(`<button class="btn btn-primary brpRight brpButton">Tile List</button>`).click(function () {
+        $(`<button class="btn btn-primary brpRight brpButton">Tile List</button>`).click(function () {
             if (brpTileListWindow.isVisible()) {
                 brpTileListWindow.close();
             }
             else {
                 brpTileListWindow.open();
             }
-        }),*/
+        }),
 
         $(`<button class="btn btn-primary brpRight brpButton">Type</button>`).click(function () {
             isTypeDisplay = !isTypeDisplay;
@@ -440,7 +452,7 @@ function setup(){
 
     );
 
-    brpWindow.panels[1].panel.append(
+    brpWindow.panels[2].panel.append(
 
         $(`
             <table id="brpTable">
@@ -549,8 +561,8 @@ function setup(){
             margin-left: 10px;
         }
         .brpRight {
-            float: right;
-            margin-right: 10px;
+            float: left;
+            margin-left: 10px;
             background-color: #8d8cdd;
             border-color: #4d366a;
         }
