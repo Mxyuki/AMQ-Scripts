@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.8.2
+// @version      1.8.3
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -384,8 +384,8 @@ function setup(){
     brpWindow = new AMQWindow({
         title: "BR Plus",
         width: 700,
-        height: 450,
-        minWidth: 440,
+        height: 470,
+        minWidth: 340,
         minHeight: 250,
         zIndex: 999,
         draggable: true,
@@ -414,7 +414,7 @@ function setup(){
 
     brpWindow.addPanel({
         width: 1.0,
-        height: "calc(100% - 75px)",
+        height: "calc(100% - 120px)",
         position: {
             x: 0,
             y: 110
