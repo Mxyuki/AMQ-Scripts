@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.3.3
+// @version      3.3.4
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
@@ -291,26 +291,27 @@ function getSkinsNames(){
     skinNameList = skinNameList.slice(2, -1);
 }
 
-function textboxProcess(searchList){
-    if(searchList != null){
+function textboxProcess(searchList) {
+    if (searchList != null) {
         $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
             this.classList.remove("hidden");
         });
         $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
             let lastClass = this.classList.item(this.classList.length - 1);
-            if(lastClass == "selected"){
+            if (lastClass == "selected") {
                 lastClass = this.classList.item(this.classList.length - 2);
                 $(this).parent().find(".swTopBarAvatarSkinContainer").css("width", "0px");
             }
-            if(!searchList.includes(lastClass)){
+            if (!searchList.includes(lastClass)) {
                 $(this).addClass("hidden");
             }
         });
-    }
-    else{
+        $('#swTopBarContentContainer').scrollLeft(0);
+    } else {
         $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer').each(function() {
             this.classList.remove("hidden");
         });
+        $('#swTopBarContentContainer').scrollLeft(0);
     }
 }
 
