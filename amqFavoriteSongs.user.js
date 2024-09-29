@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.3
+// @version      1.3.4
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
 // @description  I still tried to make that it is kinda user friendly if some people try to use it.
-// @description  If you had a version before this one and songs aren't playing it must be due to the new nl catbox link so you just have to export your song lis tand reimport it, it will update all links.
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
+// @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
@@ -30,6 +30,9 @@ let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
 let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
 let orderType = "random";
+
+const scriptVersion = "1.3.4";
+const scriptName = "AMQ Fav Songs";
 
 let favSongs = savedData.favSongs;
 let currentInfo = null;
@@ -570,7 +573,7 @@ new Listener("answer results", (payload) => {
 //STYLE
 AMQ_addStyle(`
     .faved {
-        color: #85a4e2;
+        color: #e6aeae;
     }
     .unfaved {
         color: #fff;
