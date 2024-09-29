@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.2
+// @version      1.3.3
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
 // @description  I still tried to make that it is kinda user friendly if some people try to use it.
 // @description  If you had a version before this one and songs aren't playing it must be due to the new nl catbox link so you just have to export your song lis tand reimport it, it will update all links.
 // @author       Mxyuki
-// @match        https://animemusicquiz.com/*
+// @match        https://*.animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
