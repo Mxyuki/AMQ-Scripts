@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.8.5
+// @version      1.8.6
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -45,6 +45,7 @@ let loadInterval = setInterval(() => {
 
 const scriptVersion = "1.8.4";
 const scriptName = "AMQ BR Plus";
+checkScriptVersion(scriptName, scriptVersion);
 
 let tileShow = [];
 let pickedShow = [];
