@@ -12,9 +12,9 @@ function checkScriptVersion(scriptName, scriptVersion) {
             localStorage.setItem('scriptVersionCheck', JSON.stringify(scriptVersionCheck));
 
             if (typeof popoutMessages !== 'undefined' && typeof popoutMessages.displayStandardMessage === 'function') {
-                popoutMessages.displayStandardMessage(scriptName, "updated to version " + scriptVersion);
+                popoutMessages.displayStandardMessage(scriptName, `${scriptName} has been updated from version ${storedVersion} to ${scriptVersion}`);
             }
-            console.log(`Updated ${scriptName} to version ${scriptVersion}.`);
+            console.log(`${scriptName} has been updated from version ${storedVersion} to ${scriptVersion}.`);
         } else {
             console.log(`${scriptName} is up to date (version ${scriptVersion}).`);
         }
