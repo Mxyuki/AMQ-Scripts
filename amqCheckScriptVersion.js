@@ -7,7 +7,7 @@ function checkScriptVersion(scriptName, scriptVersion) {
     } else {
         const storedVersion = scriptVersionCheck[scriptName];
         if (storedVersion !== scriptVersion) {
-            popoutMessages.displayStandardMessage(scriptName, `Updated from version ${storedVersion} → ${scriptVersion}`);
+            popoutMessages.displayStandardMessage(scriptName, `Updated ${storedVersion} → ${scriptVersion}`);
             scriptVersionCheck[scriptName] = scriptVersion;
             localStorage.setItem('scriptVersionCheck', JSON.stringify(scriptVersionCheck));
         }
