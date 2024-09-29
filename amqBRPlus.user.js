@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.8.4
+// @version      1.8.5
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -17,6 +17,7 @@
 // @description  "/brpload https://litter.catbox.moe/XXXXXX.json" will add the animes of the litterbox page into your picked list.
 // @description  "/brpclean" remove all the animes in your Picked List
 // @description  Tile List button : Open the Tile List Page.
+// @description  Type button : Make an Anilist API call to get the type of anime it is to easily know if you picked a Tv or an Ova.
 // @description  ----- Tile List Page : -----
 // @description  When in Looting phase, display all the animes that are in your Tile (doesn't show datastore items), it change automatically at each time you change tile.
 // @description  Clicking on Anime Name or ANN ID at the top Organize the Tile Animes.
@@ -26,6 +27,7 @@
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
 // @grant        GM_xmlhttpRequest
+// @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
 // @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqBRPlus.user.js
@@ -40,6 +42,9 @@ let loadInterval = setInterval(() => {
         clearInterval(loadInterval);
     }
 }, 500);
+
+const scriptVersion = "1.8.4";
+const scriptName = "AMQ BR Plus";
 
 let tileShow = [];
 let pickedShow = [];
