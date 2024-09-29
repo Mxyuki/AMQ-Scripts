@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.3.6
+// @version      3.3.7
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
@@ -24,6 +24,7 @@ let skinWidth = "10%";
 
 const scriptVersion = "3.3.6";
 const scriptName = "AMQ Skin Plus";
+checkScriptVersion(scriptName, scriptVersion);
 
 let total = 0;
 let total2 = 0;
