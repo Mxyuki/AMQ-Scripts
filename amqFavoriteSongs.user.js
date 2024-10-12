@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.5
+// @version      1.4.0
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -27,11 +27,33 @@ let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
   favSongs: []
 };
 
+savedData.favSongs.forEach(item => {
+    if (item[0] && typeof item[0] === 'string') {
+        if (item[0].startsWith("https://files.catbox.moe/")) {
+            item[0] = item[0].replace("https://files.catbox.moe/", "https://eudist.animemusicquiz.com/");
+        } else if (item[0].startsWith("https://ladist1.catbox.video/")) {
+            item[0] = item[0].replace("https://ladist1.catbox.video/", "https://eudist.animemusicquiz.com/");
+        } else if (item[0].startsWith("https://abdist1.catbox.video/")) {
+            item[0] = item[0].replace("https://abdist1.catbox.video/", "https://eudist.animemusicquiz.com/");
+        } else if (item[0].startsWith("https://nl.catbox.moe/")) {
+            item[0] = item[0].replace("https://nl.catbox.moe/", "https://eudist.animemusicquiz.com/");
+        } else if (item[0].startsWith("https://nl.catbox.video/")) {
+            item[0] = item[0].replace("https://nl.catbox.video/", "https://eudist.animemusicquiz.com/");
+        } else if (item[0].startsWith("https://naedist.animemusicquiz.com/")) {
+            item[0] = item[0].replace("https://naedist.animemusicquiz.com/", "https://eudist.animemusicquiz.com/");
+        } else if (item[0].startsWith("https://nawdist.animemusicquiz.com/")) {
+            item[0] = item[0].replace("https://nawdist.animemusicquiz.com/", "https://eudist.animemusicquiz.com/");
+        }
+    }
+});
+
+localStorage.setItem("favSongs", JSON.stringify(savedData));
+
 let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
 let orderType = "random";
 
-const scriptVersion = "1.3.4";
+const scriptVersion = "1.4.0";
 const scriptName = "AMQ Fav Songs";
 checkScriptVersion(scriptName, scriptVersion);
 
@@ -40,6 +62,7 @@ let currentInfo = null;
 let previousSongIndex = -1;
 let prePreviousSongIndex = -1;
 let semiRandomPlayedSongs = [];
+let isPlaying = false;
 
 //FUNCTIONS
 function setup(){
@@ -159,9 +182,11 @@ function setup(){
         if (fsPlayer.paused) {
             fsPlayer.play();
             $("#fsPlayButton i").removeClass('fa-play').addClass('fa-pause');
+            isPlaying = true;
         } else {
             fsPlayer.pause();
             $("#fsPlayButton i").removeClass('fa-pause').addClass('fa-play');
+            isPlaying = false;
         }
     });
 
@@ -294,7 +319,7 @@ function favoriteSong(){
             return;
         }
         else{
-            link = "https://nl.catbox.video/" + link;
+            link = "https://eudist.animemusicquiz.com/" + link;
             let favedIndex = favSongs.findIndex(song => song["0"] === link);
             if (favedIndex !== -1) {
                 favSongs.splice(favedIndex, 1);
@@ -418,7 +443,6 @@ function getRandomSong(orderType) {
             .filter(index => !semiRandomPlayedSongs.includes(index));
 
         if (availableSongs.length === 0) {
-            // All songs have been played, reset the list
             semiRandomPlayedSongs = [];
             availableSongs = Array.from({ length: numSongs }, (_, i) => i);
         }
@@ -428,19 +452,72 @@ function getRandomSong(orderType) {
         previousSongIndex = randomIndex;
     } else if (orderType === "order") {
         previousSongIndex++;
-        if(previousSongIndex >= favSongs.length) previousSongIndex = 0;
+        if (previousSongIndex >= favSongs.length) previousSongIndex = 0;
     }
 
     const fsPlayer = document.getElementById('fsPlayer');
     fsPlayer.volume = savedVolume;
-    fsPlayer.src = favSongs[previousSongIndex][0];
+    let song = favSongs[previousSongIndex];
+    fsPlayer.src = song[0];
+
+    fsPlayer.play().then(() => {
+    }).catch(error => {
+        console.error("Failed to play song, checking AnisongDB API:", error);
+
+        let json = {
+            and_logic: false,
+            ignore_duplicate: false,
+            opening_filter: true,
+            ending_filter: true,
+            insert_filter: true,
+            song_name_search_filter: { search: song.songName, partial_match: false },
+            artist_search_filter: { search: song.artist, partial_match: false, group_granularity: 0, max_other_artist: 99 }
+        };
+
+        fetch("https://anisongdb.com/api/search_request", {
+            method: "POST",
+            headers: { "Accept": "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify(json)
+        })
+        .then(res => res.json())
+        .then(results => {
+            if (results && results.length > 0) {
+                let newLink = results[0].audio;
+                song[0] = "https://eudist.animemusicquiz.com/" + newLink;
+
+                savedData.favSongs[previousSongIndex] = song;
+                localStorage.setItem("favSongs", JSON.stringify(savedData));
+
+                fsPlayer.src = song[0];
+                if (isPlaying) {
+                    fsPlayer.play().catch(() => {
+                        console.log("New link also failed, trying another song.");
+                        getRandomSong(orderType);
+                    });
+                } else {
+                    fsPlayer.pause();
+                }
+            } else {
+                console.log("No matching song found in AnisongDB, trying another song.");
+                getRandomSong(orderType);
+            }
+        });
+
+        if (!isPlaying) {
+            fsPlayer.pause();
+        }
+    });
 
     const fsInfoRow = document.getElementById('fsInfoRow');
-    const { songName, artist, romaji, type } = favSongs[previousSongIndex];
+    const { songName, artist, romaji, type } = song;
     fsInfoRow.innerHTML = `
       <p class="fsSongInfo">${songName} by ${artist}</p>
       <p class="fsSongInfo">${romaji} • ${type}</p>
     `;
+
+    if (!isPlaying) {
+        fsPlayer.pause();
+    }
 }
 
 function exportData() {
@@ -473,10 +550,10 @@ function processImport(data) {
                             }
                         }
                         if (item.audio.startsWith("https://files.catbox.moe/")) {
-                            item.audio = item.audio.replace("https://files.catbox.moe/", "https://nl.catbox.video/");
+                            item.audio = item.audio.replace("https://files.catbox.moe/", "https://eudist.animemusicquiz.com/");
                         }
                         else if (item.audio.startsWith("https://nl.catbox.moe/")) {
-                            item.audio = item.audio.replace("https://nl.catbox..moe/", "https://nl.catbox.video/");
+                            item.audio = item.audio.replace("https://nl.catbox..moe/", "https://eudist.animemusicquiz.com/");
                         }
                         if (!favSongs.some(song => song[0] === item.audio)) {
                             favSongs.push({
@@ -493,16 +570,25 @@ function processImport(data) {
                             item.type = item.type.replace("Opening", "OP").replace("Ending", "ED");
                         }
                         if (item[0].startsWith("https://files.catbox.moe/")) {
-                            item[0] = item[0].replace("https://files.catbox.moe/", "https://nl.catbox.video/");
+                            item[0] = item[0].replace("https://files.catbox.moe/", "https://eudist.animemusicquiz.com/");
                         }
                         else if (item[0].startsWith("https://ladist1.catbox.video/")) {
-                            item[0] = item[0].replace("https://ladist1.catbox.video/", "https://nl.catbox.videoe/");
+                            item[0] = item[0].replace("https://ladist1.catbox.video/", "https://eudist.animemusicquiz.com/");
                         }
                         else if (item[0].startsWith("https://abdist1.catbox.video/")) {
-                            item[0] = item[0].replace("https://abdist1.catbox.video/", "https://nl.catbox.video/");
+                            item[0] = item[0].replace("https://abdist1.catbox.video/", "https://eudist.animemusicquiz.com/");
                         }
                         else if (item[0].startsWith("https://nl.catbox.moe/")) {
-                            item[0] = item[0].replace("https://nl.catbox.moe/", "https://nl.catbox.video/");
+                            item[0] = item[0].replace("https://nl.catbox.moe/", "https://eudist.animemusicquiz.com/");
+                        }
+                        else if (item[0].startsWith("https://nl.catbox.video/")) {
+                            item[0] = item[0].replace("https://nl.catbox.video/", "https://eudist.animemusicquiz.com/");
+                        }
+                        else if (item[0].startsWith("https://naedist.animemusicquiz.com/")) {
+                            item[0] = item[0].replace("https://naedist.animemusicquiz.com/", "https://eudist.animemusicquiz.com/");
+                        }
+                        else if (item[0].startsWith("https://nawdist.animemusicquiz.com/")) {
+                            item[0] = item[0].replace("https://nawdist.animemusicquiz.com/", "https://eudist.animemusicquiz.com/");
                         }
                         if (!favSongs.some(song => song[0] === item[0])) {
                             favSongs.push({
