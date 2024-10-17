@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.1
+// @version      1.4.2
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -53,14 +53,14 @@ let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
 let orderType = "random";
 
-const scriptVersion = "1.4.1";
+const scriptVersion = "1.4.2";
 const scriptName = "AMQ Fav Songs";
 checkScriptVersion(scriptName, scriptVersion);
 
 let favSongs = savedData.favSongs;
 let currentInfo = null;
-let previousSongIndex = -1;
-let prePreviousSongIndex = -1;
+let playedSongs = [];
+let currentPlayedSongIndex = -1;
 let semiRandomPlayedSongs = [];
 let isPlaying = false;
 
@@ -105,13 +105,13 @@ function setup(){
 
                         <div id="fsButtonRow" style="text-align: center;">
                             <div id="fsPrevSongButton" class="button" style="width: 15px; padding-right: 5px; display: inline;">
-                                <i class="fa fa-fast-backward" style="color: rgb(217, 217, 217); font-size: 17px; vertical-align: top;"></i>
+                                <i class="fa fa-fast-backward main-button" style="font-size: 17px; vertical-align: top;"></i>
                             </div>
                             <div id="fsPlayButton" class="button" style="width: 15px; padding-right: 5px; display: inline;">
-                                <i class="fa fa-play" style="color: rgb(217, 217, 217); font-size: 15px; vertical-align: text-top;"></i>
+                                <i class="fa fa-play main-button" style="font-size: 17px; vertical-align: top;"></i>
                             </div>
                             <div id="fsNextSongButton" class="button" style="width: 15px; display: inline-block;">
-                                <i class="fa fa-fast-forward" style="color: rgb(217, 217, 217); font-size: 17px; vertical-align: top;"></i>
+                                <i class="fa fa-fast-forward main-button" style="font-size: 17px; vertical-align: top;"></i>
                             </div>
                         </div>
 
@@ -156,6 +156,7 @@ function setup(){
                             <table class="table">
                                 <thead>
                                     <tr>
+                                        <th style="font-weight: bold;"><i class="fa fa-play"></i></th>
                                         <th style="font-weight: bold;">Anime Name</th>
                                         <th style="font-weight: bold;">Song Name</th>
                                         <th style="font-weight: bold;">Artist</th>
@@ -191,32 +192,25 @@ function setup(){
     });
 
     $("#fsNextSongButton").click(function () {
-        getRandomSong(orderType);
-        const fsPlayButton = $("#fsPlayButton");
-        if (fsPlayButton.find('i').hasClass('fa-pause')) {
-            const fsPlayer = document.getElementById('fsPlayer');
-            fsPlayer.play();
+        console.log(currentPlayedSongIndex + " / " + playedSongs.length);
+        if (currentPlayedSongIndex < playedSongs.length - 1) {
+            // There is a next song in the playedSongs array
+            currentPlayedSongIndex++;
+            let nextSongIndex = playedSongs[currentPlayedSongIndex];
+            playSongByIndex(nextSongIndex);
+        } else {
+            // No next song, call getRandomSong immediately
+            getRandomSong(orderType);
         }
     });
 
+    // "Previous Song" button click handler
     $("#fsPrevSongButton").click(function () {
-        if(prePreviousSongIndex != -1){
-            previousSongIndex = prePreviousSongIndex;
-            const fsPlayer = document.getElementById('fsPlayer');
-            fsPlayer.src = favSongs[prePreviousSongIndex]["0"];
-
-            const fsInfoRow = document.getElementById('fsInfoRow');
-            const { songName, artist, romaji, type } = favSongs[prePreviousSongIndex];
-            fsInfoRow.innerHTML = `
-                <p class="fsSongInfo">${songName} by ${artist}</p>
-                <p class="fsSongInfo">${romaji} • ${type}</p>
-            `;
-
-            const fsPlayButton = $("#fsPlayButton");
-            if (fsPlayButton.find('i').hasClass('fa-pause')) {
-                const fsPlayer = document.getElementById('fsPlayer');
-                fsPlayer.play();
-            }
+        if (currentPlayedSongIndex > 0) {
+            currentPlayedSongIndex--;
+            console.log(currentPlayedSongIndex);
+            let prevSongIndex = playedSongs[currentPlayedSongIndex];
+        playSongByIndex(prevSongIndex);
         }
     });
 
@@ -290,7 +284,7 @@ function setup(){
 
 
     document.getElementById('fsPlayer').addEventListener('ended', function() {
-        getRandomSong(orderType);
+        getRandomSong(orderType, true);
         fsPlayer.play();
     });
 
@@ -399,7 +393,16 @@ function updateTable() {
         window.open(mp3Link, "_blank");
       });
 
-      const trashIcon = $("<i>").addClass("fa fa-trash delete-icon");
+        const playIcon = $("<i>").addClass("fa fa-play play-icon");
+        playIcon.click(() => {
+            currentPlayedSongIndex++;
+            console.log(currentPlayedSongIndex);
+            playedSongs[currentPlayedSongIndex] = index;
+            console.log(playedSongs);
+            playSongByIndex(index);
+        });
+
+        const trashIcon = $("<i>").addClass("fa fa-trash delete-icon");
       trashIcon.click(() => {
         favSongs.splice(index, 1);
         updateTable();
@@ -407,6 +410,7 @@ function updateTable() {
       });
 
       const row = $("<tr>").append(
+         $("<td>").append(playIcon),
         $("<td>").text(song.romaji || song.english || "N/A"), // Anime Name
         $("<td>").text(song.songName || "N/A"), // Song Name
         $("<td>").text(song.artist || "N/A"), // Artist
@@ -418,56 +422,63 @@ function updateTable() {
     });
 }
 
-function getRandomSong(orderType) {
-    prePreviousSongIndex = previousSongIndex;
+function getRandomSong(orderType, isEnded) {
     let numSongs = favSongs.length;
 
     if (numSongs === 0) {
         return;
     }
 
+    let randomIndex;
     if (orderType === "random") {
         if (numSongs === 1) {
-            previousSongIndex = 0;
+            randomIndex = 0;
         } else {
-            let randomIndex;
             do {
                 randomIndex = Math.floor(Math.random() * numSongs);
-            } while (randomIndex === previousSongIndex);
-
-            previousSongIndex = randomIndex;
+            } while (playedSongs.length > 0 && randomIndex === playedSongs[currentPlayedSongIndex]);
         }
     } else if (orderType === "semiRandom") {
         let availableSongs = Array.from({ length: numSongs }, (_, i) => i)
-            .filter(index => index !== previousSongIndex && index !== prePreviousSongIndex)
-            .filter(index => !semiRandomPlayedSongs.includes(index));
+            .filter(index => !playedSongs.includes(index));
 
         if (availableSongs.length === 0) {
-            semiRandomPlayedSongs = [];
             availableSongs = Array.from({ length: numSongs }, (_, i) => i);
+            playedSongs = [];
         }
 
-        let randomIndex = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-        semiRandomPlayedSongs.push(randomIndex);
-        previousSongIndex = randomIndex;
+        randomIndex = availableSongs[Math.floor(Math.random() * availableSongs.length)];
     } else if (orderType === "order") {
-        previousSongIndex++;
-        if (previousSongIndex >= favSongs.length) previousSongIndex = 0;
+        currentPlayedSongIndex++;
+        if (currentPlayedSongIndex >= numSongs) {
+            currentPlayedSongIndex = 0;
+        }
+        randomIndex = currentPlayedSongIndex;
     }
 
     const fsPlayer = document.getElementById('fsPlayer');
     fsPlayer.volume = savedVolume;
-    let song = favSongs[previousSongIndex];
+    let song = favSongs[randomIndex];
     fsPlayer.src = song[0];
+    currentPlayedSongIndex++;
+    if(isEnded){
+        playedSongs[currentPlayedSongIndex] = randomIndex;
+        playedSongs = playedSongs.slice(0, currentPlayedSongIndex + 1);
+    }
+    else{
+        playedSongs.push(randomIndex);
+    }
+    console.log(playedSongs);
 
     fsPlayer.play().then(() => {
-        // If the song starts playing, do nothing
+        // Add the song to the played songs array and update the current index
+        if (currentPlayedSongIndex === -1 || randomIndex !== playedSongs[currentPlayedSongIndex]) {
+            currentPlayedSongIndex = playedSongs.length - 1;
+        }
     }).catch(error => {
         console.error("Failed to play song:", error);
         if (isPlaying) {
-            // Retry after 5 seconds if isPlaying is true
             setTimeout(() => {
-                console.log("Retrying to play a new song...");
                 getRandomSong(orderType);
             }, 5000);
         }
@@ -485,17 +496,22 @@ function getRandomSong(orderType) {
     }
 }
 
-function exportData() {
-    let json = JSON.stringify(favSongs, null, 2);
-    let blob = new Blob([json], { type: "application/json" });
-    let url = URL.createObjectURL(blob);
+function playSongByIndex(songIndex) {
+    const fsPlayer = document.getElementById('fsPlayer');
+    let song = favSongs[songIndex];
+    fsPlayer.src = song[0];
 
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "FavoriteSong.json";
-    a.click();
+    const fsInfoRow = document.getElementById('fsInfoRow');
+    const { songName, artist, romaji, type } = song;
+    fsInfoRow.innerHTML = `
+      <p class="fsSongInfo">${songName} by ${artist}</p>
+      <p class="fsSongInfo">${romaji} • ${type}</p>
+    `;
 
-    URL.revokeObjectURL(url);
+    const fsPlayButton = $("#fsPlayButton");
+    if (fsPlayButton.find('i').hasClass('fa-pause')) {
+        fsPlayer.play();
+    }
 }
 
 function processImport(data) {
@@ -633,15 +649,29 @@ AMQ_addStyle(`
     }
 
     #fsPlayButton:hover {
-        box-sahdow: none;
+        box-shadow: none;
     }
 
     #fsNextSongButton:hover {
-        box-sahdow: none;
+        box-shadow: none;
     }
 
     #fsPrevSongButton:hover {
-        box-sahdow: none;
+        box-shadow: none;
+    }
+
+    .play-icon:hover {
+        color: #7e95c8;
+        cursor: pointer;
+    }
+
+    .main-button:hover {
+        color: #7e95c8;
+        cursor: pointer;
+    }
+
+    .main-button {
+        color: rgb(217, 217, 217);
     }
 
     #fsVideo {
