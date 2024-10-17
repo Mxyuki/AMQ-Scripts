@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         AMQ Anisong Search
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      0.6.2
+// @version      0.6.3
 // @description  Based on Kempanator amqAnswerStats, just click on the Title / Song Name / Artist Name to do an AnisondDB Research.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqWindows.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAnisongSearch.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqAnisongSearch.user.js
 // ==/UserScript==
