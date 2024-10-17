@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         AMQ Favorite Friends
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.5.1
+// @version      1.5.2
 // @description  Move your favorite friends to the top of the list and get notified when they log in/out
 // @author       Mxyuki & kempanator
 // @match        https://*.animemusicquiz.com/*
 // @grant        none
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js
 // ==/UserScript==
@@ -19,6 +19,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
+let version = "1.5.2";
 // Create modal window
 $("#gameContainer").append($(`
     <div class="modal fade" id="friendFavorite" tabindex="-1" role="dialog">
@@ -76,6 +77,8 @@ document.querySelector("#offlineColor").value = offlineColor;
 AMQ_addScriptData({
     name: "Favorite Friends",
     author: "Mxyuki & kempanator",
+    version: version,
+    link: "https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteFriends.user.js",
     description: `
         <p>This script is made to put your favorite friends at the top of the friend list and highlight them</p>
         <p>--- How to use ---</p>
