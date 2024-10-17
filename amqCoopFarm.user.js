@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         AMQ Co-op Farm
 // @namespace    https://github.com/Mxyuki/
-// @version      0.7
+// @version      0.8
 // @description  Auto Farm for AMQ. Answer and it will send it in the chatm everyone with the script will have it writen automaticaly.
 // @author       Mxyuki
 // @match        https://animemusicquiz.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqWindows.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCoopFarm.user.js
 // @updateURL	 https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCoopFarm.user.js
 // ==/UserScript==
 
@@ -21,6 +22,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
+let version = "0.8";
 let farmWindow;
 let mode = 2;
 var lastAnswer= '';
@@ -202,6 +204,8 @@ function setup() {
     AMQ_addScriptData({
         name: "Co-op Farm",
         author: "Mxyuki",
+	version: version,
+	link: "https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCoopFarm.user.js",
         description: `
             <p>This script is made to make your game in Farm co-op easier.</p>
             <p>--- Buttons ---</p>
