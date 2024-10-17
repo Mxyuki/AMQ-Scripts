@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.2
+// @version      1.4.3
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -53,7 +53,7 @@ let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
 let orderType = "random";
 
-const scriptVersion = "1.4.2";
+const scriptVersion = "1.4.3";
 const scriptName = "AMQ Fav Songs";
 checkScriptVersion(scriptName, scriptVersion);
 
@@ -200,7 +200,7 @@ function setup(){
             playSongByIndex(nextSongIndex);
         } else {
             // No next song, call getRandomSong immediately
-            getRandomSong(orderType);
+            getRandomSong();
         }
     });
 
@@ -255,6 +255,7 @@ function setup(){
             favSongs = [];
             updateTable();
             saveSettings();
+            $("#fsSongNumber").html(favSongs.length + " Songs");
             alert("Favorite List cleared!");
         }
     });
@@ -284,7 +285,7 @@ function setup(){
 
 
     document.getElementById('fsPlayer').addEventListener('ended', function() {
-        getRandomSong(orderType, true);
+        getRandomSong(true);
         fsPlayer.play();
     });
 
@@ -296,7 +297,7 @@ function setup(){
     });
 
     updateTable();
-    getRandomSong(orderType);
+    getRandomSong();
 }
 
 $("#optionsContainer > ul").prepend($(`<li class="clickAble" data-toggle="modal" data-target="#favSong">Fav. Songs</li>`));
@@ -422,7 +423,7 @@ function updateTable() {
     });
 }
 
-function getRandomSong(orderType, isEnded) {
+function getRandomSong(isEnded) {
     let numSongs = favSongs.length;
 
     if (numSongs === 0) {
@@ -449,7 +450,6 @@ function getRandomSong(orderType, isEnded) {
 
         randomIndex = availableSongs[Math.floor(Math.random() * availableSongs.length)];
     } else if (orderType === "order") {
-        currentPlayedSongIndex++;
         if (currentPlayedSongIndex >= numSongs) {
             currentPlayedSongIndex = 0;
         }
@@ -479,7 +479,7 @@ function getRandomSong(orderType, isEnded) {
         console.error("Failed to play song:", error);
         if (isPlaying) {
             setTimeout(() => {
-                getRandomSong(orderType);
+                getRandomSong();
             }, 5000);
         }
     });
