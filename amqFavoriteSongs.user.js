@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.0
+// @version      1.4.1
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -53,7 +53,7 @@ let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
 let orderType = "random";
 
-const scriptVersion = "1.4.0";
+const scriptVersion = "1.4.1";
 const scriptName = "AMQ Fav Songs";
 checkScriptVersion(scriptName, scriptVersion);
 
@@ -461,50 +461,15 @@ function getRandomSong(orderType) {
     fsPlayer.src = song[0];
 
     fsPlayer.play().then(() => {
+        // If the song starts playing, do nothing
     }).catch(error => {
-        console.error("Failed to play song, checking AnisongDB API:", error);
-
-        let json = {
-            and_logic: false,
-            ignore_duplicate: false,
-            opening_filter: true,
-            ending_filter: true,
-            insert_filter: true,
-            song_name_search_filter: { search: song.songName, partial_match: false },
-            artist_search_filter: { search: song.artist, partial_match: false, group_granularity: 0, max_other_artist: 99 }
-        };
-
-        fetch("https://anisongdb.com/api/search_request", {
-            method: "POST",
-            headers: { "Accept": "application/json", "Content-Type": "application/json" },
-            body: JSON.stringify(json)
-        })
-        .then(res => res.json())
-        .then(results => {
-            if (results && results.length > 0) {
-                let newLink = results[0].audio;
-                song[0] = "https://eudist.animemusicquiz.com/" + newLink;
-
-                savedData.favSongs[previousSongIndex] = song;
-                localStorage.setItem("favSongs", JSON.stringify(savedData));
-
-                fsPlayer.src = song[0];
-                if (isPlaying) {
-                    fsPlayer.play().catch(() => {
-                        console.log("New link also failed, trying another song.");
-                        getRandomSong(orderType);
-                    });
-                } else {
-                    fsPlayer.pause();
-                }
-            } else {
-                console.log("No matching song found in AnisongDB, trying another song.");
+        console.error("Failed to play song:", error);
+        if (isPlaying) {
+            // Retry after 5 seconds if isPlaying is true
+            setTimeout(() => {
+                console.log("Retrying to play a new song...");
                 getRandomSong(orderType);
-            }
-        });
-
-        if (!isPlaying) {
-            fsPlayer.pause();
+            }, 5000);
         }
     });
 
@@ -611,6 +576,7 @@ function processImport(data) {
     } catch (error) {
         alert("Error processing imported data: " + error);
     }
+    $("#fsSongNumber").html(favSongs.length + " Songs");
     filterOrder();
     saveSettings();
     updateTable();
