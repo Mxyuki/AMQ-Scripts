@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.3.7
+// @version      3.3.8
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, Also let you filter skins by Tier, and also let you Filter Skins by Name.
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
 // @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js
 // ==/UserScript==
@@ -22,9 +22,8 @@ let loadInterval = setInterval(() => {
 
 let skinWidth = "10%";
 
-const scriptVersion = "3.3.6";
-const scriptName = "AMQ Skin Plus";
-checkScriptVersion(scriptName, scriptVersion);
+const version = "3.3.8";
+checkScriptVersion("AMQ Skin Plus", version);
 
 let total = 0;
 let total2 = 0;
@@ -337,6 +336,8 @@ new Listener("unlock avatar", (payload) => {
 AMQ_addScriptData({
     name: "Skin Plus",
     author: "Mxyuki",
+    version: version,
+    link: "https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js",
     description: `
         <p>This script help you in the AMQ Skins Store.</p>
         <p>How to use it ?</p>
