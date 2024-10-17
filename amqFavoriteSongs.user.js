@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.3
+// @version      1.5.0
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -10,7 +10,7 @@
 // @match        https://*.animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
 // @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
 // ==/UserScript==
@@ -22,6 +22,9 @@ let loadInterval = setInterval(() => {
         clearInterval(loadInterval);
     }
 }, 500);
+
+let version = "1.5.0";
+checkScriptVersion("AMQ Fav Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
   favSongs: []
@@ -52,17 +55,13 @@ localStorage.setItem("favSongs", JSON.stringify(savedData));
 let savedVolume = JSON.parse(localStorage.getItem("fsVolume")) || 0.5;
 
 let orderType = "random";
-
-const scriptVersion = "1.4.3";
-const scriptName = "AMQ Fav Songs";
-checkScriptVersion(scriptName, scriptVersion);
-
 let favSongs = savedData.favSongs;
 let currentInfo = null;
 let playedSongs = [];
 let currentPlayedSongIndex = -1;
 let semiRandomPlayedSongs = [];
 let isPlaying = false;
+let isRepeat = false;
 
 //FUNCTIONS
 function setup(){
@@ -116,7 +115,17 @@ function setup(){
                         </div>
 
                         <div id="volumeContainer">
-                            <input type="range" id="fsVolumeSlider" min="0" max="1" step="0.01" value="1">
+
+                            <div class="fsSoundControl">
+                                <i class="fa fa-volume-up fsSound-icon"></i>
+                                <input type="range" id="fsVolume-slider" class="fsVolume-slider" style="width: 8px;" min="0" max="1" step="0.01" value="0.5" />
+                            </div>
+                            <span id="fsCurrentTime">00:00</span>
+                            <input type="range" id="fsTimeSlider" min="0" max="1" step="0.01" value="1">
+                            <span id="fsDuration">00:00</span>
+                            <div id="fsRepeatControl" class="fsRepeatControl">
+                                <i class="fa fa-repeat fsRepeat-icon"></i>
+                            </div>
                         </div>
 
                         <div id="fsOptions">
@@ -176,7 +185,47 @@ function setup(){
         </div>
     `));
 
-    $("#fsVolumeSlider").val(savedVolume);
+    $("#fsVolume-slider").val(savedVolume);
+
+    $("#fsRepeatControl").click(function () {
+        isRepeat = !isRepeat;
+        if(isRepeat) {
+            $('.fsRepeat-icon').css('color', '#aebbd8');
+        }
+        else {
+            $('.fsRepeat-icon').css('color', '#fff');
+        }
+    });
+
+    const audio = document.getElementById('fsPlayer');
+    const currentTimeDisplay = document.getElementById('fsCurrentTime');
+    const durationDisplay = document.getElementById('fsDuration');
+    const timeSlider = document.getElementById('fsTimeSlider');
+
+    audio.addEventListener('timeupdate', () => {
+        const currentTime = audio.currentTime;
+        const duration = audio.duration;
+    
+        currentTimeDisplay.textContent = formatTime(currentTime);
+        durationDisplay.textContent = formatTime(duration);
+    
+        if (duration) {
+          timeSlider.value = (currentTime / duration) * 100;
+        }
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+        const duration = audio.duration;
+        durationDisplay.textContent = formatTime(duration);
+        timeSlider.max = 100;
+    });
+
+    timeSlider.addEventListener('input', () => {
+        const duration = audio.duration;
+        if (duration) {
+          audio.currentTime = (timeSlider.value / 100) * duration;
+        }
+    });
 
     $("#fsPlayButton").click(() => {
         const fsPlayer = document.getElementById('fsPlayer');
@@ -192,23 +241,18 @@ function setup(){
     });
 
     $("#fsNextSongButton").click(function () {
-        console.log(currentPlayedSongIndex + " / " + playedSongs.length);
         if (currentPlayedSongIndex < playedSongs.length - 1) {
-            // There is a next song in the playedSongs array
             currentPlayedSongIndex++;
             let nextSongIndex = playedSongs[currentPlayedSongIndex];
             playSongByIndex(nextSongIndex);
         } else {
-            // No next song, call getRandomSong immediately
             getRandomSong();
         }
     });
 
-    // "Previous Song" button click handler
     $("#fsPrevSongButton").click(function () {
         if (currentPlayedSongIndex > 0) {
             currentPlayedSongIndex--;
-            console.log(currentPlayedSongIndex);
             let prevSongIndex = playedSongs[currentPlayedSongIndex];
         playSongByIndex(prevSongIndex);
         }
@@ -285,11 +329,19 @@ function setup(){
 
 
     document.getElementById('fsPlayer').addEventListener('ended', function() {
+
+        if(isRepeat){
+            const audio = document.getElementById('fsPlayer');
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+
         getRandomSong(true);
         fsPlayer.play();
     });
 
-    $("#fsVolumeSlider").on("input", function() {
+    $("#fsVolume-slider").on("input", function() {
         const fsPlayer = document.getElementById('fsPlayer');
         fsPlayer.volume = $(this).val();
         savedVolume = $(this).val();
@@ -397,9 +449,7 @@ function updateTable() {
         const playIcon = $("<i>").addClass("fa fa-play play-icon");
         playIcon.click(() => {
             currentPlayedSongIndex++;
-            console.log(currentPlayedSongIndex);
             playedSongs[currentPlayedSongIndex] = index;
-            console.log(playedSongs);
             playSongByIndex(index);
         });
 
@@ -468,10 +518,8 @@ function getRandomSong(isEnded) {
     else{
         playedSongs.push(randomIndex);
     }
-    console.log(playedSongs);
 
     fsPlayer.play().then(() => {
-        // Add the song to the played songs array and update the current index
         if (currentPlayedSongIndex === -1 || randomIndex !== playedSongs[currentPlayedSongIndex]) {
             currentPlayedSongIndex = playedSongs.length - 1;
         }
@@ -620,6 +668,12 @@ function handleCheckboxSelection(checkbox) {
     }
 }
 
+function formatTime(time) {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
 //LISTENERS
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
@@ -661,12 +715,12 @@ AMQ_addStyle(`
     }
 
     .play-icon:hover {
-        color: #7e95c8;
+        color: #aebbd8;
         cursor: pointer;
     }
 
     .main-button:hover {
-        color: #7e95c8;
+        color: #aebbd8;
         cursor: pointer;
     }
 
@@ -714,10 +768,6 @@ AMQ_addStyle(`
         justify-content: center;
     }
 
-    #fsVolumeSlider {
-        width: 15vh;
-    }
-
     .modal-body:is(:has(#fsPlayer))::-webkit-scrollbar {
         width: 12px;
         background-color: rgba(0,0,0,0);
@@ -735,7 +785,7 @@ AMQ_addStyle(`
 
     #fsImportExportButtons {
         display: flex;
-        gap: 10px; /* Adjust the gap as needed */
+        gap: 10px;
     }
 
     #fsClearButtonContainer {
@@ -763,17 +813,133 @@ AMQ_addStyle(`
 
     #fsOrderingType {
         display: flex;
-        gap: 10px; /* Adjust the gap as needed */
+        gap: 10px;
     }
 
     #fsSongNumberContainer {
         text-align: right;
+    }
+
+
+
+
+
+
+
+    .fsSoundControl {
+        position: relative;
+        right: 10px;
+        display: inline-block;
+    }
+
+    .fsRepeatControl {
+        position: relative;
+        left: 10px;
+        display: inline-block;
+    }
+
+    .fsSound-icon {
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .fsRepeat-icon {
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .fsVolume-slider {
+        position: absolute;
+        left: 50%;
+        bottom: 100%;
+        transform: translateX(-50%);
+        transform: translateX(-50%) rotate(180deg);
+        width: 8px;
+        height: 70px;
+        border-radius: 10px;
+        background: #63759d;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0.3s ease, opacity 0.3s ease;
+        outline: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    .fsVolume-slider:hover,
+    .fsSoundControl:hover .fsVolume-slider {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .fsVolume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 15px;
+        height: 15px;
+        background: #aebbd8;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+
+    .fsVolume-slider::-moz-range-thumb {
+        width: 15px;
+        height: 15px;
+        background: #aebbd8;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+
+    .fsVolume-slider {
+        writing-mode: bt-lr;
+        -webkit-writing-mode: vertical-rl;
+    }
+
+    #fsDuration {
+        padding-left: 5px;
+        font-size: 16px;
+    }
+
+    #fsCurrentTime {
+        padding-right: 5px;
+        font-size: 16px;
+    }
+
+    #fsTimeSlider {
+        -webkit-appearance: none;
+        margin-top: 7px;
+        height: 8px;
+        width: 13vh;
+        background: #63759d;
+        outline: none;
+        border-radius: 5px;
+    }
+
+    #fsTimeSlider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 15px;
+        height: 15px;
+        background: #aebbd8;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    #fsTimeSlider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #aebbd8;
+        border-radius: 50%;
+        cursor: pointer;
     }
 `);
 
 AMQ_addScriptData({
     name: "Favorite Songs",
     author: "Mxyuki",
+    version: version,
+    link: "https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js",
     description: `
         <p>This script let you save favorite a song and play it in a Favorite Radio.</p>
         <p>You can Add and Remove favorite song by clicking the heart, it will be blue if it is a Fav and White if it isn't :</p>
