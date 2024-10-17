@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ BR Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.8.6
+// @version      1.8.7
 // @description  Upgrade Battle Royal QOL
 // @description  Alt + O to open the window or when in game click on the icon in the top right.
 // @description  ----- Main Page : -----
@@ -28,8 +28,8 @@
 // @match        https://*.animemusicquiz.com/*
 // @grant        GM_xmlhttpRequest
 // @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqWindows.js
-// @require      https://raw.githubusercontent.com/TheJoseph98/AMQ-Scripts/master/common/amqScriptInfo.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
+// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqWindows.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqBRPlus.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqBRPlus.user.js
 // ==/UserScript==
@@ -43,9 +43,8 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-const scriptVersion = "1.8.4";
-const scriptName = "AMQ BR Plus";
-checkScriptVersion(scriptName, scriptVersion);
+const version = "1.8.7";
+checkScriptVersion("AMQ BR Plus", version);
 
 let tileShow = [];
 let pickedShow = [];
@@ -883,3 +882,14 @@ new Listener("Spectate Game", (payload) => {
         toggleButton(payload.settings.showSelection);
     }, 100);
 }).bindListener();
+
+AMQ_addScriptData({
+    name: "BR Plus",
+    author: "Mxyuki",
+    version: version,
+    link: "https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqBRPlus.user.js",
+    description: `
+        <p>Script that add QOL to the BR gameplay.</p>
+        <p>I need to do this one day.</p>
+    `
+});
