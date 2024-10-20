@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.5.0
+// @version      1.5.1
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -23,7 +23,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.5.0";
+let version = "1.5.1";
 checkScriptVersion("AMQ Fav Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
@@ -205,10 +205,10 @@ function setup(){
     audio.addEventListener('timeupdate', () => {
         const currentTime = audio.currentTime;
         const duration = audio.duration;
-    
+
         currentTimeDisplay.textContent = formatTime(currentTime);
         durationDisplay.textContent = formatTime(duration);
-    
+
         if (duration) {
           timeSlider.value = (currentTime / duration) * 100;
         }
@@ -259,6 +259,7 @@ function setup(){
     });
 
     document.getElementById("fsExport").addEventListener("click", () => {
+        console.log("a");
         exportData();
     });
 
@@ -646,6 +647,32 @@ function processImport(data) {
     updateTable();
 }
 
+function exportData() {
+    const data = favSongs.map(song => ({
+
+        url: song[0],
+        romaji: song.romaji,
+        english: song.english,
+        artist: song.artist,
+        songName: song.songName,
+        type: song.type
+    }));
+
+    const jsonData = JSON.stringify(data, null, 2);
+
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'favSongs.json';
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 function handleCheckboxSelection(checkbox) {
 
     let fsRandomCheckbox = document.getElementById("fsRandom");
@@ -653,9 +680,8 @@ function handleCheckboxSelection(checkbox) {
     let fsOrderCheckbox = document.getElementById("fsOrder");
 
     if (!checkbox.checked) {
-        checkbox.checked = true; // Ensure at least one checkbox is always selected
+        checkbox.checked = true;
     }
-    // Uncheck the other checkboxes
     if (checkbox === fsRandomCheckbox) {
         fsSemiRandomCheckbox.checked = false;
         fsOrderCheckbox.checked = false;
