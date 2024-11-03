@@ -16,7 +16,7 @@ new Listener("answer results",(payload)=>{
     let endTime= parseFloat(quizVideoController.moePlayers[quizVideoController.currentMoePlayerId].$player[0].currentTime.toFixed(2));
     setTimeout(function(){
         quizVideoController.moePlayers[quizVideoController.currentMoePlayerId].$player[0].allowSeeking = true;
-        quizVideoController.moePlayers[quizVideoController.currentMoePlayerId].$player[0].currentTime=endTime;
+        quizVideoController.moePlayers[quizVideoController.currentMoePlayerId].$player[0].currentTime = endTime;
         quizVideoController.moePlayers[quizVideoController.currentMoePlayerId].$player[0].loop = true;
     },0.01);
 }).bindListener();
