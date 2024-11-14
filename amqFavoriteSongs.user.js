@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.5.1
+// @version      1.5.2
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -23,7 +23,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.5.1";
+let version = "1.5.2";
 checkScriptVersion("AMQ Fav Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
@@ -708,7 +708,7 @@ new Listener("answer results", (payload) => {
         console.error("Mp3 link missing.");
     }
     else{
-        link = "https://nl.catbox.video/" + link;
+        link = "https://eudist.animemusicquiz.com/" + link;
 
         let faved = favSongs.findIndex(song => song["0"] === link);
 
