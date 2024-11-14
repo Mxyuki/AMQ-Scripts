@@ -1,68 +1,67 @@
 // ==UserScript==
 // @name         AMQ PlayButton Change
-// @namespace    http://tampermonkey.net/
-// @version      0.4
-// @description  Change how the Solo, Multi and Nexus button are diplayed
+// @namespace    https://github.com/Mxyuki/AMQ-Scripts
+// @version      0.5
+// @description  Change how the Solo, Multi, Jam, Nexus, and Custom buttons are displayed.
 // @author       Mxyuki
-// @match        https://animemusicquiz.com/*
+// @match        https://*.animemusicquiz.com/*
+// @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqPlayButtonChange.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqPlayButtonChange.user.js
 // ==/UserScript==
 
-if (document.getElementById("loginPage")) return;
+if ($("#loginPage").length) return;
 
-const mpPlayButton = document.getElementById('mpPlayButton');
+const version = "0.5";
+checkScriptVersion("AMQ PlayButton Change", version);
 
-mpPlayButton.removeAttribute('data-toggle');
-mpPlayButton.removeAttribute('data-target');
+const mpPlayButton = $('#mpPlayButton');
+mpPlayButton.removeAttr('data-toggle data-target').empty();
 
-const h1Element = mpPlayButton.querySelector('h1');
-mpPlayButton.removeChild(h1Element);
+const buttonsConfig = [
+    { text: 'Solo', action: () => hostModal.displayHostSolo(), hoverImage: 'https://i.imgur.com/U0umdCV.png' },
+    { text: 'Multi', action: () => viewChanger.changeView('roomBrowser'), hoverImage: 'https://i.imgur.com/Ym8nu2E.png' },
+    { text: 'Custom', action: () => customQuizBrowser.show(), hoverImage: 'https://i.imgur.com/QWs6tGm.png' },
+    { text: 'Jam', action: () => roomBrowser.fireJoinJamGame(), hoverImage: 'https://i.imgur.com/UUlrX1e.png' },
+    { text: 'Nexus', action: () => viewChanger.changeView('nexus'), hoverImage: 'https://i.imgur.com/dMSqgCV.png' }
+];
 
-const soloButton = createButton('Solo', () => hostModal.displayHostSolo());
-const multiButton = createButton('Multi', () => viewChanger.changeView('roomBrowser'));
-const jamButton = createButton('Jam', () => roomBrowser.fireJoinJamGame());
-const nexusButton = createButton('Nexus', () => viewChanger.changeView('nexus'));
-
-mpPlayButton.append(soloButton, multiButton, jamButton, nexusButton);
-mpPlayButton.style.display = 'flex';
-mpPlayButton.style.justifyContent = 'space-between';
-
-addButtonHoverStyles(soloButton, 'https://i.imgur.com/ycmLeXE.png');
-addButtonHoverStyles(multiButton, 'https://i.imgur.com/D5PGM29.png');
-addButtonHoverStyles(jamButton, 'https://i.imgur.com/osIBq9C.png');
-addButtonHoverStyles(nexusButton, 'https://i.imgur.com/idgLUtS.png');
-
-const styleElement = document.querySelector('style');
-const styleSheet = styleElement.sheet;
-
-styleSheet.insertRule('.miyuButton { width: 25%; background-color: transparent; border: none; }', styleSheet.cssRules.length);
-styleSheet.insertRule('#mainMenu.button { display: flex; }', styleSheet.cssRules.length);
-
-mpPlayButton.style.backgroundSize = 'cover';
-
-const buttons = document.querySelectorAll('#mainMenu > .button');
-
-buttons.forEach(button => {
-  button.style.display = 'flex';
-  button.style.marginLeft = '15%';
+buttonsConfig.forEach(config => {
+    const button = $('<button>')
+        .addClass('miyuButton')
+        .attr('id', `miyu${config.text}`)
+        .text(config.text)
+        .on('click', config.action)
+        .hover(
+            () => mpPlayButton.css({ 'background-image': `url("${config.hoverImage}")`, 'background-size': 'cover' }),
+            () => mpPlayButton.css({ 'background-image': '', 'background-size': '' })
+        );
+    mpPlayButton.append(button);
 });
 
-function createButton(text, onclick) {
-  const button = document.createElement('button');
-  button.textContent = text;
-  button.onclick = onclick;
-  button.classList.add('miyuButton');
-  button.id = `miyu${text}`;
-  return button;
-}
+mpPlayButton.css({
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    margin: '0 auto',
+    marginBottom: '3vh',
+    minWidth: '235px',
+    maxWidth: '400px'
+});
 
-function addButtonHoverStyles(button, hoverUrl) {
-  button.addEventListener('mouseover', () => {
-      mpPlayButton.style.backgroundSize = "cover";
-      mpPlayButton.style.background = `url("${hoverUrl}")`;
-  });
-  button.addEventListener('mouseout', () => {
-      mpPlayButton.style.background = '';
-  });
-}
+$('<style>').prop('type', 'text/css').html(`
+  .miyuButton {
+      flex: 1;
+      background-color: transparent;
+      border: none;
+      text-align: center;
+      font-size: min(2.5vw, 24px);
+      padding: 10px 0;
+      margin: 0 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-width: 20%;
+      box-sizing: border-box;
+  }
+`).appendTo('head');
