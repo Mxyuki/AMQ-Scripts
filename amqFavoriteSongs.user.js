@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.5.2
+// @version      1.5.3
 // @description  Make that you can Favorite a song during the Answer Result, and make that you can have a radio of only your favorite song you heard on AMQ.
 // @description  Can now Import Json files to the Favorite Songs, so you can import other people Favorite Songs or Import a list of Song from AnisongDB
 // @description  This was mainly made for personal use so there are some things like that it always save as a nl.catbox.video file so if you want to use it you may want to change it to your taste.
@@ -23,7 +23,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.5.2";
+let version = "1.5.3";
 checkScriptVersion("AMQ Fav Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("favSongs")) || {
@@ -403,13 +403,13 @@ function favoriteSong(){
 function filterOrder() {
     favSongs.sort((a, b) => {
         const typeOrder = { "OP": 1, "ED": 2, "INS": 3 };
-        const typeA = a.type.split(" ")[0];
-        const typeB = b.type.split(" ")[0];
-        const numberA = parseInt(a.type.split(" ")[1]);
-        const numberB = parseInt(b.type.split(" ")[1]);
+        const typeA = typeof a.type === "string" ? a.type.split(" ")[0] : "";
+        const typeB = typeof b.type === "string" ? b.type.split(" ")[0] : "";
+        const numberA = typeof a.type === "string" ? parseInt(a.type.split(" ")[1]) : NaN;
+        const numberB = typeof b.type === "string" ? parseInt(b.type.split(" ")[1]) : NaN;
 
         if (typeOrder[typeA] !== typeOrder[typeB]) {
-            return typeOrder[typeA] - typeOrder[typeB];
+            return (typeOrder[typeA] || 0) - (typeOrder[typeB] || 0);
         } else if (!isNaN(numberA) && !isNaN(numberB)) {
             return numberA - numberB;
         } else {
@@ -423,6 +423,7 @@ function filterOrder() {
         }
     });
 }
+
 
 function updateClass(isFaved){
     const qpFavSong = document.getElementById('qpFavSong');
@@ -568,6 +569,12 @@ function processImport(data) {
         let importedData = JSON.parse(data);
         if (Array.isArray(importedData)) {
             importedData.forEach(item => {
+
+                if (!item.audio && item.url) item.audio = item.url;
+                if (!item.animeJPName && item.romaji) item.animeJPName = item.romaji;
+                if (!item.songArtist && item.artist) item.songArtist = item.artist;
+                if (!item.songType && item.type) item.songType = item.type;
+
                 if ((item.audio && item.animeJPName) || (item[0] && item.romaji)) {
                     if (item.audio && item.animeJPName) {
                         if (item.songType) {
@@ -650,8 +657,8 @@ function processImport(data) {
 function exportData() {
     const data = favSongs.map(song => ({
 
-        url: song[0],
-        romaji: song.romaji,
+        audio: song[0],
+        animeJPName: song.romaji,
         english: song.english,
         artist: song.artist,
         songName: song.songName,
