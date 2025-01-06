@@ -1,0 +1,184 @@
+:root {
+    --accent-color: #F3C4F5;
+    --dark-1: #1a1a1a;
+    --dark-2: #2d2d2de0;
+    --dark-3: #6a636c;
+    --dark-4: #333333e0;
+    /* --img: url(https://i.imgur.com/agtYltE.png); */
+    /* Remove the comment arround this and replace the link in it to put an image as background */
+}
+
+*,
+*::before,
+*::after {
+    color: #eee;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--dark-1);
+    background-image: var(--img);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    height: 100vh;
+    margin: 0;
+}
+
+h5 {
+    display: none;
+}
+
+div[role="banner"] {
+    background-color: var(--dark-1) !important;
+    backdrop-filter: blur(8px);
+    padding-left: 1.5vh;
+    box-shadow: 0px 10px 8px var(--dark-1);
+}
+
+div[role="main"] {
+    padding-left: 1vh;
+    padding-right: 1vh;
+}
+
+#table[_ngcontent-ng-c2100058057] {
+    background-color: #fff0;
+}
+
+#table tr:first-child {
+    background-color: var(--dark-1) !important;
+    font-size: 17px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+#table tr:last-child {
+    border-bottom-left-radius: 80px;
+    border-bottom-right-radius: 8px;
+}
+
+#table[_ngcontent-ng-c2100058057] th[_ngcontent-ng-c2100058057] {
+    background-color: var(--dark-1) !important;
+}
+
+#table tr:first-child th:hover {
+    color: var(--accent-color) !important;
+}
+
+#table tr:not(:first-child):nth-child(even),
+#table tr:not(:first-child):nth-child(odd) {
+    font-size: 16.5px;
+    height: 45px;
+}
+
+#table tr:not(:first-child):nth-child(even) {
+    background-image: linear-gradient(to right, var(--dark-2), var(--dark-4));
+}
+
+#table tr:not(:first-child):nth-child(odd) {
+    background-image: linear-gradient(to right, var(--dark-4), var(--dark-2));
+}
+
+#table tr:not(:first-child) td span:hover {
+    color: var(--accent-color) !important;
+}
+
+#table[_ngcontent-ng-c2100058057] td[_ngcontent-ng-c2100058057],
+#table[_ngcontent-ng-c2100058057] th[_ngcontent-ng-c2100058057] {
+    border: none;
+}
+
+button[type="button"] {
+    font-size: 16px;
+    outline: none;
+    border: none;
+    margin-right: 0 !important;
+    height: 38px;
+    line-height: 38px;
+    vertical-align: middle;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background-color: var(--dark-3) !important;
+}
+
+button[type="button"]:hover {
+    color: var(--accent-color) !important;
+}
+
+input.textInputFilter {
+    outline: none !important;
+    border: none !important;
+    height: 38px;
+    padding: 10px;
+    line-height: 38px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    background-color: var(--dark-3) !important;
+    vertical-align: middle;
+}
+
+label.check {
+    font-size: 18px;
+}
+
+table {
+    border-radius: 0 0 15px 15px;
+    overflow: hidden;
+    outline: none !important;
+    border: none !important;
+}
+
+div:has(span.showFilter) {
+    font-size: 17px;
+}
+
+input[type="checkbox"] {
+    width: 25px;
+    height: 25px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: 2px solid #fff;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    position: relative;
+    top: 9px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+input[type="checkbox"]:checked::after {
+    content: "✔";
+    position: absolute;
+    top: -5.8px;
+    left: 1px;
+    color: #060606;
+    font-size: 24px;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--accent-color);
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    background-color: var(--accent-color);
+}
