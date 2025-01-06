@@ -1,10 +1,10 @@
 :root {
     --accent-color: #F3C4F5;
     --dark-1: #1a1a1a;
-    --dark-2: #2d2d2de0;
+    --dark-2: #2d2d2dd9;
     --dark-3: #6a636c;
-    --dark-4: #333333e0;
-    /* --img: url(https://i.imgur.com/agtYltE.png); */
+    --dark-4: #333333d9;
+    /*--img: url(https://i.imgur.com/agtYltE.png);*/
     /* Remove the comment arround this and replace the link in it to put an image as background */
 }
 
@@ -42,7 +42,7 @@ div[role="main"] {
     padding-right: 1vh;
 }
 
-#table[_ngcontent-ng-c2100058057] {
+#table[_ngcontent-ng-c2100058057], #table[_ngcontent-ng-c2100058057] tr[_ngcontent-ng-c2100058057]:nth-child(2n) {
     background-color: #fff0;
 }
 
