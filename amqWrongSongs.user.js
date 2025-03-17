@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Wrong Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1.0
+// @version      1.1.1
 // @description  Edit of my Fav. Songs Script so that you it add to the song list all songs that you miss in your games.
 // @description  Don't use it along the Fav. Songs script as it will prob cause issues.
 // @author       Mxyuki
@@ -21,7 +21,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.1.0";
+let version = "1.1.1";
 checkScriptVersion("AMQ Wrong Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("wrongSongs")) || {
@@ -375,6 +375,7 @@ function favoriteSong(why){
                 favSongs.splice(favedIndex, 1);
                 updateClass(false);
             } else {
+                if(why == "correct") return;
                 const typeMap = {
                     1: "OP",
                     2: "ED",
@@ -773,6 +774,7 @@ new Listener("answer results", (payload) => {
     if(playerID == -1) return;
     console.log(payload.players[playerID].listStatus);
     if(isToggle == true && isList == false || isToggle == true && isList == true && payload.players[playerID].listStatus >= 0) if(payload.players[playerID].correct == false) favoriteSong("wrong");
+    if(payload.players[playerID].correct == true) favoriteSong("correct");
 
 }).bindListener();
 
