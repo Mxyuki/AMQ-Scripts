@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Wrong Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.1
+// @version      1.1.0
 // @description  Edit of my Fav. Songs Script so that you it add to the song list all songs that you miss in your games.
 // @description  Don't use it along the Fav. Songs script as it will prob cause issues.
 // @author       Mxyuki
@@ -21,7 +21,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.0.1";
+let version = "1.1.0";
 checkScriptVersion("AMQ Wrong Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("wrongSongs")) || {
@@ -60,6 +60,9 @@ let currentPlayedSongIndex = -1;
 let semiRandomPlayedSongs = [];
 let isPlaying = false;
 let isRepeat = false;
+let settings = JSON.parse(localStorage.getItem("wsSettings")) || { isList: false, isToggle: true };
+let isList = settings.isList;
+let isToggle = settings.isToggle;
 
 //FUNCTIONS
 function setup(){
@@ -704,11 +707,50 @@ function formatTime(time) {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  }
+}
+
+function notify(){
+    gameChat.systemMessage(isToggle
+                           ? "Wrong songs will be saved. Use [/wstoggle] to disable."
+                           : "Wrong songs won't be saved. Use [/wstoggle] to enable.");
+
+    gameChat.systemMessage(isList
+                           ? "Only misses from your list will be saved. Use [/wslist] to save all misses."
+                           : "All misses will be saved. Use [/wslist] to save only those from your list.");
+}
+
+document.getElementById("gcInput").addEventListener("keydown", function(event) {
+    if (event.keyCode === 13) {
+        let text = document.getElementById("gcInput").value.trim();
+        let settings = JSON.parse(localStorage.getItem("wsSettings")) || { isList: false, isToggle: true };
+
+        if (text === "/wslist") {
+            event.preventDefault();
+            settings.isList = !settings.isList;
+            isList = !isList;
+            gameChat.systemMessage(isList
+                           ? "Only misses from your list will be saved."
+                           : "All misses will be saved.");
+            localStorage.setItem("wsSettings", JSON.stringify(settings)); // Save updated state
+            document.getElementById("gcInput").value = "";
+        }
+        else if (text === "/wstoggle") {
+            event.preventDefault();
+            settings.isToggle = !settings.isToggle;
+            isToggle = !isToggle;
+            gameChat.systemMessage(isToggle
+                           ? "Wrong songs will be saved."
+                           : "Wrong songs won't be saved.");
+            localStorage.setItem("wsSettings", JSON.stringify(settings)); // Save updated state
+            document.getElementById("gcInput").value = "";
+        }
+    }
+});
 
 //LISTENERS
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
+    console.log(payload);
     let link = currentInfo.videoTargetMap.catbox[0];
     if(link == undefined){
         console.error("Mp3 link missing.");
@@ -729,9 +771,19 @@ new Listener("answer results", (payload) => {
     let playersArray = Object.values(quiz.players);
     let playerID = playersArray.findIndex(player => player._name === selfName);
     if(playerID == -1) return;
-    if(payload.players[playerID].correct == false) favoriteSong("wrong");
+    console.log(payload.players[playerID].listStatus);
+    if(isToggle == true && isList == false || isToggle == true && isList == true && payload.players[playerID].listStatus >= 0) if(payload.players[playerID].correct == false) favoriteSong("wrong");
 
+}).bindListener();
 
+new Listener("Join Game", (response) => {
+	if(response.error) return;
+	notify();
+}).bindListener();
+
+new Listener("Spectate Game", (response) => {
+	if(response.error) return;
+	notify();
 }).bindListener();
 
 //STYLE
