@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Wrong Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.0
+// @version      1.2.1
 // @description  Edit of my Fav. Songs Script so that you it add to the song list all songs that you miss in your games.
 // @description  Don't use it along the Fav. Songs script as it will prob cause issues.
 // @author       Mxyuki
@@ -21,7 +21,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.2.0";
+let version = "1.2.1";
 checkScriptVersion("AMQ Wrong Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("wrongSongs")) || {
@@ -82,7 +82,9 @@ function setup(){
     qpFavSong.style.marginTop = '3px';
     qpFavSong.style.cursor = 'pointer';
 
-    qpFavSong.onclick = favoriteSong("like");
+    qpFavSong.onclick = function() {
+        favoriteSong();
+    };
 
     qpSongInfoLinkRow.insertBefore(qpFavSong, qpSongInfoLinkRow.querySelector('b'));
 
@@ -790,7 +792,6 @@ document.getElementById("gcInput").addEventListener("keydown", function(event) {
 //LISTENERS
 new Listener("answer results", (payload) => {
     currentInfo = payload.songInfo;
-    console.log(payload);
     let link = currentInfo.videoTargetMap.catbox[0];
     if(link == undefined){
         console.error("Mp3 link missing.");
@@ -798,10 +799,23 @@ new Listener("answer results", (payload) => {
     else{
         link = "https://eudist.animemusicquiz.com/" + link;
 
-        let faved = favSongs.findIndex(song => song["0"] === link);
+        // Check for video link with preference for 720p, then 480p
+        let videoLink = null;
+        if (currentInfo.videoTargetMap.catbox[720]) {
+            videoLink = "https://eudist.animemusicquiz.com/" + currentInfo.videoTargetMap.catbox[720];
+        } else if (currentInfo.videoTargetMap.catbox[480]) {
+            videoLink = "https://eudist.animemusicquiz.com/" + currentInfo.videoTargetMap.catbox[480];
+        }
 
-        if(faved === -1) faved = false;
-        else faved = true;
+        // Find if the song is already favorited
+        let favedIndex = favSongs.findIndex(song => song["0"] === link);
+        let faved = favedIndex !== -1;
+
+        // If we found a video but the favorited song doesn't have one, update it
+        if (faved && videoLink && !favSongs[favedIndex].video) {
+            favSongs[favedIndex].video = videoLink;
+            saveSettings(); // Save the updated song with video
+        }
 
         updateClass(faved);
     }
@@ -811,7 +825,6 @@ new Listener("answer results", (payload) => {
     let playersArray = Object.values(quiz.players);
     let playerID = playersArray.findIndex(player => player._name === selfName);
     if(playerID == -1) return;
-    console.log(payload.players[playerID].listStatus);
     if(isToggle == true && isList == false || isToggle == true && isList == true && payload.players[playerID].listStatus >= 0) if(payload.players[playerID].correct == false) favoriteSong("wrong");
     if(payload.players[playerID].correct == true) favoriteSong("correct");
 
