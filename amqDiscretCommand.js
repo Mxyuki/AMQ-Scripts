@@ -76,12 +76,6 @@
     // Add the event listener to detect commands
     document.addEventListener('keydown', universalCommandInterceptor);
 
-    // Example of registering commands (you can do this in your specific script)
-    window.CommandRegistry.register('/example', (args) => {
-        console.log('Example command called with args:', args);
-        return `Processed example with: ${args}`;
-    });
-
     // Expose the CommandRegistry globally for easy access
     window.commandRegistry = window.CommandRegistry;
 })();
