@@ -25,9 +25,9 @@
                     // Execute the command handler
                     const result = this.commands[commandName](args);
                     
-                    // Debug logging if debug state is true
+                    // Conditional logging based on debug state
                     if (this._debugState) {
-                        console.log('Command Debug:', {
+                        console.log('Command executed:', {
                             command: commandName,
                             args: args,
                             result: result
@@ -55,7 +55,12 @@
         // Method to toggle debug state
         toggleDebug: function() {
             this._debugState = !this._debugState;
-            return `Debug mode ${this._debugState ? 'enabled' : 'disabled'}`;
+            return `Command debug ${this._debugState ? 'enabled' : 'disabled'}`;
+        },
+
+        // Method to get current debug state
+        isDebugEnabled: function() {
+            return this._debugState;
         }
     };
 
@@ -77,9 +82,6 @@
                     // Clear the input
                     inputElement.value = '';
                     
-                    // Optional: Display command result or log it
-                    console.log('Command executed:', commandResult);
-                    
                     // You can add custom logging or notification here
                     // For example, using an existing system message function if available
                     if (typeof gameChat !== 'undefined' && gameChat.systemMessage) {
@@ -96,12 +98,6 @@
     // Register the debug toggle command
     window.CommandRegistry.register('/dcDebug', () => {
         return window.CommandRegistry.toggleDebug();
-    });
-
-    // Example of demonstrating debug logging
-    window.CommandRegistry.register('/dcExample', (args) => {
-        console.log('Example command called with args:', args);
-        return `Processed example with: ${args}`;
     });
 
     // Expose the CommandRegistry globally for easy access
