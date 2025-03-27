@@ -60,9 +60,6 @@
                     // Clear the input
                     inputElement.value = '';
                     
-                    // Optional: Display command result or log it
-                    console.log('Command executed:', commandResult);
-                    
                     // You can add custom logging or notification here
                     // For example, using an existing system message function if available
                     if (typeof gameChat !== 'undefined' && gameChat.systemMessage) {
