@@ -66,7 +66,7 @@
                     // You can add custom logging or notification here
                     // For example, using an existing system message function if available
                     if (typeof gameChat !== 'undefined' && gameChat.systemMessage) {
-                        gameChat.systemMessage(`Command ${commandResult.command} executed.`);
+                        gameChat.systemMessage(`${commandResult.command} executed.`);
                     }
                 }
             }
