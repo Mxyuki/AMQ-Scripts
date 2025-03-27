@@ -2,9 +2,10 @@
 (function() {
     'use strict';
 
-    // Global command registry
+    // Global command registry with debug state
     window.CommandRegistry = window.CommandRegistry || {
         commands: {},
+        _debugState: false,
         
         // Method to register a new command
         register: function(command, handler) {
@@ -23,6 +24,16 @@
                 try {
                     // Execute the command handler
                     const result = this.commands[commandName](args);
+                    
+                    // Debug logging if debug state is true
+                    if (this._debugState) {
+                        console.log('Command Debug:', {
+                            command: commandName,
+                            args: args,
+                            result: result
+                        });
+                    }
+                    
                     return {
                         handled: true,
                         command: commandName,
@@ -39,6 +50,12 @@
             }
             
             return { handled: false };
+        },
+        
+        // Method to toggle debug state
+        toggleDebug: function() {
+            this._debugState = !this._debugState;
+            return `Debug mode ${this._debugState ? 'enabled' : 'disabled'}`;
         }
     };
 
@@ -60,6 +77,9 @@
                     // Clear the input
                     inputElement.value = '';
                     
+                    // Optional: Display command result or log it
+                    console.log('Command executed:', commandResult);
+                    
                     // You can add custom logging or notification here
                     // For example, using an existing system message function if available
                     if (typeof gameChat !== 'undefined' && gameChat.systemMessage) {
@@ -73,8 +93,13 @@
     // Add the event listener to detect commands
     document.addEventListener('keydown', universalCommandInterceptor);
 
-    // Example of registering commands (you can do this in your specific script)
-    window.CommandRegistry.register('/example', (args) => {
+    // Register the debug toggle command
+    window.CommandRegistry.register('/dcDebug', () => {
+        return window.CommandRegistry.toggleDebug();
+    });
+
+    // Example of demonstrating debug logging
+    window.CommandRegistry.register('/dcExample', (args) => {
         console.log('Example command called with args:', args);
         return `Processed example with: ${args}`;
     });
