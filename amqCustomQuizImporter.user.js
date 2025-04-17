@@ -79,8 +79,6 @@ function importQuiz(jsonData, fileName) {
 
     const songIds = jsonData.map(item => ({ annSongId: item.annSongId }));
 
-    console.log(songIds[0]);
-
     if (songIds.length > 250) songNumber = 250;
     else songNumber = songIds.length;
 
@@ -96,7 +94,7 @@ function importQuiz(jsonData, fileName) {
             quizId: null,
             quizSave: {
                 name: fileName,
-                description: fileName,
+                description: songIds.length + " songs imported from: " + fileName,
                 tags: [],
                 ruleBlocks: [
                     {
