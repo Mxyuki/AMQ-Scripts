@@ -117,11 +117,9 @@
 
             setTimeout(() => {
                 document.querySelector('#cqsCreatorButtonContainer > div').click();
-                console.log('Clicked on "Browse" button');
 
                 setTimeout(() => {
                     document.querySelector('#cqsCreatorButtonContainer > div').click();
-                    console.log('Clicked on "Build" button');
                 }, 500);
             }, 2000);
 
