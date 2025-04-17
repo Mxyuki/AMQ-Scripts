@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         AMQ Wrong Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2.1
+// @version      1.2.2
 // @description  Edit of my Fav. Songs Script so that you it add to the song list all songs that you miss in your games.
 // @description  Don't use it along the Fav. Songs script as it will prob cause issues.
-// @author       Mxyuki
+// @author       Myuki
 // @match        https://*.animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
 // @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
@@ -21,7 +21,7 @@ let loadInterval = setInterval(() => {
     }
 }, 500);
 
-let version = "1.2.1";
+let version = "1.2.2";
 checkScriptVersion("AMQ Wrong Songs", version);
 
 let savedData = JSON.parse(localStorage.getItem("wrongSongs")) || {
@@ -262,7 +262,6 @@ function setup(){
     });
 
     document.getElementById("fsExport").addEventListener("click", () => {
-        console.log("a");
         exportData();
     });
 
@@ -699,14 +698,13 @@ function processUrl(url) {
 
 function exportData() {
     const data = favSongs.map(song => ({
-
-        audio: song[0],
-        video: song.video,
+        HQ: song.video,
+        audio: song.audio,
         animeJPName: song.romaji,
-        english: song.english,
-        artist: song.artist,
+        animeENName: song.english,
+        songArtist: song.artist,
         songName: song.songName,
-        type: song.type
+        songType: song.type
     }));
 
     const jsonData = JSON.stringify(data, null, 2);
@@ -716,7 +714,7 @@ function exportData() {
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'favSongs.json';
+    a.download = 'wrongSongs.json';
     document.body.appendChild(a);
     a.click();
 
