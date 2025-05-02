@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.4.0
+// @version      3.5.0
 // @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, let you filter skins by Tier, let you Filter Skins by Name, and also calcul how many level are needed to reach your pity.
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
@@ -19,7 +19,7 @@
 
     // Global configuration
     const config = {
-        version: "3.4.0",
+        version: "3.5.0",
         skinWidth: "10%",
         checkInterval: 500
     };
@@ -304,26 +304,30 @@
         observer.observe(targetNode, { childList: true });
     }
 
-    // Count owned and available skins
     function updateSkinCounts() {
         let unlocked = 0;
         let total = 0;
 
-        $('.swTopBarUnlockStatusUnlocked').each(function() {
-            unlocked += parseInt($(this).text());
+        $('#swTopBarContentContainerInner .swTopBarAvatarContainer.leftRightButtonTop').each(function () {
+            const $container = $(this);
+            const avatarClass = $container.find('.swTopBarImageContainer').attr('class')?.split(' ').pop();
+
+            if (!avatarClass || avatarClass === 'swTopBarImageContainer') return;
+
+            const unlockedVal = parseInt($container.find('.swTopBarUnlockStatusUnlocked').first().text() || 0);
+            const totalVal = parseInt($container.find('.swTopBarUnlockStatusTotal').first().text() || 0);
+
+            unlocked += unlockedVal;
+            total += totalVal;
         });
 
-        $('.swTopBarUnlockStatusTotal').each(function() {
-            total += parseInt($(this).text());
-        });
-
-        // Adjust counts (removing default skins)
-        state.totalSkins = unlocked - 45;
-        state.totalAvailableSkins = total - 105;
-        state.collectionPercentage = ((state.totalSkins / state.totalAvailableSkins) * 100).toFixed(2);
+        state.totalSkins = unlocked;
+        state.totalAvailableSkins = total;
+        state.collectionPercentage = ((unlocked / total) * 100).toFixed(2);
 
         $('#totalSkinText').text(`${state.totalSkins} / ${state.totalAvailableSkins} | ${state.collectionPercentage} %`);
     }
+
 
     // Collect skin names for search functionality
     function collectSkinNames() {
@@ -396,7 +400,7 @@
     function setupQuickBuy() {
         $(".swAvatarTilePrice").each(function() {
             const priceText = $(this).text();
-            const validPrices = ["10,000", "40,000", "50,000", "250,000", "290,000", "20", "60", "200", "700"];
+            const validPrices = ["10,000", "30,000", "40,000", "50,000", "250,000", "280,000", "290,000", "20", "60", "200", "700"];
 
             if (!$(this).parent().hasClass('secondRow') && validPrices.includes(priceText)) {
                 $(this).parent().off('click').on('click', buySkin);
@@ -425,7 +429,7 @@
         if (state.filters.tier0) {
             $('.swAvatarTilePrice').each(function() {
                 const price = $(this).text();
-                if (["10,000", "40,000", "50,000", "250,000", "290,000"].includes(price) ||
+                if (["10,000", "30,000", "40,000", "50,000", "250,000", "280,000", "290,000"].includes(price) ||
                     (price === '700' && !$(this).parent().hasClass('secondRow'))) {
                     $(this).closest('.hidden').removeClass('hidden');
                 }
