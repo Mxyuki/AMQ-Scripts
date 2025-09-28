@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Custom Quiz Importer
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3
+// @version      1.4
 // @description  Import custom quizzes from JSON files from anisongdb.com with
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -12,7 +12,7 @@
 
 if ($("#loginPage").length) return;
 
-let version = 1.3;
+let version = 1.4;
 checkScriptVersion("AMQ Custom Quiz Importer", version);
 
 function addImportButton() {
@@ -247,6 +247,7 @@ function importQuiz(songData, fileName) {
                 ruleBlocks: [
                     {
                         randomOrder: true,
+                        duplicates: true,
                         songCount: songCount,
                         guessTime: {
                             guessTime: 20,
