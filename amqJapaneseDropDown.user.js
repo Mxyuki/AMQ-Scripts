@@ -1,11 +1,8 @@
 // ==UserScript==
 // @name         AMQ Japanese DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.0
+// @version      1.5.0
 // @description  Make AMQ playable using Japanese characters.
-// @description  Most scrapped info from ANN are accessible here https://github.com/Mxyuki/amqJP <- I need to edit this to match the new way.
-// @description  If you want to upgrade it feel free to use anything I put there.
-// @description  Remade the way I get the titles usingthe new Expand Library, still need some tweakingto be perfect but should be working  better now.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
@@ -17,117 +14,132 @@
 (function() {
     'use strict';
 
-    let version = "1.4.0";
-    checkScriptVersion("AMQ Japanese DropDown", version);
+    const SCRIPT_VERSION = "1.5.0";
+    const JSON_URL = 'https://raw.githubusercontent.com/Mxyuki/amqJP/main/newDropDown.json';
+    
+    checkScriptVersion("AMQ Japanese DropDown", SCRIPT_VERSION);
 
-    const githubJsonUrl = 'https://raw.githubusercontent.com/Mxyuki/amqJP/main/newDropDown.json';
-    let jsonData = null;
+    let animeDatabase = null;
+    let romajiToJapaneseMap = new Map();
+    let japaneseToRomajiMap = new Map();
 
-    async function fetchJsonData() {
+    // <-- Database Management -->
+    async function loadAnimeDatabase() {
+        if (animeDatabase !== null) return;
+
         try {
-            let response = await fetch(githubJsonUrl);
+            const response = await fetch(JSON_URL);
+            
             if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
+                throw new Error(`Network response failed: ${response.statusText}`);
             }
-            jsonData = await response.json();
+
+            animeDatabase = await response.json();
+            buildLookupMaps();
+            
         } catch (error) {
-            console.error('Failed to fetch JSON data:', error);
+            console.error('Failed to load anime database:', error);
+            animeDatabase = {};
         }
     }
 
-    async function convertJapaneseToRO(japaneseTitle) {
-        if (!jsonData) {
-            await fetchJsonData();
-        }
-        for (let item of jsonData) {
-            if (item.JA === japaneseTitle) {
-                return item.RO;
+    function buildLookupMaps() {
+        romajiToJapaneseMap.clear();
+        japaneseToRomajiMap.clear();
+
+        for (const id in animeDatabase) {
+            const anime = animeDatabase[id];
+            const romaji = anime.romaji;
+            const japanese = anime.japanese;
+
+            if (romaji && japanese) {
+                romajiToJapaneseMap.set(romaji, japanese);
+                japaneseToRomajiMap.set(japanese, romaji);
             }
         }
-        return japaneseTitle;
     }
 
-    let originalSubmitAnswer = QuizTypeAnswerInputController.prototype.submitAnswer;
+    function getJapaneseList() {
+        return Array.from(japaneseToRomajiMap.keys());
+    }
+
+    // <-- Title Conversion -->
+    async function convertJapaneseToRomaji(japaneseTitle) {
+        await loadAnimeDatabase();
+        return japaneseToRomajiMap.get(japaneseTitle) || japaneseTitle;
+    }
+
+    async function convertRomajiToJapanese(romajiTitle) {
+        await loadAnimeDatabase();
+        return romajiToJapaneseMap.get(romajiTitle) || null;
+    }
+
+    // <-- Answer Submission Hook -->
+    const originalSubmitAnswer = QuizTypeAnswerInputController.prototype.submitAnswer;
 
     QuizTypeAnswerInputController.prototype.submitAnswer = async function(answer) {
-        let convertedAnswer = await convertJapaneseToRO(answer);
+        const convertedAnswer = await convertJapaneseToRomaji(answer);
         originalSubmitAnswer.call(this, convertedAnswer);
     };
 
-    AutoCompleteController.prototype.updateList = function () {
+    // <-- AutoComplete List Override -->
+    AutoCompleteController.prototype.updateList = function() {
         if (this.version === null) {
-            let retriveListListener = new Listener("get all song names", async function (payload) {
+            const retrieveListListener = new Listener("get all song names", async function(payload) {
                 this.version = payload.version;
-                if (!jsonData) {
-                    await fetchJsonData();
-                }
-                if (Array.isArray(jsonData)) {
-                    this.list = jsonData.map(item => item.JA);
-                } else {
-                    console.error('Invalid data format:', jsonData);
-                    return;
-                }
+                
+                await loadAnimeDatabase();
+                this.list = getJapaneseList();
                 this.newList();
-                retriveListListener.unbindListener();
+                
+                retrieveListListener.unbindListener();
             }.bind(this));
-            retriveListListener.bindListener();
+
+            retrieveListListener.bindListener();
             socket.sendCommand({
                 type: 'quiz',
                 command: 'get all song names'
             });
         } else {
-            let updateSongsListener = new Listener("update all song names", function (payload) {
+            const updateSongsListener = new Listener("update all song names", function(payload) {
                 this.version = payload.version;
+
                 if (payload.deleted.length + payload.new.length > 0) {
                     this.list = this.list.filter(name => !payload.deleted.includes(name));
                     this.list = this.list.concat(payload.new);
                     this.newList();
                 }
+
                 updateSongsListener.unbindListener();
             }.bind(this));
+
             updateSongsListener.bindListener();
             socket.sendCommand({
                 type: 'quiz',
                 command: 'update all song names',
-                data: {
-                    currentVersion: this.version
-                }
+                data: { currentVersion: this.version }
             });
         }
     };
 
+    // <-- Answer Results Display Hook -->
     new Listener("answer results", async (payload) => {
-        if (payload.songInfo && payload.songInfo.animeNames) {
-            const { romaji, english } = payload.songInfo.animeNames;
+        if (!payload.songInfo?.animeNames) return;
 
-            if (!jsonData) {
-                await fetchJsonData();
-            }
+        const { romaji, english } = payload.songInfo.animeNames;
+        await loadAnimeDatabase();
 
-            let foundJA = null;
+        const titleToLookup = romaji || english;
+        if (!titleToLookup) return;
 
-            if (romaji) {
-                for (let item of jsonData) {
-                    if (item.RO === romaji) {
-                        foundJA = item.JA;
-                        break;
-                    }
-                }
-            }
-            if (!foundJA && english) {
-                for (let item of jsonData) {
-                    if (item.EN === english) {
-                        foundJA = item.JA;
-                        break;
-                    }
-                }
-            }
-            if (foundJA) {
-                setTimeout(() => {
-                    $('#qpAnimeName').text(foundJA);
-                    fitTextToContainer($("#qpAnimeName"), $("#qpAnimeNameContainer"), 25, 11);
-                }, 100);
-            }
+        const japaneseTitle = await convertRomajiToJapanese(titleToLookup);
+
+        if (japaneseTitle) {
+            setTimeout(() => {
+                $('#qpAnimeName').text(japaneseTitle);
+                fitTextToContainer($("#qpAnimeName"), $("#qpAnimeNameContainer"), 25, 11);
+            }, 100);
         }
     }).bindListener();
+
 })();
