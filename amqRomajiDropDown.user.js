@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Romaji DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.0
+// @version      1.0.1
 // @description  Replace dropdown with only Romaji anime names using cache
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -9,13 +9,13 @@
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqRomajiDropDown.user.js
 // ==/UserScript==
 
-(function() {
+((function() {
     'use strict';
 
     let dropdownList = [];
     let isInitialized = false;
 
-    // <-- Extract Japanese names from cache -->
+    // <-- Extract Japanese names from cache (optimized) -->
     function extractNamesFromCache(animeCache) {
         const nameSet = new Set();
 
@@ -23,13 +23,15 @@
             const names = animeEntry.names;
             if (!names?.length) continue;
 
-            // <-- Find first JA name, or first EN name if no JA exists -->
-            const jaName = names.find(n => n.language === 'JA')?.name;
-            const enName = names.find(n => n.language === 'EN')?.name;
-            const targetName = jaName || enName;
+            // <-- Get ALL JA names, fallback to ALL EN names if no JA exists -->
+            const jaNames = names.filter(n => n.language === 'JA');
+            const enNames = names.filter(n => n.language === 'EN');
+            const targetNames = jaNames.length > 0 ? jaNames : enNames;
 
-            if (targetName) {
-                nameSet.add(targetName);
+            for (const nameObj of targetNames) {
+                if (nameObj.name) {
+                    nameSet.add(nameObj.name);
+                }
             }
         }
 
@@ -37,7 +39,7 @@
         console.log(`[AMQ Romaji] Loaded ${dropdownList.length} anime names`);
     }
 
-    // <-- Wait for dependency -->
+    // <-- Wait for dependency with Promise -->
     function waitFor(checkFn, maxAttempts = 40) {
         return new Promise((resolve, reject) => {
             let attempts = 0;
@@ -53,7 +55,7 @@
         });
     }
 
-    // <-- Replace autocomplete list -->
+    // <-- Replace autocomplete list (cached) -->
     function hookAutoComplete() {
         const originalUpdateList = AutoCompleteController.prototype.updateList;
 
@@ -90,7 +92,7 @@
         };
     }
 
-    // <-- Initialize -->
+    // <-- Initialize (async) -->
     async function initialize() {
         if (isInitialized) return;
 
