@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Romaji DropDown
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.1
+// @version      1.0.2
 // @description  Replace dropdown with only Romaji anime names using cache
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -15,7 +15,7 @@
     let dropdownList = [];
     let isInitialized = false;
 
-    // <-- Extract Japanese names from cache (optimized) -->
+    // <-- Extract Japanese names from cache -->
     function extractNamesFromCache(animeCache) {
         const nameSet = new Set();
 
@@ -55,7 +55,7 @@
         });
     }
 
-    // <-- Replace autocomplete list (cached) -->
+    // <-- Replace autocomplete list -->
     function hookAutoComplete() {
         const originalUpdateList = AutoCompleteController.prototype.updateList;
 
@@ -92,7 +92,7 @@
         };
     }
 
-    // <-- Initialize (async) -->
+    // <-- Initialize -->
     async function initialize() {
         if (isInitialized) return;
 
