@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ DM Save
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0
+// @version      2.0.1
 // @description  Save and restore DM messages and conversations across sessions
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -66,6 +66,71 @@ function getTimestamp() {
 function isChatOpen(chatName) {
     return $(`#chatBox-${chatName} > .chatBoxContainer`).hasClass("open");
 }
+
+/* <-- Context Menu Chat Button Enabler --> */
+const ContextMenuFix = {
+    preventDisabledClass() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .context-menu-item.context-menu-disabled:has(span:first-child:only-child) {
+                pointer-events: auto !important;
+                opacity: 1 !important;
+                cursor: pointer !important;
+            }
+
+            .context-menu-item:has(> span:first-child:only-child:is(:contains("Chat"), :contains("Invite to Game"), :contains("Join Game"))) {
+                pointer-events: auto !important;
+                opacity: 1 !important;
+                cursor: pointer !important;
+            }
+        `;
+        document.head.appendChild(style);
+    },
+
+    forceEnableChat() {
+        const observer = new MutationObserver(() => {
+            const items = document.querySelectorAll('.context-menu-item.context-menu-disabled');
+
+            items.forEach(item => {
+                const text = item.textContent.trim();
+                if (text === 'Chat' || text === 'Invite to Game' || text === 'Join Game') {
+                    item.classList.remove('context-menu-disabled');
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        return observer;
+    },
+
+    overrideJQueryAddClass() {
+        const checkAndOverride = () => {
+            if (typeof $ !== 'undefined' && $.fn.addClass) {
+                const originalAddClass = $.fn.addClass;
+
+                $.fn.addClass = function(className) {
+                    if (typeof className === 'string' && className.includes('context-menu-disabled')) {
+                        const text = this.text().trim();
+                        if (text === 'Chat' || text === 'Invite to Game' || text === 'Join Game') {
+                            return this;
+                        }
+                    }
+                    return originalAddClass.apply(this, arguments);
+                };
+            } else {
+                setTimeout(checkAndOverride, 500);
+            }
+        };
+
+        checkAndOverride();
+    }
+};
 
 /* <-- Message Management --> */
 const Messages = {
@@ -308,6 +373,9 @@ state.messages = Storage.load("amqDmMessages", {});
 state.unreadChats = Storage.load("amqUnreadDms", []);
 state.unreadMessages = Storage.load("amqUnreadMessages", {});
 
+ContextMenuFix.preventDisabledClass();
+ContextMenuFix.forceEnableChat();
+ContextMenuFix.overrideJQueryAddClass();
 hookChatBox();
 
 if (document.readyState === 'loading') {
