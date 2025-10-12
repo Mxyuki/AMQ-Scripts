@@ -1,13 +1,13 @@
 // ==UserScript==
-// @name         AMQ Upload DM Save
+// @name         AMQ Upload DM
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0.0
+// @version      1.0.1
 // @description  Save and restore upload system messages from AMQ
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @grant        none
-// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqUploadDMSave.user.js
-// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqUploadDMSave.user.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqUploadDM.user.js
+// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqUploadDM.user.js
 // ==/UserScript==
 
 if (document.querySelector("#loginPage")) return;
@@ -190,10 +190,10 @@ function initialize() {
 
     setupSocketListener();
 
-    if (CONFIG.autoCreateChat && state.messages.length > 0) {
+    if (CONFIG.autoCreateChat) {
         setTimeout(() => {
             const chat = ChatUI.createChat();
-            if (chat) {
+            if (chat && state.messages.length > 0) {
                 setTimeout(() => ChatUI.loadMessages(), 500);
             }
         }, CONFIG.initDelay);
@@ -205,5 +205,3 @@ if (document.readyState === 'loading') {
 } else {
     initialize();
 }
-
-window.loadUploadMessages = () => ChatUI.loadMessages();
