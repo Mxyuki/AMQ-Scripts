@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ DM Save
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.1
-// @description  Save and restore DM messages and conversations across sessions
+// @version      2.1.0
+// @description  Save and restore DM messages and conversations across sessions (XSS Protected)
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @grant        none
@@ -50,6 +50,37 @@ const Storage = {
         } catch (error) {
             console.log(`Storage save failed for ${key}`);
         }
+    }
+};
+
+/* <-- Security --> */
+const Security = {
+    sanitizeText(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    createElement(tag, attributes = {}, textContent = '') {
+        const element = document.createElement(tag);
+
+        for (const [key, value] of Object.entries(attributes)) {
+            if (key === 'style' && typeof value === 'object') {
+                Object.assign(element.style, value);
+            } else if (key === 'class') {
+                element.className = value;
+            } else if (key.startsWith('data-')) {
+                element.setAttribute(key, value);
+            } else {
+                element[key] = value;
+            }
+        }
+
+        if (textContent) {
+            element.textContent = textContent;
+        }
+
+        return element;
     }
 };
 
@@ -217,23 +248,26 @@ const UI = {
             $footer.find('.unread-badge').remove();
 
             if (unreadCount > 0 && !isChatOpen(chatName)) {
-                $footer.css('position', 'relative').append(`
-                    <span class="unread-badge" style="
-                        position: absolute;
-                        top: 12.5px;
-                        right: 20px;
-                        background-color: ${CONFIG.badgeColor};
-                        color: ${CONFIG.badgeTextColor};
-                        border-radius: 10px;
-                        padding: 2px 6px;
-                        font-size: 11px;
-                        font-weight: bold;
-                        min-width: 18px;
-                        text-align: center;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                        z-index: 10;
-                    ">${unreadCount}</span>
-                `);
+                const badge = Security.createElement('span', {
+                    class: 'unread-badge',
+                    style: {
+                        position: 'absolute',
+                        top: '12.5px',
+                        right: '20px',
+                        backgroundColor: CONFIG.badgeColor,
+                        color: CONFIG.badgeTextColor,
+                        borderRadius: '10px',
+                        padding: '2px 6px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        minWidth: '18px',
+                        textAlign: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                        zIndex: '10'
+                    }
+                }, unreadCount.toString());
+
+                $footer.css('position', 'relative').append(badge);
             }
         }, CONFIG.badgeUpdateDelay);
     },
@@ -269,21 +303,43 @@ const UI = {
                 return;
             }
 
-            $(scrollbarSelector).after('<li class="previousMessage" style="padding-left: 4rem">--- Previous Messages ---</li>');
+            const separator = Security.createElement('li', {
+                class: 'previousMessage',
+                style: { paddingLeft: '4rem' }
+            }, '--- Previous Messages ---');
+
+            $(scrollbarSelector).after(separator);
 
             for (let i = messagesToLoad.length - 1; i >= 0; i--) {
                 const msg = messagesToLoad[i];
                 const isUnread = Unread.isMessageUnread(chatName, msg.key);
-                const highlightStyle = isUnread ? `style="background-color: ${CONFIG.highlightColor};"` : '';
-                const unreadClass = isUnread ? 'unread-message' : '';
 
-                $(scrollbarSelector).after(`
-                    <li class="${unreadClass}" ${highlightStyle} data-chat="${chatName}">
-                        <span class="dmTimestamp" style="opacity: 0.5">${msg.timestamp}</span>
-                        <span class="dmUsername">${msg.sender}:</span>
-                         ${msg.message}
-                    </li>
-                `);
+                const messageItem = Security.createElement('li', {
+                    class: isUnread ? 'unread-message' : '',
+                    'data-chat': chatName
+                });
+
+                if (isUnread) {
+                    messageItem.style.backgroundColor = CONFIG.highlightColor;
+                }
+
+                const timestampSpan = Security.createElement('span', {
+                    class: 'dmTimestamp',
+                    style: { opacity: '0.5' }
+                }, msg.timestamp);
+
+                const usernameSpan = Security.createElement('span', {
+                    class: 'dmUsername'
+                }, msg.sender + ':');
+
+                const messageText = document.createTextNode(' ' + msg.message);
+
+                messageItem.appendChild(timestampSpan);
+                messageItem.appendChild(document.createTextNode(' '));
+                messageItem.appendChild(usernameSpan);
+                messageItem.appendChild(messageText);
+
+                $(scrollbarSelector).after(messageItem);
             }
 
             $chatContent.scrollTop($chatContent.prop("scrollHeight"));
