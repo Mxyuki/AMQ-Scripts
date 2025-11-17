@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ Skin Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.5.0
-// @description  Display in the skin Area, The Number of skin you have, The total number of skin in the game, And the percentage of skin you possess, let you filter skins by Tier, let you Filter Skins by Name, and also calcul how many level are needed to reach your pity.
+// @version      4.0.1
+// @description  Enhanced skin management for AMQ with filtering, search, statistics, and pity calculator
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
 // @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
@@ -14,516 +14,501 @@
 (function() {
     'use strict';
 
-    // Exit early if we're on the login page
     if ($("#loginPage").length) return;
 
-    // Global configuration
-    const config = {
-        version: "3.5.0",
+    const CONFIG = {
+        version: "4.0.1",
         skinWidth: "10%",
-        checkInterval: 500
+        initCheckInterval: 500,
+        searchDebounceDelay: 100,
+        buyClickDelay: 100,
+        ticketsPerLevel: 1,
+        ticketsPerBonusLevel: 6,
+        bonusLevelInterval: 10,
+        pityTicketCost: 2
     };
 
-    // Global state
-    const state = {
-        // Skin statistics
-        totalSkins: 0,
-        totalAvailableSkins: 0,
-        collectionPercentage: 0,
-
-        // Filter states
-        filters: {
-            locked: false,
-            tier0: false,
-            tier1: false,
-            tier2: false,
-            tier3: false
-        },
-
-        // Search functionality
-        skinNameList: [],
-        searchTimeout: null,
-        awesomeplete: null,
-
-        // Pity system tracking
-        currentPity: 0,
-        maxPity: 0,
-        ticketCount: 0,
-        playerLevel: 0
+    const TIER_PRICES = {
+        tier0: ["10,000", "30,000", "40,000", "50,000", "250,000", "280,000", "290,000", "700"],
+        tier1: ["20"],
+        tier2: ["60"],
+        tier3: ["200"]
     };
 
-    // Initialize when game is loaded
-    const initInterval = setInterval(() => {
-        if ($("#loadingScreen").hasClass("hidden")) {
-            initialize();
-            clearInterval(initInterval);
-        }
-    }, config.checkInterval);
+    const SELECTORS = {
+        loadingScreen: "#loadingScreen",
+        skinContainer: "#swContentAvatarContainer",
+        topBarContainer: "#swTopBarContentContainer",
+        topBarContent: "#swTopBarContentContainerInner",
+        avatarContainer: ".swTopBarAvatarContainer.leftRightButtonTop",
+        skinTile: ".swAvatarTile",
+        skinPrice: ".swAvatarTilePrice",
+        searchBox: "#spTextBox",
+        buyButton: "#swRightColumnActionButtonText",
+        pityInfo: "#pityLevelInfo",
+        totalSkinText: "#totalSkinText",
+        rightColumnBottom: "#swRightColumnBottomInner",
+        pityContainer: "#swResonanceProgressBarContainer",
+        currentPity: "#swResonancePointCurrent",
+        maxPity: "#swResonancePointTarget",
+        ticketCount: "#currencyTicketText",
+        playerLevel: "#xpLevelContainer .levelText"
+    };
 
-    // Main initialization
-    function initialize() {
-        checkScriptVersion("AMQ Skin Plus", config.version);
-
-        updateSkinCounts();
-        collectSkinNames();
-        updatePityData();
-
-        createUserInterface();
-        setupEventListeners();
-        setupMutationObserver();
-        applyStyles();
-    }
-
-    // Update pity system data
-    function updatePityData() {
-        state.currentPity = parseInt($("#swResonancePointCurrent").text()) || 0;
-        state.maxPity = parseInt($("#swResonancePointTarget").text()) || 0;
-        state.ticketCount = parseInt($("#currencyTicketText").text()) || 0;
-        state.playerLevel = parseInt($("#xpLevelContainer .levelText").first().text()) || 0;
-    }
-
-    // Calculate levels needed for pity
-    function calculateLevelsForPity() {
-        // Calculate tickets needed to reach pity
-        const pityRemaining = state.maxPity - state.currentPity;
-        const ticketsNeeded = pityRemaining * 2;
-        const ticketsRemaining = ticketsNeeded - state.ticketCount;
-
-        if (ticketsRemaining <= 0) {
-            return {
-                levelsNeeded: 0,
-                finalLevel: state.playerLevel
+    class SkinManager {
+        constructor() {
+            this.state = {
+                totalSkins: 0,
+                totalAvailableSkins: 0,
+                collectionPercentage: 0,
+                filters: {
+                    locked: false,
+                    tier0: false,
+                    tier1: false,
+                    tier2: false,
+                    tier3: false
+                },
+                skinNameList: [],
+                searchTimeout: null,
+                awesomeplete: null,
+                currentPity: 0,
+                maxPity: 0,
+                ticketCount: 0,
+                playerLevel: 0
             };
         }
 
-        // Calculate levels needed based on bonus every 10 levels
-        let ticketsAccumulated = 0;
-        let levelsNeeded = 0;
-        let currentLevel = state.playerLevel;
+        initialize() {
+            checkScriptVersion("AMQ Skin Plus", CONFIG.version);
 
-        while (ticketsAccumulated < ticketsRemaining) {
-            currentLevel++;
-            levelsNeeded++;
+            this.updateSkinCounts();
+            this.collectSkinNames();
+            this.updatePityData();
 
-            // Check if this level is a multiple of 10 (bonus tickets)
-            if (currentLevel % 10 === 0) {
-                ticketsAccumulated += 6;
-            } else {
-                ticketsAccumulated += 1;
-            }
+            this.createUI();
+            this.setupEventListeners();
+            this.setupMutationObserver();
+            this.applyStyles();
         }
 
-        return {
-            levelsNeeded,
-            finalLevel: state.playerLevel + levelsNeeded
-        };
-    }
+        <!-- Skin Statistics Management -->
+        updateSkinCounts() {
+            let unlockedCount = 0;
+            let totalCount = 0;
 
-    // Create and inject UI elements
-    function createUserInterface() {
-        // Create main UI elements
-        const ui = `
-            <div id="skinSearch">
-                <input id="spTextBox" type="text" placeholder="Search Skin">
-            </div>
-            <div id="skinTiers">
-                <div class="spContainer">
-                    <p id="skinLocked" class="skinTierText">Locked</p>
-                    <div class="customCheckbox spCheckbox">
-                        <input id="spLockedCheckbox" type="checkbox">
-                        <label for="spLockedCheckbox">
-                            <i class="fa fa-check" aria-hidden="true"></i>
-                        </label>
-                    </div>
-                </div>
-                <div class="spContainer">
-                    <p id="skinTier0" class="skinTierText">Tier 0</p>
-                    <div class="customCheckbox spCheckbox">
-                        <input id="spTier0Checkbox" type="checkbox">
-                        <label for="spTier0Checkbox">
-                            <i class="fa fa-check" aria-hidden="true"></i>
-                        </label>
-                    </div>
-                </div>
-                <div class="spContainer">
-                    <p id="skinTier1" class="skinTierText">Tier 1</p>
-                    <div class="customCheckbox spCheckbox">
-                        <input id="spTier1Checkbox" type="checkbox">
-                        <label for="spTier1Checkbox">
-                            <i class="fa fa-check" aria-hidden="true"></i>
-                        </label>
-                    </div>
-                </div>
-                <div class="spContainer">
-                    <p id="skinTier2" class="skinTierText">Tier 2</p>
-                    <div class="customCheckbox spCheckbox">
-                        <input id="spTier2Checkbox" type="checkbox">
-                        <label for="spTier2Checkbox">
-                            <i class="fa fa-check" aria-hidden="true"></i>
-                        </label>
-                    </div>
-                </div>
-                <div class="spContainer">
-                    <p id="skinTier3" class="skinTierText">Tier 3</p>
-                    <div class="customCheckbox spCheckbox">
-                        <input id="spTier3Checkbox" type="checkbox">
-                        <label for="spTier3Checkbox">
-                            <i class="fa fa-check" aria-hidden="true"></i>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div id="swRightColumnTotalSkin">
-                <div id="swRightColumnTotalSkinArea" class="text-center" style="margin-top: -20px;">
-                    <h1 style="font-size: 25px;">Total Skins:</h1>
-                    <p id="totalSkinText">${state.totalSkins} / ${state.totalAvailableSkins} | ${state.collectionPercentage} %</p>
-                </div>
-            </div>
-        `;
+            $(SELECTORS.topBarContent + ' ' + SELECTORS.avatarContainer).each(function() {
+                const $container = $(this);
+                const avatarClass = $container.find('.swTopBarImageContainer').attr('class')?.split(' ').pop();
 
-        $("#swRightColumnBottomInner").prepend(ui);
+                if (!avatarClass || avatarClass === 'swTopBarImageContainer') return;
 
-        // Add pity level calculator
-        addPityLevelCalculator();
+                const unlocked = parseInt($container.find('.swTopBarUnlockStatusUnlocked').first().text() || 0);
+                const total = parseInt($container.find('.swTopBarUnlockStatusTotal').first().text() || 0);
 
-        // Initialize Awesomeplete for skin search
-        state.awesomeplete = new AmqAwesomeplete(document.querySelector("#spTextBox"), {
-            list: state.skinNameList,
-            minChars: 1,
-            maxItems: 5
-        });
-    }
+                unlockedCount += unlocked;
+                totalCount += total;
+            });
 
-    // Add pity level calculator to the UI
-    function addPityLevelCalculator() {
-        const pityCalc = calculateLevelsForPity();
-        const pityHtml = `<p id="pityLevelInfo">${pityCalc.levelsNeeded} levels needed (${pityCalc.finalLevel})</p>`;
+            this.state.totalSkins = unlockedCount;
+            this.state.totalAvailableSkins = totalCount;
+            this.state.collectionPercentage = totalCount > 0
+                ? ((unlockedCount / totalCount) * 100).toFixed(2)
+                : 0;
 
-        // Add after the resonance points display
-        $("#swResonanceProgressBarContainer").after(pityHtml);
-    }
+            this.updateSkinDisplay();
+        }
 
-    // Update pity calculator display
-    function updatePityCalculator() {
-        updatePityData();
-        const pityCalc = calculateLevelsForPity();
-        $("#pityLevelInfo").text(`${pityCalc.levelsNeeded} levels needed (${pityCalc.finalLevel})`);
-    }
+        updateSkinDisplay() {
+            $(SELECTORS.totalSkinText).text(
+                `${this.state.totalSkins} / ${this.state.totalAvailableSkins} | ${this.state.collectionPercentage} %`
+            );
+        }
 
-    // Set up event listeners
-    function setupEventListeners() {
-        // Search box input handler
-        $("#spTextBox").on("keyup", function() {
-            handleSearchInput(state.awesomeplete.currentSubList);
-        });
+        collectSkinNames() {
+            this.state.skinNameList = $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer')
+                .map(function() {
+                    return this.classList.item(this.classList.length - 1);
+                })
+                .get()
+                .slice(2, -1);
+        }
 
-        // Avatar container change handler
-        $("#swContentAvatarContainer").on("change", function() {
-            filterSkins();
-        });
+        <!-- Pity System Management -->
+        updatePityData() {
+            this.state.currentPity = parseInt($(SELECTORS.currentPity).text()) || 0;
+            this.state.maxPity = parseInt($(SELECTORS.maxPity).text()) || 0;
+            this.state.ticketCount = parseInt($(SELECTORS.ticketCount).text()) || 0;
+            this.state.playerLevel = parseInt($(SELECTORS.playerLevel).first().text()) || 0;
+        }
 
-        // Checkbox event listeners
-        setupCheckboxes();
+        calculateLevelsForPity() {
+            const pityRemaining = this.state.maxPity - this.state.currentPity;
+            const ticketsNeeded = pityRemaining * CONFIG.pityTicketCost;
+            const ticketsRemaining = ticketsNeeded - this.state.ticketCount;
 
-        // Listen for skin unlocks
-        new Listener("unlock avatar", () => {
-            updateSkinCounts();
-            filterSkins();
-        }).bindListener();
-
-        // Listen for XP/level changes
-        new Listener("quiz xp credit gain", () => {
-            const newLevel = parseInt($("#xpLevelContainer .levelText").first().text()) || 0;
-
-            // Only update if level changed
-            if (newLevel !== state.playerLevel) {
-                state.playerLevel = newLevel;
-                updatePityCalculator();
+            if (ticketsRemaining <= 0) {
+                return {
+                    levelsNeeded: 0,
+                    finalLevel: this.state.playerLevel
+                };
             }
-        }).bindListener();
 
-        // Listen for ticket and pity changes
-        const observeTargets = ["#swResonancePointCurrent", "#swResonancePointTarget", "#currencyTicketText"];
-        observeTargets.forEach(selector => {
-            const target = document.querySelector(selector);
-            if (target) {
-                new MutationObserver(() => updatePityCalculator()).observe(target, {
-                    childList: true,
-                    characterData: true,
-                    subtree: true
-                });
+            let ticketsAccumulated = 0;
+            let levelsNeeded = 0;
+            let currentLevel = this.state.playerLevel;
+
+            while (ticketsAccumulated < ticketsRemaining) {
+                currentLevel++;
+                levelsNeeded++;
+
+                ticketsAccumulated += (currentLevel % CONFIG.bonusLevelInterval === 0)
+                    ? CONFIG.ticketsPerBonusLevel
+                    : CONFIG.ticketsPerLevel;
             }
-        });
-    }
 
-    // Set up checkbox handlers
-    function setupCheckboxes() {
-        $("#spLockedCheckbox").prop("checked", state.filters.locked).on("click", () => {
-            state.filters.locked = !state.filters.locked;
-            filterSkins();
-        });
+            return {
+                levelsNeeded,
+                finalLevel: this.state.playerLevel + levelsNeeded
+            };
+        }
 
-        $("#spTier0Checkbox").prop("checked", state.filters.tier0).on("click", () => {
-            state.filters.tier0 = !state.filters.tier0;
-            filterSkins();
-        });
+        updatePityCalculator() {
+            this.updatePityData();
+            const pityCalc = this.calculateLevelsForPity();
+            $(SELECTORS.pityInfo).text(`${pityCalc.levelsNeeded} levels needed (${pityCalc.finalLevel})`);
+        }
 
-        $("#spTier1Checkbox").prop("checked", state.filters.tier1).on("click", () => {
-            state.filters.tier1 = !state.filters.tier1;
-            filterSkins();
-        });
+        <!-- UI Creation -->
+        createUI() {
+            this.createMainUI();
+            this.createPityCalculator();
+            this.initializeSearch();
+        }
 
-        $("#spTier2Checkbox").prop("checked", state.filters.tier2).on("click", () => {
-            state.filters.tier2 = !state.filters.tier2;
-            filterSkins();
-        });
+        createMainUI() {
+            const ui = `
+                <div id="skinSearch">
+                    <input id="spTextBox" type="text" placeholder="Search Skin">
+                </div>
+                <div id="skinTiers">
+                    ${this.createTierCheckbox("Locked", "spLockedCheckbox")}
+                    ${this.createTierCheckbox("Tier 0", "spTier0Checkbox")}
+                    ${this.createTierCheckbox("Tier 1", "spTier1Checkbox")}
+                    ${this.createTierCheckbox("Tier 2", "spTier2Checkbox")}
+                    ${this.createTierCheckbox("Tier 3", "spTier3Checkbox")}
+                </div>
+                <div id="swRightColumnTotalSkin">
+                    <div id="swRightColumnTotalSkinArea" class="text-center" style="margin-top: -20px;">
+                        <h1 style="font-size: 25px;">Total Skins:</h1>
+                        <p id="totalSkinText">${this.state.totalSkins} / ${this.state.totalAvailableSkins} | ${this.state.collectionPercentage} %</p>
+                    </div>
+                </div>
+            `;
 
-        $("#spTier3Checkbox").prop("checked", state.filters.tier3).on("click", () => {
-            state.filters.tier3 = !state.filters.tier3;
-            filterSkins();
-        });
-    }
+            $(SELECTORS.rightColumnBottom).prepend(ui);
+        }
 
-    // Set up mutation observer for the skin container
-    function setupMutationObserver() {
-        const targetNode = document.querySelector("#swContentAvatarContainer");
-        const observer = new MutationObserver(mutations => {
-            mutations.forEach(mutation => {
-                if (mutation.type === 'childList') {
-                    for (let i = 0; i < mutation.addedNodes.length; i++) {
-                        const node = mutation.addedNodes[i];
-                        if (node.classList && !node.classList.contains("previewTile")) {
-                            clearTimeout(state.searchTimeout);
-                            state.searchTimeout = setTimeout(filterSkins, 100);
+        createTierCheckbox(label, id) {
+            const formattedId = id.replace("Checkbox", "");
+            return `
+                <div class="spContainer">
+                    <p id="${formattedId}" class="skinTierText">${label}</p>
+                    <div class="customCheckbox spCheckbox">
+                        <input id="${id}" type="checkbox">
+                        <label for="${id}">
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </label>
+                    </div>
+                </div>
+            `;
+        }
+
+        createPityCalculator() {
+            const pityCalc = this.calculateLevelsForPity();
+            const pityHtml = `<p id="pityLevelInfo">${pityCalc.levelsNeeded} levels needed (${pityCalc.finalLevel})</p>`;
+            $(SELECTORS.pityContainer).after(pityHtml);
+        }
+
+        initializeSearch() {
+            this.state.awesomeplete = new AmqAwesomeplete(document.querySelector(SELECTORS.searchBox), {
+                list: this.state.skinNameList,
+                minChars: 1,
+                maxItems: 5
+            });
+        }
+
+        <!-- Event Listeners -->
+        setupEventListeners() {
+            this.setupSearchListener();
+            this.setupContainerListener();
+            this.setupCheckboxListeners();
+            this.setupGameListeners();
+            this.setupPityObservers();
+        }
+
+        setupSearchListener() {
+            $(SELECTORS.searchBox).on("keyup", () => {
+                this.handleSearchInput(this.state.awesomeplete.currentSubList);
+            });
+        }
+
+        setupContainerListener() {
+            $(SELECTORS.skinContainer).on("change", () => {
+                this.filterSkins();
+            });
+        }
+
+        setupCheckboxListeners() {
+            const checkboxMappings = [
+                { selector: "#spLockedCheckbox", filter: "locked" },
+                { selector: "#spTier0Checkbox", filter: "tier0" },
+                { selector: "#spTier1Checkbox", filter: "tier1" },
+                { selector: "#spTier2Checkbox", filter: "tier2" },
+                { selector: "#spTier3Checkbox", filter: "tier3" }
+            ];
+
+            checkboxMappings.forEach(({ selector, filter }) => {
+                $(selector)
+                    .prop("checked", this.state.filters[filter])
+                    .on("click", () => {
+                        this.state.filters[filter] = !this.state.filters[filter];
+                        this.filterSkins();
+                    });
+            });
+        }
+
+        setupGameListeners() {
+            new Listener("unlock avatar", () => {
+                this.updateSkinCounts();
+                this.filterSkins();
+            }).bindListener();
+
+            new Listener("quiz xp credit gain", () => {
+                const newLevel = parseInt($(SELECTORS.playerLevel).first().text()) || 0;
+                if (newLevel !== this.state.playerLevel) {
+                    this.state.playerLevel = newLevel;
+                    this.updatePityCalculator();
+                }
+            }).bindListener();
+        }
+
+        setupPityObservers() {
+            const observeTargets = [SELECTORS.currentPity, SELECTORS.maxPity, SELECTORS.ticketCount];
+
+            observeTargets.forEach(selector => {
+                const target = document.querySelector(selector);
+                if (target) {
+                    new MutationObserver(() => this.updatePityCalculator()).observe(target, {
+                        childList: true,
+                        characterData: true,
+                        subtree: true
+                    });
+                }
+            });
+        }
+
+        setupMutationObserver() {
+            const targetNode = document.querySelector(SELECTORS.skinContainer);
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'childList') {
+                        for (let node of mutation.addedNodes) {
+                            if (node.classList && !node.classList.contains("previewTile")) {
+                                clearTimeout(this.state.searchTimeout);
+                                this.state.searchTimeout = setTimeout(() => this.filterSkins(), CONFIG.searchDebounceDelay);
+                                break;
+                            }
                         }
                     }
-                }
+                });
             });
-        });
 
-        observer.observe(targetNode, { childList: true });
-    }
+            observer.observe(targetNode, { childList: true });
+        }
 
-    function updateSkinCounts() {
-        let unlocked = 0;
-        let total = 0;
+        <!-- Search Functionality -->
+        handleSearchInput(searchList) {
+            const $containers = $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer');
+            $containers.removeClass("hidden");
 
-        $('#swTopBarContentContainerInner .swTopBarAvatarContainer.leftRightButtonTop').each(function () {
-            const $container = $(this);
-            const avatarClass = $container.find('.swTopBarImageContainer').attr('class')?.split(' ').pop();
+            if (searchList != null) {
+                $containers.each(function() {
+                    let lastClass = this.classList.item(this.classList.length - 1);
 
-            if (!avatarClass || avatarClass === 'swTopBarImageContainer') return;
+                    if (lastClass === "selected") {
+                        lastClass = this.classList.item(this.classList.length - 2);
+                        $(this).parent().find(".swTopBarAvatarSkinContainer").css("width", "0px");
+                    }
 
-            const unlockedVal = parseInt($container.find('.swTopBarUnlockStatusUnlocked').first().text() || 0);
-            const totalVal = parseInt($container.find('.swTopBarUnlockStatusTotal').first().text() || 0);
+                    if (!searchList.includes(lastClass)) {
+                        $(this).addClass("hidden");
+                    }
+                });
+            }
 
-            unlocked += unlockedVal;
-            total += totalVal;
-        });
+            $(SELECTORS.topBarContainer).scrollLeft(0);
+        }
 
-        state.totalSkins = unlocked;
-        state.totalAvailableSkins = total;
-        state.collectionPercentage = ((unlocked / total) * 100).toFixed(2);
+        <!-- Skin Filtering -->
+        filterSkins() {
+            this.setupQuickBuy();
+            clearTimeout(this.state.searchTimeout);
 
-        $('#totalSkinText').text(`${state.totalSkins} / ${state.totalAvailableSkins} | ${state.collectionPercentage} %`);
-    }
+            $(SELECTORS.skinTile).addClass('hidden');
 
+            const allTiersSelected = this.state.filters.tier0 && this.state.filters.tier1 &&
+                                    this.state.filters.tier2 && this.state.filters.tier3;
+            const noTiersSelected = !this.state.filters.tier0 && !this.state.filters.tier1 &&
+                                   !this.state.filters.tier2 && !this.state.filters.tier3;
 
-    // Collect skin names for search functionality
-    function collectSkinNames() {
-        state.skinNameList = $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer')
-            .map(function() {
-                return this.classList.item(this.classList.length - 1);
-            })
-            .get()
-            .slice(2, -1);
-    }
-
-    // Handle search input
-    function handleSearchInput(searchList) {
-        const $containers = $('.swTopBarAvatarImageContainer.clickAble.swTopBarImageContainer');
-
-        $containers.removeClass("hidden");
-
-        if (searchList != null) {
-            $containers.each(function() {
-                let lastClass = this.classList.item(this.classList.length - 1);
-
-                if (lastClass === "selected") {
-                    lastClass = this.classList.item(this.classList.length - 2);
-                    $(this).parent().find(".swTopBarAvatarSkinContainer").css("width", "0px");
+            if (!this.state.filters.locked) {
+                this.filterUnlockedSkins();
+                if (allTiersSelected || noTiersSelected) {
+                    $(SELECTORS.skinTile).removeClass('hidden');
                 }
-
-                if (!searchList.includes(lastClass)) {
-                    $(this).addClass("hidden");
+            } else {
+                this.filterLockedSkins();
+                if (allTiersSelected || noTiersSelected) {
+                    $(SELECTORS.skinTile + ':not(.unlocked)').removeClass('hidden');
+                    $(SELECTORS.skinTile + '.unlocked').addClass('hidden');
                 }
-            });
-        }
-
-        $('#swTopBarContentContainer').scrollLeft(0);
-    }
-
-    // Apply skin filtering based on checkboxes
-    function filterSkins() {
-        setupQuickBuy();
-        clearTimeout(state.searchTimeout);
-
-        // Hide all tiles initially
-        $('.swAvatarTile').addClass('hidden');
-
-        const allTiersSelected = state.filters.tier0 && state.filters.tier1 &&
-                                state.filters.tier2 && state.filters.tier3;
-        const noTiersSelected = !state.filters.tier0 && !state.filters.tier1 &&
-                               !state.filters.tier2 && !state.filters.tier3;
-
-        if (!state.filters.locked) {
-            // Unlocked skins filtering
-            filterUnlockedSkins();
-
-            // Show all if all tiers selected or none selected
-            if (allTiersSelected || noTiersSelected) {
-                $('.swAvatarTile').removeClass('hidden');
-            }
-        } else {
-            // Locked skins filtering
-            filterLockedSkins();
-
-            // Special case for all tiers or no tiers
-            if (allTiersSelected || noTiersSelected) {
-                $('.swAvatarTile:not(.unlocked)').removeClass('hidden');
-                $('.swAvatarTile.unlocked').addClass('hidden');
             }
         }
-    }
 
-    // Set up quick buy functionality
-    function setupQuickBuy() {
-        $(".swAvatarTilePrice").each(function() {
-            const priceText = $(this).text();
-            const validPrices = ["10,000", "30,000", "40,000", "50,000", "250,000", "280,000", "290,000", "20", "60", "200", "700"];
-
-            if (!$(this).parent().hasClass('secondRow') && validPrices.includes(priceText)) {
-                $(this).parent().off('click').on('click', buySkin);
+        filterUnlockedSkins() {
+            if (this.state.filters.tier0) {
+                $(SELECTORS.skinTile + '.unlocked .swAvatarTileRarityColor.hide').closest('.hidden').removeClass('hidden');
             }
-        });
-    }
+            if (this.state.filters.tier1) {
+                $(SELECTORS.skinTile + ' .swAvatarTileRarityColor.tier1').closest('.hidden').removeClass('hidden');
+            }
+            if (this.state.filters.tier2) {
+                $(SELECTORS.skinTile + ' .swAvatarTileRarityColor.tier2').closest('.hidden').removeClass('hidden');
+            }
+            if (this.state.filters.tier3) {
+                $(SELECTORS.skinTile + ' .swAvatarTileRarityColor.tier3').closest('.hidden').removeClass('hidden');
+            }
+        }
 
-    // Filter unlocked skins
-    function filterUnlockedSkins() {
-        if (state.filters.tier0) {
-            $('.swAvatarTile.unlocked .swAvatarTileRarityColor.hide').closest('.hidden').removeClass('hidden');
-        }
-        if (state.filters.tier1) {
-            $('.swAvatarTile .swAvatarTileRarityColor.tier1').closest('.hidden').removeClass('hidden');
-        }
-        if (state.filters.tier2) {
-            $('.swAvatarTile .swAvatarTileRarityColor.tier2').closest('.hidden').removeClass('hidden');
-        }
-        if (state.filters.tier3) {
-            $('.swAvatarTile .swAvatarTileRarityColor.tier3').closest('.hidden').removeClass('hidden');
-        }
-    }
+        filterLockedSkins() {
+            const filterByTier = (tier, priceArray) => {
+                if (!this.state.filters[tier]) return;
 
-    // Filter locked skins
-    function filterLockedSkins() {
-        if (state.filters.tier0) {
-            $('.swAvatarTilePrice').each(function() {
-                const price = $(this).text();
-                if (["10,000", "30,000", "40,000", "50,000", "250,000", "280,000", "290,000"].includes(price) ||
-                    (price === '700' && !$(this).parent().hasClass('secondRow'))) {
-                    $(this).closest('.hidden').removeClass('hidden');
+                $(SELECTORS.skinPrice).each(function() {
+                    const price = $(this).text();
+                    const isSecondRow = $(this).parent().hasClass('secondRow');
+                    const isHidden = $(this).parent().hasClass('hide');
+
+                    if (tier === 'tier0') {
+                        if (priceArray.includes(price) && (price !== '700' || !isSecondRow)) {
+                            $(this).closest('.hidden').removeClass('hidden');
+                        }
+                    } else {
+                        if (priceArray.includes(price) && !isHidden) {
+                            $(this).closest('.hidden').removeClass('hidden');
+                        }
+                    }
+                });
+            };
+
+            filterByTier('tier0', TIER_PRICES.tier0);
+            filterByTier('tier1', TIER_PRICES.tier1);
+            filterByTier('tier2', TIER_PRICES.tier2);
+            filterByTier('tier3', TIER_PRICES.tier3);
+        }
+
+        <!-- Quick Buy Feature -->
+        setupQuickBuy() {
+            const validPrices = [...TIER_PRICES.tier0, ...TIER_PRICES.tier1, ...TIER_PRICES.tier2, ...TIER_PRICES.tier3];
+
+            $(SELECTORS.skinPrice).each(function() {
+                const priceText = $(this).text();
+                const $parent = $(this).parent();
+
+                if (!$parent.hasClass('secondRow') && validPrices.includes(priceText)) {
+                    $parent.off('click').on('click', () => {
+                        setTimeout(() => {
+                            $(SELECTORS.buyButton).click();
+                        }, CONFIG.buyClickDelay);
+                    });
                 }
             });
         }
-        if (state.filters.tier1) {
-            $('.swAvatarTilePrice').each(function() {
-                if ($(this).text() === '20' && !$(this).parent().hasClass('hide')) {
-                    $(this).closest('.hidden').removeClass('hidden');
+
+        <!-- Styling -->
+        applyStyles() {
+            AMQ_addStyle(`
+                #skinSearch {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
-            });
-        }
-        if (state.filters.tier2) {
-            $('.swAvatarTilePrice').each(function() {
-                if ($(this).text() === '60' && !$(this).parent().hasClass('hide')) {
-                    $(this).closest('.hidden').removeClass('hidden');
+                #skinTiers {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 15px;
+                    padding-bottom: 20px;
                 }
-            });
-        }
-        if (state.filters.tier3) {
-            $('.swAvatarTilePrice').each(function() {
-                if ($(this).text() === '200' && !$(this).parent().hasClass('hide')) {
-                    $(this).closest('.hidden').removeClass('hidden');
+                .spContainer {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
-            });
+                #swRightColumnTotalSkin {
+                    margin-bottom: 10px;
+                }
+                .swAvatarTile:nth-of-type(4n) {
+                    margin-right: 1.5%;
+                }
+                .swAvatarTile {
+                    width: ${CONFIG.skinWidth};
+                }
+                #swContentAvatarContainer{
+                    column-gap: 1.5%;
+                }
+                .swAvatarTile:nth-of-type(4n) {
+                    margin-right: 0%;
+                }
+                #spTextBox {
+                    background-color: #424242;
+                    margin-top: 15px;
+                }
+                .skinTierText {
+                    font-weight: bold;
+                }
+                #pityLevelInfo {
+                    color: #86cefa;
+                    font-weight: bold;
+                    margin-top: 5px;
+                    text-align: center;
+                }
+            `);
         }
     }
 
-    // Quick buy skin functionality
-    function buySkin() {
-        setTimeout(() => {
-            $("#swRightColumnActionButtonText").click();
-        }, 100);
-    }
+    <!-- Script Initialization -->
+    const initInterval = setInterval(() => {
+        if ($(SELECTORS.loadingScreen).hasClass("hidden")) {
+            const skinManager = new SkinManager();
+            skinManager.initialize();
+            clearInterval(initInterval);
+        }
+    }, CONFIG.initCheckInterval);
 
-    // Apply CSS styles
-    function applyStyles() {
-        AMQ_addStyle(`
-            #skinSearch {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            #skinTiers {
-                display: flex;
-                justify-content: space-between;
-                margin: 15px;
-                padding-bottom: 20px;
-            }
-            .spContainer {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            #swRightColumnTotalSkin {
-                margin-bottom: 10px;
-            }
-            .swAvatarTile:nth-of-type(4n) {
-                margin-right: 1.5%;
-            }
-            .swAvatarTile {
-                width: ${config.skinWidth};
-                margin-right: 1.5%;
-            }
-            #spTextBox {
-                background-color: #424242;
-                margin-top: 15px;
-            }
-            .skinTierText {
-                font-weight: bold;
-            }
-            #pityLevelInfo {
-                color: #86cefa;
-                font-weight: bold;
-                margin-top: 5px;
-                text-align: center;
-            }
-        `);
-    }
-
-    // Register script with AMQ
+    <!-- Script Registration -->
     AMQ_addScriptData({
         name: "Skin Plus",
         author: "Mxyuki",
-        version: config.version,
+        version: CONFIG.version,
         link: "https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqSkinPlus.user.js",
         description: `
-            <p>This script helps you in the AMQ Skins Store.</p>
+            <p>Enhanced skin management for AMQ.</p>
             <p>Features:</p>
             <ul>
-                <li>Total Skins Counter with collection percentage</li>
-                <li>Tier filtering for both unlocked and locked skins</li>
+                <li>Total skins counter with collection percentage</li>
+                <li>Tier filtering for unlocked and locked skins</li>
                 <li>Search bar to filter skins by name</li>
-                <li>Fast buy feature - click on price to buy</li>
+                <li>Quick buy feature - click on price to purchase</li>
                 <li>Pity system calculator - shows levels needed to reach pity</li>
             </ul>
         `
