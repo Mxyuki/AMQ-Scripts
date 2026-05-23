@@ -1,19 +1,15 @@
 // ==UserScript==
 // @name         AMQ Custom Quiz Importer
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0
+// @version      2.1
 // @description  Import custom quizzes from JSON files with multi-rule block support
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
-// @require      https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqCheckScriptVersion.js
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomQuizImporter.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomQuizImporter.user.js
 // ==/UserScript==
 
 if ($("#loginPage").length) return;
-
-let version = 2.0;
-checkScriptVersion("AMQ Custom Quiz Importer", version);
 
 const MAX_RULE_BLOCKS = 25;
 const MAX_SONG_COUNT = 250;
@@ -335,6 +331,11 @@ class RuleBlock {
 
         quizData.samplePoint = {
             samplePoint: [this.settings.samplePointStart, this.settings.samplePointEnd]
+        };
+        quizData.guessModes = {
+            song: true,
+            tinyVideo: false,
+            blurVideo: false
         };
 
         return quizData;
