@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         AMQ Search By Player
-// @namespace    https://github.com/yourname
+// @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      0.1
 // @description  Make the room browser search bar also match players inside the room, not just the host.
 // @author       Myuki
