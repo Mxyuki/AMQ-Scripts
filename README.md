@@ -130,6 +130,10 @@ If the system sends you a message to validate or refuse your song, this script s
 
 *(I do not personally use this script, so I am unsure if it is still working or useful. Keeping it here in case someone needs it.)*
 
+# [AMQ User List Search](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqUserListSearch.user.js)
+
+Allow you to search for a username in the list of player without the need to scroll through all the user.
+
 # [AMQ Video Mode But Better](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqVideoModeButBetter.user.js)
 
 Allows you to customize the blur amount and size of the different video modes to your preference.
