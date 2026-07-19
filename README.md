@@ -1,4 +1,4 @@
-# AMQ Anisong Search
+# [AMQ Anisong Search](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqAnisongSearch.user.js)
 
 Lets you search for information about an anime name, song name, or artist by simply clicking on it. It opens a window showing the corresponding AnisongDB results.
 
