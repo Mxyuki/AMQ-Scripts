@@ -1,207 +1,94 @@
-# There is a lot of useless script in here but i made them for fun.
+# AMQ Anisong Search
 
-# I haven't updated it in a while, i will one day update it.
+Lets you search for information about an anime name, song name, or artist by simply clicking on it. It opens a window showing the corresponding AnisongDB results.
 
-# How to use it
+*(Song name and artist searches only work outside of Ranked mode.)*
 
-You must add the extension **Tampermonkey** to your browser. 
+# [AMQ Auto Send Answer](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqAutoSendAnswer.user.js)
 
-Then 1. click on the script you want to add and then clic on the **Raw** button at the top right of the lines of code
+Toggle it with **Alt + T**. Every time you type something in the answer bar, it will automatically validate your answer.
 
-Or 2. click on **TamperMonkey** then click on **Create a new script**, after that just put the script in it and `Load` or `Reload` https://animemusicquiz.com/
+*(Mostly used in teams to show what you are typing directly.)*
 
-If a Script isn't discribed under here it's either the script is not finished or as just been added recently or it's really useless and i forgot it
+# [AMQ BR Plus](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqBRPlus.user.js)
 
+Adds quality-of-life features to Battle Royale mode.
 
-# AMQ Play Button Change
+* Toggle a list with **Alt + O** showing the anime you picked and their ANN ID.
+* Allows you to display all anime names currently in the room.
 
-A script that change how in the AMQ menu the Play button is displayed.
+*(This script may need some updates, but it is still functional.)*
 
-Instead of having the window with the Solo / Multi / Nexus appear those 3 options a directly available on the Play button now.
+# [AMQ Command Drop Down](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqCommandDropDown.user.js)
 
+Adds a dropdown menu when you start typing a message with `/` in chat.
 
-# AMQ Skin Plus
+This makes it easier to access Kempanator's Mega Commands.
 
-AMQ Skin Plus is a script that display `The number of skin owner` / `The number of total skins in AMQ`, it will also tell you ther Percentage of skin you have.
+*(The commands have not been updated in a while, so some may be missing.)*
 
-It also let you filter Skins by `Tier`
+# [AMQ Coop Farm](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqCoopFarm.user.js)
 
-And let you Search Skins by `Name`.
+Adds a window allowing you to choose whether you want to share or automatically accept answers from other players to farm EXP together.
 
-All of that in the `Avatar Page` on top of your `Avatar`.
+You can also customize the chat answer prefix to match other existing co-op farming scripts.
 
+# [AMQ Custom Quiz Importer](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqCustomQuizImporter.user.js)
 
-# AMQ Gif Search
+Adds an import button in the Custom Quiz build tab.
 
-AMQ Gif Search is a script that is made to go with AMQ Chat Image
+Allows you to import song lists from AnisongDB or from a list of ANN IDs / AnisongDB song IDs in just a few clicks.
 
-It add a button under the emoji buttons in games, that make appear a TextBox where you can searcg GIF.
+# [AMQ DM Save](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqDMSave.user.js)
 
-By clicking on an image it will add the link to the gif to your message.
+Locally saves all received DMs with their timestamps.
 
-Kempanator will add it to his Chat Plus script, so you don't need to have a lot of script, and will add some other options and fix some problems that might exist.
+Also adds a badge showing the number of unread messages.
 
+# [AMQ Favorite Friends](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqFavoriteFriends.user.js)
 
-# AMQ Room Password
+Adds a Favorite button in the bottom-right gear menu.
 
-AMQ Room Password is a script that save the Passwords of Rooms you joined at least once, It saves the password with Who was the host of the room at the moment you joined.
+Allows you to mark people as Favorite Friends, which will always keep them at the top of your friend list.
 
-For the moment the password are Only findable in `Inspect > Application > Storage > Local Storage > animemusicquiz.com > room-info-list`
+# [AMQ Favorite Songs](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqFavoriteSongs.user.js)
 
+Adds a button under song information to save songs as favorites.
 
-# AMQ Chat Image To Link
+Your favorite songs can then be accessed from the **Fav. Songs** button in the bottom-right gear menu.
 
-AMQ Chat Image To Link is a script that make that you can `Drag` an image saved on your computer or `Paste` a copied image into AMQ chatbox and it will add to your message a litterbox file to send
+*(Needs an update to move the favorite button after the "Add to Custom List" button.)*
 
-I advise to use this script with a script that show image in chat.
+# [AMQ Hidden Friends](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqHiddenFriends.user.js)
 
-*Also big thank to Kitty for allowing API request from AMQ*
+Shows which of your friends are currently invisible in your friend list.
 
+Using `/HF` in chat displays your invisible friends list.
 
-# AMQ Chat Image
+*(Only you can see the command and its result.)*
 
-AMQ Chat Image is a script that detect when there is a link that finish with png/jpg/gif, and then make the image appear under it in the chat.
+# [AMQ Play Button Change](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqPlayButtonChange.user.js)
 
-Kempanator made a better version of it in his Chat Plus script, that has more options and works better
+Lets you customize the play button to quickly access only the modes you want.
 
+This avoids having to open another window to select a mode.
 
-# AMQ Favorite Friends
+*(Can be customized in the Graphics tab of AMQ Settings.)*
 
-AMQ Favorite Friend is a script that will let you add favorite friends and then show them at the top of your Friend List
+# [AMQ Search By Player](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqSearchByPlayer.user.js)
 
-it will also show you when they log in and log out
+Changes the Room List search bar so you can search for any player in the room, not only the host.
 
-**--- Add/Remove Favorite ---**
+# [AMQ Upload DM Save](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqUploadDMSave.user.js)
 
-To add or remove a friend from Favorite you just need to click the `Gear Button` at the bottom right and then click the Favorite button.
+Made for people who upload songs to AMQ.
 
-it will open a window where you can enter the name of your friend in a textbox and click `Add` or `Remove`.
+If the system sends you a message to validate or refuse your song, this script saves the message locally so you can still view it after refreshing the page.
 
-then their name will be displayed under to know every favorite friends you have.
+*(I do not personally use this script, so I am unsure if it is still working or useful. Keeping it here in case someone needs it.)*
 
-If one of your friends that you are adding is already online just refresh the page to make him appear at the top.
+# [AMQ Video Mode But Better](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqVideoModeButBetter.user.js)
 
+Allows you to customize the blur amount and size of the different video modes to your preference.
 
-# AMQ Co-op Farm
-
-AMQ Co-op Farm is a script that make your games in Farm co-op easier.
-
-**--- Buttons ---**
-
-`Enter` : Pressing enter will send your answer.
-
-`At the top right Coop Farm button` : Allow you to change how the script will work with differents Mods.
-
-**--- Mods ---**
-
-`Enabled`             - Receive answer and Send answer.
-
-`Send Answer Only`    - Only send your answer and don't receive answer.
-
-`Receive Only`        - Only receive the answer and don't send answer.
-
-`Disabled`            - Don't receive anser and don't send answer.
-
-
-# AMQ DM Save
-
-AMQ DM Save is a script that save the last messages sent in dm of everyone who sent you a message or at who you sent a message.
-
-The saved DM will appear when you Get or Send a message to this person.
-
-To change the number of saved DM just change the value of `numberSaved` to the number of dm you want saved + 1.
-
-
-# AMQ Update List
-
-AMQ Update List is a script that will update your list each time you log on amq, so you always get the last anime you watched in your list.
-
-To activate the Auto Update of one of your list, just go in `Settings` > `Anime List` > `Check the Checkbox of the list you want`
-
-
-# AMQ Custom Plus
-
-AMQ Custom Plus is a script that change your `AMQ Picture`, In the bottom right corner, in lobbys and in your profile.
-
-It also let you put any `Level` you want displayed on your game.
-
-You can also have any `Skin` you want
-
-*Other player don't see the Image / Level / Skin. It only display for you*
-
-
-# AMQ LowerToUpper
-
-AMQ LowerToUpper is a script made to change all your answer in Uppercase answer or Lowercase answer.
-
-(Not really helpful just for fun)
-
-**--- Buttons ---**
-
-`Insert` : When you answered something press insert to change it to UpperCase.
-
-`Delete` : When you answered something press delete to change it to LowerCase.
-
-
-# AMQ DAYT WHY
-
-(Have not been updated in a while)
-
-AMQ DAYT WHY is a script made so we can reuse shorten name of anime and not have to write all the long name.
-
-**--- Example ---**
-
-If you write Denyuden when you will press Enter it will automaticaly change your answer to Densetsu no Yuusha no Densetsu.
-
-**--- Add shortened name ---**
-
-        if (x == 'shortened name'){            //Must be in lowercase
-          $("#qpAnswerInput").val('Full name that work for AMQ');
-        }
-
-
-# AMQ Song Artist Type
-
-AMQ Song Artist Type is a script to play alone or with your friend the gamemode Song/Artist.
-
-**--- Buttons ---**
-
-`At the top right Artsit/Song button` : Open the window to play S/A.
-
-In this window you can enable or disable the script.
-
-When enabled you just need to write the answer in the TextBox for Song/Artist/Type and just wait the end of the music.
-When the music end if the script is enable your answers will be sent in the chat and it will count your points.
-
-At the end of the game it will say how many point you have for each.
-
-
-# AMQ Auto Send Answer
-
-AMQ Auto Send Answer is a script made for team mode.
-
-When you will write your answer it will send it automaticaly at each letter and let everyone see what you're writing at the moment.
-
-**--- Buttons ---**
-
-`Alt + T` : Pressing it will enable or disable the script and send a message in chat to know in which state you are.
-
-
-# AMQ No Host
-
-(Not been updated in a while and really bad scripting)
-
-A script that give instantly Host to the last player who joined the game when someone give you Host.
-
-Plus a mode that put the last settings you saved before giving host to the last player who joined the game.
-
-**--- Buttons ---**
-
-`Alt + I` : Auto give Host to someone else
-
-`Alt + O` : Auto put last saved settings plus give Host to someone else
-
-
-# AMQ HuTao Voice
-
-AMQ HuTao Voice is just a script that will use voice line of HuTao from genshin while doing various action in AMQ
+*(Use this only in solo games or with friends, and use it at your own risk.)*
