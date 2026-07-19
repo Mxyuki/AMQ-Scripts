@@ -1,3 +1,46 @@
+# AMQ Scripts
+
+A collection of userscripts made for [Anime Music Quiz](https://animemusicquiz.com/).
+
+These scripts add various quality-of-life improvements, extra features, and tools to enhance your AMQ experience.
+
+## Installation
+
+To use these scripts, you first need to install a userscript manager.
+
+I recommend using [Tampermonkey](https://www.tampermonkey.net/).
+
+After installing Tampermonkey:
+
+1. Open the script you want to install from this repository.
+2. Click the **Raw** button at the top right of the script page.
+3. Tampermonkey should automatically open and ask you to install the script.
+4. Click **Install** and the script will be ready to use.
+
+### Manual Installation
+
+If clicking **Raw** does not open Tampermonkey automatically:
+
+1. Open the Tampermonkey extension.
+2. Click **Create a new script**.
+3. Delete the default template.
+4. Copy the entire script code from GitHub.
+5. Paste it into Tampermonkey.
+6. Save the script.
+
+## Updating Scripts
+
+When a script receives an update, simply open the script page again and press **Raw**.
+
+Tampermonkey will detect that the script already exists and allow you to update it.
+
+## Notes
+
+- These scripts are made for personal use on [Anime Music Quiz](https://animemusicquiz.com/).
+- Some scripts may require updates if AMQ changes its website.
+- Some features may only work in specific game modes.
+- Use scripts responsibly and avoid using features that could negatively affect other players' experience.
+
 # [AMQ Anisong Search](https://github.com/Mxyuki/AMQ-Scripts/blob/main/amqAnisongSearch.user.js)
 
 Lets you search for information about an anime name, song name, or artist by simply clicking on it. It opens a window showing the corresponding AnisongDB results.
