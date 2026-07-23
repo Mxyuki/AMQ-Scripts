@@ -181,9 +181,6 @@
         return { type: 3, typeNumber: 0 };
     }
 
-    // Converts an item from the external AMQ song-database export format
-    // (annId/annSongId/animeENName/animeJPName/animeAltName/songType/HQ/MQ/audio/...)
-    // into our internal song schema.
     function convertExternalSong(item) {
         const romaji = item.animeJPName || '';
         const english = item.animeENName || '';
@@ -211,9 +208,7 @@
             addedAt: Date.now(),
         };
     }
-
-    // Accepts either our own internal song shape (has videoMap) or the external
-    // database shape (has HQ/MQ/audio + songType) and returns our internal shape.
+    
     function normalizeImportedSong(item) {
         if (!item || typeof item !== 'object') return null;
         if (item.videoMap && typeof item.videoMap === 'object') return item;
@@ -598,7 +593,6 @@
 
     function pushHistoryEntry(playlistId, song, index) {
         const bucket = getHistoryBucket(playlistId);
-        // a direct/manual play always starts a fresh forward path from here
         bucket.entries = bucket.entries.slice(0, bucket.pointer + 1);
         bucket.entries.push({ song, index });
         bucket.pointer = bucket.entries.length - 1;
@@ -631,7 +625,6 @@
         if (!playerState.activePlaylistId) return;
         const bucket = getHistoryBucket(playerState.activePlaylistId);
         if (bucket.pointer < bucket.entries.length - 1) {
-            // we went back earlier; replay the same song that came next before
             jumpToHistoryEntry(playerState.activePlaylistId, bucket.pointer + 1);
         } else {
             computeFreshNext();
@@ -933,9 +926,6 @@
                         savePlaylists();
                         showToast('Playlists imported.');
                     } else {
-                        // Flat list of songs (our own single-playlist export, or an
-                        // external AMQ song-database export) -> one new playlist
-                        // named after the file itself.
                         const songs = data.map(normalizeImportedSong).filter(Boolean);
                         if (!songs.length) throw new Error('no valid songs');
                         const newPl = { id: uid(), name: baseName || 'Imported Playlist', system: false, createdAt: Date.now(), songs };
@@ -1293,12 +1283,6 @@
         let listenerOk = registerListener();
         injectMenuButton();
         ensureSongInfoButtons();
-
-        // Cheap, low-frequency safety net instead of a body-wide MutationObserver
-        // (a subtree observer on the whole page fights with other userscripts'
-        // observers and AMQ's own constant DOM churn, which is what was freezing
-        // the tab). Each of these calls is a couple of getElementById lookups and
-        // no-ops instantly if our elements are already in place.
         setInterval(() => {
             injectMenuButton();
             if (!listenerOk) listenerOk = registerListener();
