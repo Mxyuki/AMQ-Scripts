@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.2
+// @version      2.0.3
 // @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
 // @author       Mxyuki
@@ -212,6 +212,8 @@
         };
     }
 
+    // Accepts either our own internal song shape (has videoMap) or the external
+    // database shape (has HQ/MQ/audio + songType) and returns our internal shape.
     function normalizeImportedSong(item) {
         if (!item || typeof item !== 'object') return null;
         if (item.videoMap && typeof item.videoMap === 'object') return item;
@@ -503,6 +505,7 @@
     }
 
     let videoEl, videoWrapEl, audioPlaceholderEl, seekEl, curTimeEl, durTimeEl, playPauseBtn, loopBtn, volumeEl, historyPanelEl;
+    let recalcVideoBoxHeight = function () {}; // replaced once the window is built
     let romajiEl, englishEl, altBadgeEl, songNameEl, artistEl, animeTypeLineEl, qualityRowEl, domainSelectEl, orderSelectEl, playingMarkerRefreshFn;
 
     function qualityChain(preferred) {
@@ -595,6 +598,7 @@
         animeTypeLineEl.textContent = (song.animeEnglish || song.animeRomaji || '') + ' • ' + typeLabel(song);
         updateQualityButtonsUI();
         refreshPlaylistPlayingMarker();
+        requestAnimationFrame(() => recalcVideoBoxHeight());
     }
 
     function escapeHtml(s) {
@@ -614,7 +618,6 @@
 
     function pushHistoryEntry(playlistId, song, index) {
         const bucket = getHistoryBucket(playlistId);
-        // a direct/manual play always starts a fresh forward path from here
         bucket.entries = bucket.entries.slice(0, bucket.pointer + 1);
         bucket.entries.push({ song, index });
         bucket.pointer = bucket.entries.length - 1;
@@ -647,7 +650,6 @@
         if (!playerState.activePlaylistId) return;
         const bucket = getHistoryBucket(playerState.activePlaylistId);
         if (bucket.pointer < bucket.entries.length - 1) {
-            // we went back earlier; replay the same song that came next before
             jumpToHistoryEntry(playerState.activePlaylistId, bucket.pointer + 1);
         } else {
             computeFreshNext();
@@ -939,7 +941,6 @@
                     if (!Array.isArray(data) || !data.length) throw new Error('bad format');
 
                     if (data[0] && typeof data[0] === 'object' && Array.isArray(data[0].songs)) {
-                        // Full multi-playlist backup (our own "Export" used to produce this)
                         data.forEach(pl => {
                             if (pl.id === LIKED_ID) {
                                 (pl.songs || []).forEach(s => {
@@ -1166,6 +1167,12 @@
             return { minH, maxH };
         }
 
+        function recalc() {
+            const currentTotal = parseInt(playerSectionEl.style.height, 10) || playerSectionEl.getBoundingClientRect().height;
+            if (currentTotal) applyPlayerHeight(currentTotal);
+        }
+        recalcVideoBoxHeight = recalc;
+
         let dragging = false;
         let startY = 0;
         let startHeight = 0;
@@ -1374,7 +1381,6 @@
         let listenerOk = registerListener();
         injectMenuButton();
         ensureSongInfoButtons();
-
         setInterval(() => {
             injectMenuButton();
             if (!listenerOk) listenerOk = registerListener();
