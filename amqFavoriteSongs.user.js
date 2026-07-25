@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.1
+// @version      2.0.2
 // @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
 // @author       Mxyuki
@@ -65,6 +65,7 @@
         quality: '720',
         order: 'inOrder',
         loop: false,
+        playerHeight: 340,
     }, storageGet(STORAGE_KEYS.SETTINGS, {}));
 
     function savePlaylists() {
@@ -183,9 +184,6 @@
         return { type: 3, typeNumber: 0 };
     }
 
-    // Converts an item from the external AMQ song-database export format
-    // (annId/annSongId/animeENName/animeJPName/animeAltName/songType/HQ/MQ/audio/...)
-    // into our internal song schema.
     function convertExternalSong(item) {
         const romaji = item.animeJPName || '';
         const english = item.animeENName || '';
@@ -214,8 +212,6 @@
         };
     }
 
-    // Accepts either our own internal song shape (has videoMap) or the external
-    // database shape (has HQ/MQ/audio + songType) and returns our internal shape.
     function normalizeImportedSong(item) {
         if (!item || typeof item !== 'object') return null;
         if (item.videoMap && typeof item.videoMap === 'object') return item;
@@ -280,9 +276,21 @@
     .pm-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
     /* ---- Player ---- */
-    .pm-player { padding: 12px 16px; border-bottom: 1px solid var(--pm-border); background: var(--pm-bg2); }
-    .pm-video-wrap { position: relative; width: 100%; max-height: 220px; background: #000; border-radius: 6px; overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
-    .pm-video-wrap video { width: 100%; max-height: 220px; display: block; }
+    .pm-player { padding: 12px 16px; border-bottom: 1px solid var(--pm-border); background: var(--pm-bg2); box-sizing: border-box; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
+
+    .pm-resizer {
+        height: 7px; flex-shrink: 0; cursor: row-resize; background: var(--pm-bg2);
+        border-bottom: 1px solid var(--pm-border); position: relative; touch-action: none;
+    }
+    .pm-resizer::before {
+        content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        width: 36px; height: 3px; border-radius: 2px; background: var(--pm-border);
+    }
+    .pm-resizer:hover, .pm-resizer.pm-dragging { background: var(--pm-bg3); }
+    .pm-resizer:hover::before, .pm-resizer.pm-dragging::before { background: var(--pm-accent); }
+    .pm-video-wrap { position: relative; width: 100%; flex: 0 0 auto; min-height: 50px; background: #000; border-radius: 6px; overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
+    .pm-video-wrap video { width: 100%; height: 100%; display: block; object-fit: contain; }
+    .pm-player-meta { flex-shrink: 0; }
     .pm-audio-placeholder {
         position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
         background: linear-gradient(135deg, var(--pm-bg3), var(--pm-bg4)); text-align: center; padding: 10px;
@@ -470,12 +478,6 @@
         document.querySelectorAll('.pm-popover-modal').forEach(p => p.remove());
     }
 
-    // AMQ (and some other userscripts) bind global keydown handlers on
-    // document/window for hotkeys, and some of them swallow keys like
-    // Backspace to stop the browser's "navigate back" behavior. That can
-    // eat keystrokes meant for our own inputs before they take effect.
-    // Stopping propagation on our own text fields keeps typing/deleting
-    // working normally without touching AMQ's own key handling.
     function stopKeyPropagation(el) {
         ['keydown', 'keyup', 'keypress'].forEach(evt => {
             el.addEventListener(evt, (e) => e.stopPropagation());
@@ -500,7 +502,7 @@
         return playerState.historyMap[playlistId];
     }
 
-    let videoEl, audioPlaceholderEl, seekEl, curTimeEl, durTimeEl, playPauseBtn, loopBtn, volumeEl, historyPanelEl;
+    let videoEl, videoWrapEl, audioPlaceholderEl, seekEl, curTimeEl, durTimeEl, playPauseBtn, loopBtn, volumeEl, historyPanelEl;
     let romajiEl, englishEl, altBadgeEl, songNameEl, artistEl, animeTypeLineEl, qualityRowEl, domainSelectEl, orderSelectEl, playingMarkerRefreshFn;
 
     function qualityChain(preferred) {
@@ -738,9 +740,11 @@
     let searchQuery = '';
 
     function buildPlayerSection() {
-        const wrap = ce('div', { class: 'pm-player' });
+        const wrap = ce('div', { class: 'pm-player', id: 'pmPlayerSection' });
+        wrap.style.height = (settings.playerHeight || 340) + 'px';
 
         const videoWrap = ce('div', { class: 'pm-video-wrap', id: 'pmVideoWrap' });
+        videoWrapEl = videoWrap;
         videoEl = ce('video', { preload: 'metadata' });
         audioPlaceholderEl = ce('div', { class: 'pm-audio-placeholder' },
             '<div class="pm-note-icon"><i class="fa fa-music" aria-hidden="true"></i></div><div>Audio only</div>');
@@ -758,10 +762,12 @@
         songNameEl = ce('div', { class: 'pm-song-name' }, '—');
         artistEl = ce('div', { class: 'pm-artist' }, '');
         animeTypeLineEl = ce('div', { class: 'pm-anime-type-line' }, '');
-        wrap.appendChild(titles);
-        wrap.appendChild(songNameEl);
-        wrap.appendChild(artistEl);
-        wrap.appendChild(animeTypeLineEl);
+
+        const meta = ce('div', { class: 'pm-player-meta' });
+        meta.appendChild(titles);
+        meta.appendChild(songNameEl);
+        meta.appendChild(artistEl);
+        meta.appendChild(animeTypeLineEl);
 
         const progressRow = ce('div', { class: 'pm-progress-row' });
         curTimeEl = ce('div', { class: 'pm-time' }, '0:00');
@@ -770,7 +776,7 @@
         progressRow.appendChild(curTimeEl);
         progressRow.appendChild(seekEl);
         progressRow.appendChild(durTimeEl);
-        wrap.appendChild(progressRow);
+        meta.appendChild(progressRow);
 
         const controls = ce('div', { class: 'pm-controls-row' });
         playPauseBtn = ce('div', { class: 'pm-btn pm-icon-btn' }, '<i class="fa fa-play" aria-hidden="true"></i>');
@@ -809,10 +815,12 @@
         controls.appendChild(orderSelectEl);
         controls.appendChild(domainSelectEl);
         controls.appendChild(qualityRowEl);
-        wrap.appendChild(controls);
+        meta.appendChild(controls);
 
         historyPanelEl = ce('div', { class: 'pm-history-panel', style: 'display:none;' });
-        wrap.appendChild(historyPanelEl);
+        meta.appendChild(historyPanelEl);
+
+        wrap.appendChild(meta);
 
         // wiring
         videoEl.volume = settings.volume;
@@ -947,9 +955,6 @@
                         savePlaylists();
                         showToast('Playlists imported.');
                     } else {
-                        // Flat list of songs (our own single-playlist export, or an
-                        // external AMQ song-database export) -> one new playlist
-                        // named after the file itself.
                         const songs = data.map(normalizeImportedSong).filter(Boolean);
                         if (!songs.length) throw new Error('no valid songs');
                         const newPl = { id: uid(), name: baseName || 'Imported Playlist', system: false, createdAt: Date.now(), songs };
@@ -1133,11 +1138,71 @@
         win.appendChild(header);
 
         const body = ce('div', { class: 'pm-body' });
-        body.appendChild(buildPlayerSection());
-        body.appendChild(buildBrowserSection());
+        const playerSectionEl = buildPlayerSection();
+        const resizer = ce('div', { class: 'pm-resizer', title: 'Drag to resize' });
+        const browserSectionEl = buildBrowserSection();
+        body.appendChild(playerSectionEl);
+        body.appendChild(resizer);
+        body.appendChild(browserSectionEl);
         win.appendChild(body);
 
+        const VIDEO_MIN = 50; // smallest the video/audio box is allowed to shrink to
+        const CHROME = 32; // vertical padding + gap below the video box
+
+        function applyPlayerHeight(totalHeight) {
+            playerSectionEl.style.height = totalHeight + 'px';
+            const metaEl = playerSectionEl.querySelector('.pm-player-meta');
+            const metaHeight = metaEl ? metaEl.getBoundingClientRect().height : 150;
+            const videoHeight = Math.max(VIDEO_MIN, totalHeight - metaHeight - CHROME);
+            if (videoWrapEl) videoWrapEl.style.height = videoHeight + 'px';
+        }
+
+        function getHeightBounds() {
+            const winHeight = win.getBoundingClientRect().height;
+            const metaEl = playerSectionEl.querySelector('.pm-player-meta');
+            const metaHeight = metaEl ? metaEl.getBoundingClientRect().height : 150;
+            const minH = metaHeight + VIDEO_MIN + CHROME;
+            const maxH = Math.max(minH, winHeight - 220); // leave room for header + resizer + a usable browser area
+            return { minH, maxH };
+        }
+
+        let dragging = false;
+        let startY = 0;
+        let startHeight = 0;
+        resizer.addEventListener('pointerdown', (e) => {
+            dragging = true;
+            startY = e.clientY;
+            startHeight = playerSectionEl.getBoundingClientRect().height;
+            resizer.classList.add('pm-dragging');
+            resizer.setPointerCapture(e.pointerId);
+            e.preventDefault();
+        });
+        resizer.addEventListener('pointermove', (e) => {
+            if (!dragging) return;
+            const { minH, maxH } = getHeightBounds();
+            let newHeight = startHeight + (e.clientY - startY);
+            newHeight = Math.max(minH, Math.min(maxH, newHeight));
+            applyPlayerHeight(newHeight);
+        });
+        function endDrag(e) {
+            if (!dragging) return;
+            dragging = false;
+            resizer.classList.remove('pm-dragging');
+            settings.playerHeight = Math.round(playerSectionEl.getBoundingClientRect().height);
+            saveSettings();
+        }
+        resizer.addEventListener('pointerup', endDrag);
+        resizer.addEventListener('pointercancel', endDrag);
+
         document.body.appendChild(win);
+        requestAnimationFrame(() => {
+            const winHeight = win.getBoundingClientRect().height;
+            if (!winHeight) return;
+            const { minH, maxH } = getHeightBounds();
+            const current = parseInt(playerSectionEl.style.height, 10) || 340;
+            const clamped = Math.max(minH, Math.min(maxH, current));
+            applyPlayerHeight(clamped);
+        });
 
         function close() { win.classList.remove('pm-open'); overlay.classList.remove('pm-open'); }
         function open() { win.classList.add('pm-open'); overlay.classList.add('pm-open'); }
@@ -1310,11 +1375,6 @@
         injectMenuButton();
         ensureSongInfoButtons();
 
-        // Cheap, low-frequency safety net instead of a body-wide MutationObserver
-        // (a subtree observer on the whole page fights with other userscripts'
-        // observers and AMQ's own constant DOM churn, which is what was freezing
-        // the tab). Each of these calls is a couple of getElementById lookups and
-        // no-ops instantly if our elements are already in place.
         setInterval(() => {
             injectMenuButton();
             if (!listenerOk) listenerOk = registerListener();
