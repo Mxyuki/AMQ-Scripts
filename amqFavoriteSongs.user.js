@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.0
-// @description  Total remak of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
+// @version      2.0.1
+// @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
 // @author       Mxyuki
 // @match        https://*.animemusicquiz.com/*
@@ -183,6 +183,9 @@
         return { type: 3, typeNumber: 0 };
     }
 
+    // Converts an item from the external AMQ song-database export format
+    // (annId/annSongId/animeENName/animeJPName/animeAltName/songType/HQ/MQ/audio/...)
+    // into our internal song schema.
     function convertExternalSong(item) {
         const romaji = item.animeJPName || '';
         const english = item.animeENName || '';
@@ -210,7 +213,9 @@
             addedAt: Date.now(),
         };
     }
-    
+
+    // Accepts either our own internal song shape (has videoMap) or the external
+    // database shape (has HQ/MQ/audio + songType) and returns our internal shape.
     function normalizeImportedSong(item) {
         if (!item || typeof item !== 'object') return null;
         if (item.videoMap && typeof item.videoMap === 'object') return item;
@@ -465,6 +470,18 @@
         document.querySelectorAll('.pm-popover-modal').forEach(p => p.remove());
     }
 
+    // AMQ (and some other userscripts) bind global keydown handlers on
+    // document/window for hotkeys, and some of them swallow keys like
+    // Backspace to stop the browser's "navigate back" behavior. That can
+    // eat keystrokes meant for our own inputs before they take effect.
+    // Stopping propagation on our own text fields keeps typing/deleting
+    // working normally without touching AMQ's own key handling.
+    function stopKeyPropagation(el) {
+        ['keydown', 'keyup', 'keypress'].forEach(evt => {
+            el.addEventListener(evt, (e) => e.stopPropagation());
+        });
+    }
+
     /* =========================================================================================
      *  PLAYER ENGINE
      * ========================================================================================= */
@@ -595,6 +612,7 @@
 
     function pushHistoryEntry(playlistId, song, index) {
         const bucket = getHistoryBucket(playlistId);
+        // a direct/manual play always starts a fresh forward path from here
         bucket.entries = bucket.entries.slice(0, bucket.pointer + 1);
         bucket.entries.push({ song, index });
         bucket.pointer = bucket.entries.length - 1;
@@ -627,6 +645,7 @@
         if (!playerState.activePlaylistId) return;
         const bucket = getHistoryBucket(playerState.activePlaylistId);
         if (bucket.pointer < bucket.entries.length - 1) {
+            // we went back earlier; replay the same song that came next before
             jumpToHistoryEntry(playerState.activePlaylistId, bucket.pointer + 1);
         } else {
             computeFreshNext();
@@ -928,6 +947,9 @@
                         savePlaylists();
                         showToast('Playlists imported.');
                     } else {
+                        // Flat list of songs (our own single-playlist export, or an
+                        // external AMQ song-database export) -> one new playlist
+                        // named after the file itself.
                         const songs = data.map(normalizeImportedSong).filter(Boolean);
                         if (!songs.length) throw new Error('no valid songs');
                         const newPl = { id: uid(), name: baseName || 'Imported Playlist', system: false, createdAt: Date.now(), songs };
@@ -1001,6 +1023,7 @@
         const listHeader = ce('div', { class: 'pm-list-header' });
         const playPlaylistBtn = ce('div', { class: 'pm-btn', title: 'Play this playlist' }, '<i class="fa fa-play" aria-hidden="true"></i> Play');
         const searchEl = ce('input', { class: 'pm-search', placeholder: 'Search song / artist / anime...' });
+        stopKeyPropagation(searchEl);
         listHeader.appendChild(playPlaylistBtn);
         listHeader.appendChild(searchEl);
         mainList.appendChild(listHeader);
@@ -1208,6 +1231,7 @@
 
         const newRow = ce('div', { class: 'pm-popover-new' });
         const input = ce('input', { placeholder: 'New playlist name' });
+        stopKeyPropagation(input);
         const addNewBtn = ce('div', { class: 'pm-btn' }, '<i class="fa fa-plus" aria-hidden="true"></i>');
         newRow.appendChild(input);
         newRow.appendChild(addNewBtn);
@@ -1285,6 +1309,12 @@
         let listenerOk = registerListener();
         injectMenuButton();
         ensureSongInfoButtons();
+
+        // Cheap, low-frequency safety net instead of a body-wide MutationObserver
+        // (a subtree observer on the whole page fights with other userscripts'
+        // observers and AMQ's own constant DOM churn, which is what was freezing
+        // the tab). Each of these calls is a couple of getElementById lookups and
+        // no-ops instantly if our elements are already in place.
         setInterval(() => {
             injectMenuButton();
             if (!listenerOk) listenerOk = registerListener();
