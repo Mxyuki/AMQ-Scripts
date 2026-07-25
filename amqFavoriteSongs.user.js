@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.3
+// @version      2.0.4
 // @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
 // @author       Myuki
@@ -212,8 +212,6 @@
         };
     }
 
-    // Accepts either our own internal song shape (has videoMap) or the external
-    // database shape (has HQ/MQ/audio + songType) and returns our internal shape.
     function normalizeImportedSong(item) {
         if (!item || typeof item !== 'object') return null;
         if (item.videoMap && typeof item.videoMap === 'object') return item;
@@ -402,6 +400,7 @@
     #pmLikeBtn:hover, #pmAddBtn:hover { color: var(--pm-accent); }
     #pmLikeBtn.pm-liked { color: var(--pm-danger); }
     #pmAddBtn.pm-in-playlist { color: var(--pm-accent); }
+    #pmPlayerAddBtn.pm-in-playlist { color: var(--pm-accent); border-color: var(--pm-accent); }
 
     .pm-popover {
         position: absolute; z-index: 100001; background: var(--pm-bg2); border: 1px solid var(--pm-border);
@@ -598,6 +597,7 @@
         animeTypeLineEl.textContent = (song.animeEnglish || song.animeRomaji || '') + ' • ' + typeLabel(song);
         updateQualityButtonsUI();
         refreshPlaylistPlayingMarker();
+        updatePlayerAddButtonState();
         requestAnimationFrame(() => recalcVideoBoxHeight());
     }
 
@@ -618,6 +618,7 @@
 
     function pushHistoryEntry(playlistId, song, index) {
         const bucket = getHistoryBucket(playlistId);
+        // a direct/manual play always starts a fresh forward path from here
         bucket.entries = bucket.entries.slice(0, bucket.pointer + 1);
         bucket.entries.push({ song, index });
         bucket.pointer = bucket.entries.length - 1;
@@ -784,6 +785,7 @@
         playPauseBtn = ce('div', { class: 'pm-btn pm-icon-btn' }, '<i class="fa fa-play" aria-hidden="true"></i>');
         loopBtn = ce('div', { class: 'pm-btn pm-icon-btn', title: 'Loop this song' }, '<i class="fa fa-repeat" aria-hidden="true"></i>');
         const historyBtn = ce('div', { class: 'pm-btn pm-icon-btn', title: 'Song history for this playlist' }, '<i class="fa fa-history" aria-hidden="true"></i>');
+        const addToPlaylistBtn = ce('div', { class: 'pm-btn pm-icon-btn', id: 'pmPlayerAddBtn', title: 'Add current song to another playlist' }, '<i class="fa fa-plus-square-o" aria-hidden="true"></i>');
         const prevBtn = ce('div', { class: 'pm-btn pm-icon-btn', title: 'Previous song' }, '<i class="fa fa-step-backward" aria-hidden="true"></i>');
         const nextBtn = ce('div', { class: 'pm-btn pm-icon-btn', title: 'Next song' }, '<i class="fa fa-step-forward" aria-hidden="true"></i>');
 
@@ -813,6 +815,7 @@
         controls.appendChild(nextBtn);
         controls.appendChild(loopBtn);
         controls.appendChild(historyBtn);
+        controls.appendChild(addToPlaylistBtn);
         controls.appendChild(volWrap);
         controls.appendChild(orderSelectEl);
         controls.appendChild(domainSelectEl);
@@ -843,6 +846,10 @@
             historyPanelEl.style.display = show ? 'block' : 'none';
             historyBtn.classList.toggle('pm-active', show);
             if (show) renderHistoryPanel();
+        });
+        addToPlaylistBtn.addEventListener('click', () => {
+            if (!playerState.currentSong) { showToast('Nothing is playing right now.', true); return; }
+            openAddToPlaylistPopover(playerState.currentSong);
         });
         loopBtn.addEventListener('click', () => {
             settings.loop = !settings.loop;
@@ -1265,14 +1272,25 @@
         if (addIcon) addIcon.className = 'fa ' + (inPlaylist ? 'fa-plus-square' : 'fa-plus-square-o');
     }
 
-    function openAddToPlaylistPopover() {
+    function updatePlayerAddButtonState() {
+        const btn = document.getElementById('pmPlayerAddBtn');
+        if (!btn) return;
+        if (!playerState.currentSong) { btn.classList.remove('pm-in-playlist'); return; }
+        const containing = findPlaylistsContaining(playerState.currentSong.annSongId).filter(p => p.id !== LIKED_ID);
+        const inPlaylist = containing.length > 0;
+        btn.classList.toggle('pm-in-playlist', inPlaylist);
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fa ' + (inPlaylist ? 'fa-plus-square' : 'fa-plus-square-o');
+    }
+
+    function openAddToPlaylistPopover(song) {
         closeAnyPopover();
-        if (!currentRevealedSong) return;
+        if (!song) return;
 
         const overlay = ce('div', { class: 'pm-confirm-overlay pm-popover-modal' });
         const box = ce('div', { class: 'pm-confirm-box' });
         box.appendChild(ce('p', { style: 'font-weight:600;color:var(--pm-accent);margin-bottom:10px;' },
-            'Add "' + escapeHtml(currentRevealedSong.songName) + '" to...'));
+            'Add "' + escapeHtml(song.songName) + '" to...'));
 
         const listWrap = ce('div', { style: 'max-height:220px;overflow-y:auto;margin-bottom:6px;' });
         box.appendChild(listWrap);
@@ -1285,15 +1303,16 @@
                 return;
             }
             custom.forEach(p => {
-                const has = !!findSongInPlaylist(p, currentRevealedSong.annSongId);
+                const has = !!findSongInPlaylist(p, song.annSongId);
                 const item = ce('div', { class: 'pm-popover-item' },
                     '<i class="fa ' + (has ? 'fa-check-square-o' : 'fa-square-o') + '" aria-hidden="true"></i> ' + escapeHtml(p.name) +
                     '<span style="margin-left:auto;color:var(--pm-text-dim);font-size:10px;">(' + p.songs.length + ')</span>');
                 item.style.justifyContent = 'flex-start';
                 item.addEventListener('click', () => {
-                    if (has) removeSongFromPlaylist(p.id, currentRevealedSong.annSongId);
-                    else addSongToPlaylist(p.id, currentRevealedSong);
+                    if (has) removeSongFromPlaylist(p.id, song.annSongId);
+                    else addSongToPlaylist(p.id, song);
                     updateSongInfoRowState();
+                    updatePlayerAddButtonState();
                     renderList();
                 });
                 listWrap.appendChild(item);
@@ -1311,8 +1330,9 @@
         function createAndAdd() {
             if (input.value.trim()) {
                 const pl = createPlaylist(input.value.trim());
-                addSongToPlaylist(pl.id, currentRevealedSong);
+                addSongToPlaylist(pl.id, song);
                 updateSongInfoRowState();
+                updatePlayerAddButtonState();
                 input.value = '';
                 renderList();
             }
@@ -1349,7 +1369,7 @@
             addBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (!currentRevealedSong) return;
-                openAddToPlaylistPopover();
+                openAddToPlaylistPopover(currentRevealedSong);
             });
             row.appendChild(addBtn);
         }
