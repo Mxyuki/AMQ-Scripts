@@ -4,7 +4,7 @@
 // @version      2.0.3
 // @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
-// @author       Mxyuki
+// @author       Myuki
 // @match        https://*.animemusicquiz.com/*
 // @icon         https://i.imgur.com/syptORo.png
 // @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
