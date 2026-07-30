@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.4
+// @version      2.0.6
 // @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
 // @author       Myuki
@@ -30,6 +30,7 @@
     };
 
     const LIKED_ID = 'liked_songs_system';
+    const WRONG_ID = 'wrong_answers_system';
 
     /* =========================================================================================
      *  STORAGE
@@ -48,14 +49,21 @@
         try {
             if (typeof GM_setValue === 'function') GM_setValue(key, raw);
             else localStorage.setItem(key, raw);
-        } catch (e) { /* ignore */ }
+        } catch (e) {}
     }
 
     let playlists = storageGet(STORAGE_KEYS.PLAYLISTS, null);
     if (!playlists) {
         playlists = [
             { id: LIKED_ID, name: 'Liked Songs', system: true, createdAt: Date.now(), songs: [] },
+            { id: WRONG_ID, name: 'Wrong Answers', system: true, wrongAnswers: true, createdAt: Date.now(), songs: [] },
         ];
+        storageSet(STORAGE_KEYS.PLAYLISTS, playlists);
+    } else if (!playlists.find(p => p.id === WRONG_ID)) {
+        const wrongPl = { id: WRONG_ID, name: 'Wrong Answers', system: true, wrongAnswers: true, createdAt: Date.now(), songs: [] };
+        const likedIdx = playlists.findIndex(p => p.id === LIKED_ID);
+        if (likedIdx !== -1) playlists.splice(likedIdx + 1, 0, wrongPl);
+        else playlists.unshift(wrongPl);
         storageSet(STORAGE_KEYS.PLAYLISTS, playlists);
     }
 
@@ -223,6 +231,10 @@
         const cleaned = String(name || 'playlist').replace(/[\\/:*?"<>|]/g, '_').trim();
         return cleaned || 'playlist';
     }
+
+    /* =========================================================================================
+     *  CSS
+     * ========================================================================================= */
     const css = `
     :root {
         --pm-accent: ${ACCENT};
@@ -275,7 +287,6 @@
 
     .pm-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
-    /* ---- Player ---- */
     .pm-player { padding: 12px 16px; border-bottom: 1px solid var(--pm-border); background: var(--pm-bg2); box-sizing: border-box; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
 
     .pm-resizer {
@@ -347,7 +358,6 @@
     .pm-history-row:hover { background: var(--pm-bg4); color: var(--pm-text); }
     .pm-history-row.pm-history-current { color: var(--pm-accent); font-weight: 600; background: var(--pm-bg4); }
 
-    /* ---- Browser ---- */
     .pm-browser { flex: 1; overflow: hidden; display: flex; }
     .pm-sidebar { width: 210px; border-right: 1px solid var(--pm-border); background: var(--pm-bg2); display: flex; flex-direction: column; }
     .pm-sidebar-actions { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--pm-border); }
@@ -365,6 +375,12 @@
     .pm-pl-count { font-size: 11px; color: var(--pm-text-dim); }
     .pm-pl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 6px; }
     .pm-pl-del { color: var(--pm-text-dim); font-size: 13px; padding: 0 4px; }
+    .pm-pl-edit { color: var(--pm-text-dim); font-size: 12px; padding: 0 4px; }
+    .pm-pl-edit:hover { color: var(--pm-accent); }
+    .pm-pl-rename-input {
+        flex: 1; min-width: 0; background: var(--pm-bg4); border: 1px solid var(--pm-accent);
+        color: var(--pm-text); border-radius: 4px; padding: 2px 6px; font-size: 13px; margin-right: 6px;
+    }
     .pm-pl-del:hover { color: var(--pm-danger); }
 
     .pm-main-list { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -387,7 +403,12 @@
     .pm-q-tag:visited { color: var(--pm-text-dim); }
     .pm-q-tag:hover, .pm-q-tag:visited:hover { color: var(--pm-accent); border-color: var(--pm-accent); }
     .pm-q-tag.pm-disabled { opacity: 0.25; pointer-events: none; }
-    .pm-q-tag.pm-active, .pm-q-tag.pm-active:visited { background: var(--pm-accent); border-color: var(--pm-accent); color: #08131c; font-weight: 600; }
+
+    .pm-pq-tag { border: 1px solid var(--pm-border); border-radius: 3px; padding: 1px 6px; cursor: pointer; font-size: 10px; }
+    .pm-pq-tag.pm-q-available { color: var(--pm-accent); }
+    .pm-pq-tag.pm-q-unavailable { color: var(--pm-text-dim); }
+    .pm-pq-tag:hover { border-color: var(--pm-accent); }
+    .pm-pq-tag.pm-now-playing { border-color: var(--pm-accent); box-shadow: inset 0 0 0 1px var(--pm-accent); font-weight: 600; }
     .pm-song-id { font-size: 10px; color: var(--pm-text-dim); width: 60px; text-align: right; }
     .pm-song-actions { display: flex; gap: 4px; align-items: center; }
     .pm-song-actions select { background: var(--pm-bg3); color: var(--pm-text); border: 1px solid var(--pm-border); border-radius: 4px; font-size: 10px; padding: 2px; }
@@ -395,7 +416,6 @@
     .pm-song-remove:hover { color: var(--pm-danger); }
     .pm-empty-hint { color: var(--pm-text-dim); font-size: 12px; padding: 20px; text-align: center; }
 
-    /* ---- Song info row buttons (in-quiz) ---- */
     #pmLikeBtn, #pmAddBtn { cursor: pointer; margin-left: 10px; font-size: 15px; display: inline-block; position: relative; color: var(--pm-text-dim); }
     #pmLikeBtn:hover, #pmAddBtn:hover { color: var(--pm-accent); }
     #pmLikeBtn.pm-liked { color: var(--pm-danger); }
@@ -412,7 +432,6 @@
     .pm-popover-new { display: flex; gap: 4px; margin-top: 6px; border-top: 1px solid var(--pm-border); padding-top: 6px; }
     .pm-popover-new input { flex: 1; background: var(--pm-bg3); border: 1px solid var(--pm-border); color: var(--pm-text); border-radius: 4px; padding: 4px 6px; font-size: 11px; }
 
-    /* ---- Confirm dialog / toast ---- */
     .pm-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100002; display: flex; align-items: center; justify-content: center; }
     .pm-confirm-box { background: var(--pm-bg2); border: 1px solid var(--pm-border); border-radius: 8px; padding: 18px; width: 320px; color: var(--pm-text); }
     .pm-confirm-box p { font-size: 13px; margin: 0 0 14px; }
@@ -536,8 +555,6 @@
             cleanup();
             if (resumeTime) { try { videoEl.currentTime = resumeTime; } catch (e) {} }
             playerState.currentQuality = quality;
-            settings.quality = quality;
-            saveSettings();
             updateQualityButtonsUI();
             updateAudioVideoVisual(quality);
             if (autoplay) videoEl.play().catch(() => {});
@@ -573,12 +590,13 @@
     }
 
     function updateQualityButtonsUI() {
-        if (!qualityRowEl || !playerState.currentSong) return;
-        qualityRowEl.querySelectorAll('.pm-q-tag').forEach(tag => {
+        if (!qualityRowEl) return;
+        qualityRowEl.querySelectorAll('.pm-pq-tag').forEach(tag => {
             const q = tag.dataset.q;
-            const has = !!playerState.currentSong.videoMap[q];
-            tag.classList.toggle('pm-disabled', !has);
-            tag.classList.toggle('pm-active', playerState.currentQuality === q);
+            const has = !!(playerState.currentSong && playerState.currentSong.videoMap[q]);
+            tag.classList.toggle('pm-q-available', has);
+            tag.classList.toggle('pm-q-unavailable', !has);
+            tag.classList.toggle('pm-now-playing', !!playerState.currentSong && playerState.currentQuality === q);
         });
     }
 
@@ -612,13 +630,12 @@
         pushHistoryEntry(playlistId, song, index);
         updateNowPlayingUI(song);
         if (settings.order === 'semiRandom') playerState.semiRandomPlayed.add(song.annId);
-        loadSongWithFallback(song, quality || playerState.currentQuality || settings.quality || '720', 0, true);
+        loadSongWithFallback(song, quality || settings.quality || '720', 0, true);
         renderHistoryPanel();
     }
 
     function pushHistoryEntry(playlistId, song, index) {
         const bucket = getHistoryBucket(playlistId);
-        // a direct/manual play always starts a fresh forward path from here
         bucket.entries = bucket.entries.slice(0, bucket.pointer + 1);
         bucket.entries.push({ song, index });
         bucket.pointer = bucket.entries.length - 1;
@@ -633,7 +650,7 @@
         playerState.activePlaylistId = playlistId;
         playerState.currentSongIndex = entry.index;
         updateNowPlayingUI(entry.song);
-        loadSongWithFallback(entry.song, playerState.currentQuality || settings.quality || '720', 0, true);
+        loadSongWithFallback(entry.song, settings.quality || '720', 0, true);
         renderHistoryPanel();
     }
 
@@ -730,7 +747,9 @@
         }
     }
     function switchQuality(quality) {
-        if (!playerState.currentSong || !playerState.currentSong.videoMap[quality]) return;
+        if (!playerState.currentSong) return;
+        settings.quality = quality;
+        saveSettings();
         const resume = videoEl.currentTime;
         const wasPlaying = !videoEl.paused;
         loadSongWithFallback(playerState.currentSong, quality, resume, wasPlaying);
@@ -805,7 +824,10 @@
         qualityRowEl = ce('div', { class: 'pm-quality-row' });
         ['0', '480', '720'].forEach(q => {
             const label = q === '0' ? 'Audio' : (q === '480' ? 'MQ' : 'HQ');
-            const tag = ce('div', { class: 'pm-q-tag pm-disabled', 'data-q': q }, label);
+            const title = q === '0' ? 'Prefer Audio (falls back to MQ, then HQ)'
+                : q === '480' ? 'Prefer MQ (falls back to HQ, then Audio)'
+                : 'Prefer HQ (falls back to MQ, then Audio)';
+            const tag = ce('div', { class: 'pm-pq-tag pm-q-unavailable', 'data-q': q, title: title }, label);
             tag.addEventListener('click', () => switchQuality(q));
             qualityRowEl.appendChild(tag);
         });
@@ -827,7 +849,6 @@
 
         wrap.appendChild(meta);
 
-        // wiring
         videoEl.volume = settings.volume;
         volumeEl.addEventListener('input', () => {
             videoEl.volume = parseFloat(volumeEl.value);
@@ -846,6 +867,7 @@
             historyPanelEl.style.display = show ? 'block' : 'none';
             historyBtn.classList.toggle('pm-active', show);
             if (show) renderHistoryPanel();
+            requestAnimationFrame(() => recalcVideoBoxHeight());
         });
         addToPlaylistBtn.addEventListener('click', () => {
             if (!playerState.currentSong) { showToast('Nothing is playing right now.', true); return; }
@@ -901,7 +923,6 @@
     function buildBrowserSection() {
         const wrap = ce('div', { class: 'pm-browser' });
 
-        // sidebar
         const sidebar = ce('div', { class: 'pm-sidebar' });
         const sideActions = ce('div', { class: 'pm-sidebar-actions' });
         const newBtn = ce('div', { class: 'pm-btn' }, '+ New');
@@ -1000,10 +1021,65 @@
                 item.appendChild(playEl);
                 item.appendChild(nameEl);
                 item.appendChild(countEl);
-                if (!pl.system) {
-                    const delEl = ce('span', { class: 'pm-pl-del' }, '<i class="fa fa-trash" aria-hidden="true"></i>');
+                if (pl.id !== LIKED_ID) {
+                    const isWrongPl = pl.id === WRONG_ID;
+                    function startInlineRename() {
+                        if (item.querySelector('.pm-pl-rename-input')) return;
+                        const input = ce('input', { class: 'pm-pl-rename-input', value: isWrongPl ? '' : pl.name });
+                        if (isWrongPl) input.placeholder = 'New playlist name';
+                        stopKeyPropagation(input);
+                        input.addEventListener('click', (e) => e.stopPropagation());
+                        input.addEventListener('mousedown', (e) => e.stopPropagation());
+                        nameEl.replaceWith(input);
+                        input.focus();
+                        input.select();
+                        let settled = false;
+                        function commit() {
+                            if (settled) return;
+                            settled = true;
+                            const val = input.value.trim();
+                            if (val) {
+                                if (isWrongPl) {
+                                    const newPl = { id: uid(), name: val, system: false, createdAt: Date.now(), songs: pl.songs.map(s => Object.assign({}, s)) };
+                                    playlists.push(newPl);
+                                    savePlaylists();
+                                    selectedBrowserPlaylistId = newPl.id;
+                                    showToast('Created "' + val + '" (' + newPl.songs.length + ' songs) from Wrong Answers.');
+                                } else if (val !== pl.name) {
+                                    renamePlaylist(pl.id, val);
+                                }
+                            }
+                            renderSidebar();
+                            renderSongList();
+                        }
+                        function cancel() {
+                            if (settled) return;
+                            settled = true;
+                            renderSidebar();
+                        }
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+                            else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+                        });
+                        input.addEventListener('blur', commit);
+                    }
+                    const editEl = ce('span', { class: 'pm-pl-edit', title: isWrongPl ? 'Save a copy as a new playlist' : 'Rename playlist' }, '<i class="fa fa-pencil" aria-hidden="true"></i>');
+                    editEl.addEventListener('click', (e) => { e.stopPropagation(); startInlineRename(); });
+                    item.appendChild(editEl);
+                    nameEl.addEventListener('dblclick', (e) => { e.stopPropagation(); startInlineRename(); });
+
+                    const delEl = ce('span', { class: 'pm-pl-del', title: isWrongPl ? 'Empty this playlist' : 'Delete playlist' }, '<i class="fa fa-trash" aria-hidden="true"></i>');
                     delEl.addEventListener('click', (e) => {
                         e.stopPropagation();
+                        if (isWrongPl) {
+                            confirmDialog('Empty the Wrong Answers playlist? This cannot be undone.', () => {
+                                pl.songs = [];
+                                savePlaylists();
+                                renderSidebar();
+                                renderSongList();
+                            });
+                            return;
+                        }
                         confirmDialog('Delete playlist "' + pl.name + '"? This cannot be undone.', () => {
                             if (playerState.activePlaylistId === pl.id) {
                                 playerState.activePlaylistId = null;
@@ -1016,10 +1092,6 @@
                         });
                     });
                     item.appendChild(delEl);
-                    nameEl.addEventListener('dblclick', () => {
-                        const newName = prompt('Rename playlist:', pl.name);
-                        if (newName && newName.trim()) { renamePlaylist(pl.id, newName.trim()); renderSidebar(); renderSongList(); }
-                    });
                 }
                 item.addEventListener('click', () => {
                     selectedBrowserPlaylistId = pl.id;
@@ -1031,7 +1103,6 @@
         }
         playingMarkerRefreshFn = renderSidebar;
 
-        // main list
         const mainList = ce('div', { class: 'pm-main-list' });
         const listHeader = ce('div', { class: 'pm-list-header' });
         const playPlaylistBtn = ce('div', { class: 'pm-btn', title: 'Play this playlist' }, '<i class="fa fa-play" aria-hidden="true"></i> Play');
@@ -1074,7 +1145,8 @@
 
                 const meta = ce('div', { class: 'pm-song-meta' });
                 meta.appendChild(ce('div', { class: 'pm-song-title-line' }, escapeHtml(song.songName) + ' — ' + escapeHtml(song.artist)));
-                meta.appendChild(ce('div', { class: 'pm-song-sub-line' }, escapeHtml(song.animeRomaji) + ' • ' + typeLabel(song)));
+                meta.appendChild(ce('div', { class: 'pm-song-sub-line' },
+                    escapeHtml(song.animeRomaji) + ' • ' + typeLabel(song)));
                 row.appendChild(meta);
 
                 const qTags = ce('div', { class: 'pm-song-qualities' });
@@ -1297,15 +1369,19 @@
 
         function renderList() {
             listWrap.innerHTML = '';
+            const likedPl = getPlaylist(LIKED_ID);
             const custom = playlists.filter(p => p.id !== LIKED_ID);
-            if (!custom.length) {
-                listWrap.appendChild(ce('div', { style: 'color:var(--pm-text-dim);padding:4px;font-size:12px;' }, 'No custom playlists yet — create one below.'));
+            const all = likedPl ? [likedPl].concat(custom) : custom;
+            if (!all.length) {
+                listWrap.appendChild(ce('div', { style: 'color:var(--pm-text-dim);padding:4px;font-size:12px;' }, 'No playlists yet — create one below.'));
                 return;
             }
-            custom.forEach(p => {
+            all.forEach(p => {
                 const has = !!findSongInPlaylist(p, song.annSongId);
+                const isLikedPl = p.id === LIKED_ID;
+                const icon = isLikedPl ? (has ? 'fa-heart' : 'fa-heart-o') : (has ? 'fa-check-square-o' : 'fa-square-o');
                 const item = ce('div', { class: 'pm-popover-item' },
-                    '<i class="fa ' + (has ? 'fa-check-square-o' : 'fa-square-o') + '" aria-hidden="true"></i> ' + escapeHtml(p.name) +
+                    '<i class="fa ' + icon + '" aria-hidden="true"></i> ' + escapeHtml(p.name) +
                     '<span style="margin-left:auto;color:var(--pm-text-dim);font-size:10px;">(' + p.songs.length + ')</span>');
                 item.style.justifyContent = 'flex-start';
                 item.addEventListener('click', () => {
@@ -1379,6 +1455,32 @@
     /* =========================================================================================
      *  AMQ LISTENER
      * ========================================================================================= */
+
+    function wasSelfAnswerWrong(payload) {
+        try {
+            if (typeof quiz === 'undefined' || !quiz.players || !payload || !payload.players) return null;
+            const selfN = (typeof selfName !== 'undefined') ? selfName : null;
+            if (!selfN) return null;
+
+            if (quiz.gameMode === 'Nexus') {
+                const first = Object.values(payload.players)[0];
+                return first ? first.correct === false : null;
+            }
+
+            const findPlayer = Object.values(quiz.players).find(p =>
+                p._name === selfN && p.avatarSlot && p.avatarSlot._disabled === false);
+            if (!findPlayer) return null;
+
+            const playersArr = Object.values(payload.players);
+            const entry = playersArr.find(p => p.gamePlayerId === findPlayer.gamePlayerId);
+            if (!entry) return null;
+
+            return entry.correct === false;
+        } catch (e) {
+            return null;
+        }
+    }
+
     function registerListener() {
         if (typeof Listener === 'undefined') return false;
         new Listener('answer results', (payload) => {
@@ -1388,8 +1490,11 @@
                 const song = extractSong(songInfo);
                 currentRevealedSong = song;
                 updateSongEverywhere(song);
+                if (wasSelfAnswerWrong(payload) === true) {
+                    addSongToPlaylist(WRONG_ID, song);
+                }
                 ensureSongInfoButtons();
-            } catch (e) { /* ignore malformed payloads */ }
+            } catch (e) {}
         }).bindListener();
         return true;
     }
@@ -1401,6 +1506,7 @@
         let listenerOk = registerListener();
         injectMenuButton();
         ensureSongInfoButtons();
+
         setInterval(() => {
             injectMenuButton();
             if (!listenerOk) listenerOk = registerListener();
