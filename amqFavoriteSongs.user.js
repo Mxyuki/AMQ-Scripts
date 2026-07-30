@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Fav Songs
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.6
+// @version      2.0.7
 // @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
 // @description  Since it is totally new some issue might appear so just tell me on discord
 // @author       Myuki
@@ -1337,7 +1337,7 @@
         const likeIcon = likeBtn.querySelector('i');
         if (likeIcon) likeIcon.className = 'fa ' + (liked ? 'fa-heart' : 'fa-heart-o');
 
-        const containing = findPlaylistsContaining(currentRevealedSong.annSongId).filter(p => p.id !== LIKED_ID);
+        const containing = findPlaylistsContaining(currentRevealedSong.annSongId).filter(p => p.id !== LIKED_ID && p.id !== WRONG_ID);
         const inPlaylist = containing.length > 0;
         addBtn.classList.toggle('pm-in-playlist', inPlaylist);
         const addIcon = addBtn.querySelector('i');
@@ -1348,7 +1348,7 @@
         const btn = document.getElementById('pmPlayerAddBtn');
         if (!btn) return;
         if (!playerState.currentSong) { btn.classList.remove('pm-in-playlist'); return; }
-        const containing = findPlaylistsContaining(playerState.currentSong.annSongId).filter(p => p.id !== LIKED_ID);
+        const containing = findPlaylistsContaining(playerState.currentSong.annSongId).filter(p => p.id !== LIKED_ID && p.id !== WRONG_ID);
         const inPlaylist = containing.length > 0;
         btn.classList.toggle('pm-in-playlist', inPlaylist);
         const icon = btn.querySelector('i');
