@@ -1,17 +1,13 @@
 // ==UserScript==
-// @name         AMQ Fav Songs
-// @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.0.7
-// @description  Total remake of previous AMQ Fav Songs, now allow to makes playlists, to see video or not
-// @description  Since it is totally new some issue might appear so just tell me on discord
-// @author       Myuki
+// @name         AMQ Playlist & Player
+// @namespace    https://amq.local/playlist-manager
+// @version      1.0.0
+// @description  Like songs and build custom playlists while playing AMQ, then browse & listen to them with a full-featured in-game player.
+// @author       you
 // @match        https://*.animemusicquiz.com/*
-// @icon         https://i.imgur.com/syptORo.png
-// @require      https://github.com/joske2865/AMQ-Scripts/raw/master/common/amqScriptInfo.js
-// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
-// @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFavoriteSongs.user.js
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @run-at       document-idle
 // ==/UserScript==
 
 (function () {
@@ -534,6 +530,14 @@
         return 'https://' + domain + '.animemusicquiz.com/' + filename;
     }
 
+    const VOLUME_MIN_DB = -40;
+    function sliderPosToGain(pos) {
+        if (pos <= 0) return 0;
+        if (pos >= 1) return 1;
+        const db = VOLUME_MIN_DB * (1 - pos);
+        return Math.pow(10, db / 20);
+    }
+
     function attemptChain(song, chain, idx, resumeTime, autoplay) {
         clearTimeout(playerState.loadTimer);
         if (idx >= chain.length) {
@@ -849,10 +853,11 @@
 
         wrap.appendChild(meta);
 
-        videoEl.volume = settings.volume;
+        videoEl.volume = sliderPosToGain(settings.volume);
         volumeEl.addEventListener('input', () => {
-            videoEl.volume = parseFloat(volumeEl.value);
-            settings.volume = parseFloat(volumeEl.value);
+            const pos = parseFloat(volumeEl.value);
+            videoEl.volume = sliderPosToGain(pos);
+            settings.volume = pos;
             saveSettings();
         });
         playPauseBtn.addEventListener('click', () => {
@@ -1467,12 +1472,12 @@
                 return first ? first.correct === false : null;
             }
 
-            const findPlayer = Object.values(quiz.players).find(p =>
-                p._name === selfN && p.avatarSlot && p.avatarSlot._disabled === false);
-            if (!findPlayer) return null;
-
             const playersArr = Object.values(payload.players);
-            const entry = playersArr.find(p => p.gamePlayerId === findPlayer.gamePlayerId);
+            const entry = playersArr.find(p => {
+                const livePlayer = quiz.players[p.gamePlayerId];
+                return livePlayer && livePlayer._name === selfN &&
+                    (!livePlayer.avatarSlot || livePlayer.avatarSlot._disabled === false);
+            });
             if (!entry) return null;
 
             return entry.correct === false;
