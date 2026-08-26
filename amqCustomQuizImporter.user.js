@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Custom Quiz Importer
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      2.1
+// @version      2.2
 // @description  Import custom quizzes from JSON files with multi-rule block support
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -83,7 +83,11 @@ class ImportedFile {
             /annSongId\s*:\s*\[([\d,\s]+)\]/g
         ];
 
-        if (extractWithPatterns(annSongIdPatterns, id => ({ annSongId: id }))) {
+        if (extractWithPatterns(annSongIdPatterns, id => ({
+            connectUp: false,
+            locked: false,
+            annSongId: id
+        }))) {
             return result;
         }
 
@@ -95,6 +99,8 @@ class ImportedFile {
         ];
 
         extractWithPatterns(annIdPatterns, id => ({
+            connectUp: false,
+            locked: false,
             annId: id,
             includeSongTypes: { ...this.songTypeSettings },
             numberOfSongs: 250
@@ -346,6 +352,7 @@ class ImportManager {
     constructor() {
         this.ruleBlocks = [];
         this.nextBlockId = 1;
+        this.ruleBlockRandomOrder = true;
         this.createModal();
     }
 
@@ -361,6 +368,9 @@ class ImportManager {
                         <div class="quiz-info-section">
                             <label>Quiz Name: <input type="text" id="quizNameInput" maxlength="30" placeholder="Enter quiz name"></label>
                             <label>Quiz Description: <textarea id="quizDescriptionInput" maxlength="500" placeholder="Enter quiz description"></textarea></label>
+                            <div class="setting-row">
+                                <label><input type="checkbox" class="ruleBlockRandomOrder-input" checked> Rule Block Random Order</label>
+                            </div>
                         </div>
                         <div id="ruleBlocksContainer"></div>
                         <button id="addRuleBlockBtn" class="add-rule-block-btn">Add Rule Block</button>
@@ -436,7 +446,7 @@ class ImportManager {
                 display: block;
                 margin-bottom: 10px;
             }
-            .quiz-info-section input,
+            .quiz-info-section input[type="text"],
             .quiz-info-section textarea {
                 width: 100%;
                 padding: 8px;
@@ -620,6 +630,9 @@ class ImportManager {
         this.$modal.find('.close-modal-btn, .cancel-btn').on('click', () => this.hide());
         this.$modal.find('#addRuleBlockBtn').on('click', () => this.addRuleBlock());
         this.$modal.find('#finalizeImportBtn').on('click', () => this.finalizeImport());
+        this.$modal.find('.ruleBlockRandomOrder-input').on('change', (e) => {
+            this.ruleBlockRandomOrder = e.target.checked;
+        });
     }
 
     show() {
@@ -687,7 +700,8 @@ class ImportManager {
                     name: quizName,
                     description: quizDescription || `Imported quiz with ${ruleBlocksData.length} rule block(s)`,
                     tags: [],
-                    ruleBlocks: ruleBlocksData
+                    ruleBlocks: ruleBlocksData,
+                    ruleBlockRandomOrder: this.ruleBlockRandomOrder
                 },
                 quizId: null
             }
