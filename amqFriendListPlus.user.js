@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.1
+// @version      1.2
 // @description  Update the Friends List to provide more information and make friend interactions more accessible.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -13,6 +13,13 @@
     "use strict";
 
     if (typeof Listener === "undefined") return;
+
+    const loadInterval = setInterval(() => {
+        if (document.querySelector("#loadingScreen.hidden")) {
+            clearInterval(loadInterval);
+            setup();
+        }
+    }, 500);
 
     // closeView without the "remove roombrowser listners" socket command
     RoomBrowser.prototype.closeView = function () {
@@ -138,7 +145,6 @@
 
         const $friendList = $("#friendlist");
         if ($friendList.length) {
-            $friendList.empty();
             $friendList.css({
                 width: "100%",
                 height: "100%",
@@ -258,19 +264,24 @@
                 position: sticky;
                 top: 0;
                 z-index: 10;
-                padding: 0 0 8px 0;
-                background: rgba(0,0,0,0.18);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 8px 6px 8px;
+                background: rgb(59, 59, 59);
                 border: 1px solid rgba(255,255,255,0.08);
                 border-radius: 8px;
                 overflow: hidden;
                 margin-bottom: 10px;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
             }
             .amqFriendPlusSearchInput {
+                flex: 1 1 auto;
                 width: 100%;
                 box-sizing: border-box;
                 border: none;
-                border-radius: 0;
-                background: rgba(255,255,255,0.03);
+                border-radius: 6px;
+                background: rgba(255,255,255,0.05);
                 color: #dfe7ff;
                 padding: 8px 10px;
                 font-size: 12px;
@@ -281,30 +292,160 @@
                 box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
             }
             .amqFriendPlusSearchInput:focus {
-                background: rgba(255,255,255,0.05);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+                background: rgba(255,255,255,0.07);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
             }
             .amqFriendPlusSearchInput::placeholder {
                 color: rgba(196, 206, 235, 0.8);
                 text-transform: uppercase;
+            }
+            .amqFriendPlusSearchGearButton {
+                flex: 0 0 auto;
+                width: 30px;
+                height: 30px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 6px;
+                background: rgba(255,255,255,0.05);
+                color: #dfe7ff;
+                cursor: pointer;
+                padding: 0;
+                transition: background 0.15s ease, transform 0.15s ease;
+            }
+            .amqFriendPlusSearchGearButton:hover {
+                background: rgba(255,255,255,0.08);
+            }
+            .amqFriendPlusSearchGearButton.is-active {
+                background: rgba(255,255,255,0.1);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+            .amqFriendPlusSettingsPanel {
+                display: none;
+                margin: 0 0 10px 0;
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 8px;
+                background: rgba(255,255,255,0.04);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+                overflow: hidden;
+            }
+            .amqFriendPlusSettingsPanel.is-open {
+                display: block;
+            }
+            .amqFriendPlusSettingsHeader {
+                padding: 8px 10px 7px 10px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #dfe7ff;
+                background: rgba(0,0,0,0.18);
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+            .amqFriendPlusSettingsBody {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                padding: 8px;
+            }
+            .amqFriendPlusAlertRow {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 6px 6px;
+                background: rgba(255,255,255,0.02);
+                border-radius: 6px;
+                border: 1px solid rgba(255,255,255,0.04);
+            }
+            .amqFriendPlusAlertLabel {
+                flex: 1 1 auto;
+                min-width: 0;
+                font-size: 11px;
+                line-height: 1.3;
+                color: #dfe7ff;
+                font-weight: 600;
+                letter-spacing: 0.02em;
+            }
+            .amqFriendPlusAlertModeGroup {
+                display: inline-flex;
+                align-items: center;
+                justify-content: flex-end;
+                min-width: 150px;
+            }
+            .amqFriendPlusAlertModeSelect {
+                width: 100%;
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                border: 1px solid rgba(255,255,255,0.08);
+                background: rgba(255,255,255,0.04);
+                color: #dfe7ff;
+                border-radius: 5px;
+                padding: 5px 28px 5px 8px;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                cursor: pointer;
+                outline: none;
+                background-image: linear-gradient(45deg, transparent 50%, #dfe7ff 50%), linear-gradient(135deg, #dfe7ff 50%, transparent 50%);
+                background-position: calc(100% - 14px) calc(50% - 2px), calc(100% - 9px) calc(50% - 2px);
+                background-size: 5px 5px, 5px 5px;
+                background-repeat: no-repeat;
+            }
+            .amqFriendPlusAlertModeSelect:focus {
+                border-color: rgba(255,255,255,0.18);
+                background-color: rgba(255,255,255,0.06);
+            }
+            .amqFriendPlusAlertModeSelect option {
+                /* Chrome renders the native option list with a solid, flattened version of the
+                   select's background instead of respecting its transparency, which can end up
+                   light instead of dark — so give options an explicit solid dark background here
+                   rather than relying on the translucent one above. */
+                background-color: #1b1f29;
+                color: #dfe7ff;
+            }
+            .amqFriendPlusAvatarWrap {
+                width: 68px;
+                height: 68px;
+                flex: 0 0 68px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                border: 2px solid #7d7d7d;
+                background: rgba(0,0,0,0.2);
+                overflow: hidden;
+                cursor: pointer;
+                pointer-events: auto;
+            }
+            .amqFriendPlusAvatarWrap .avatarDisplay,
+            .amqFriendPlusAvatarWrap .avatarDisplay *,
+            .amqFriendPlusAvatarWrap .avatarImage,
+            .amqFriendPlusAvatarWrap .avatarSpineContainer,
+            .amqFriendPlusAvatarWrap .avatarSpine,
+            .amqFriendPlusAvatarWrap .avatarDecoration {
+                pointer-events: none;
             }
             .amqFriendPlusAllUsersSearchWrap {
                 position: sticky;
                 top: 0;
                 z-index: 12;
                 padding: 0 0 8px 0;
-                background: rgba(0,0,0,0.18);
+                background: rgb(59, 59, 59);
                 border: 1px solid rgba(255,255,255,0.08);
                 border-radius: 8px;
                 overflow: hidden;
                 margin-bottom: 8px;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
             }
             .amqFriendPlusAllUsersSearchInput {
                 width: 100%;
                 box-sizing: border-box;
                 border: none;
                 border-radius: 0;
-                background: rgba(255,255,255,0.03);
+                background: rgba(255,255,255,0.05);
                 color: #dfe7ff;
                 padding: 8px 10px;
                 font-size: 12px;
@@ -315,8 +456,8 @@
                 box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
             }
             .amqFriendPlusAllUsersSearchInput:focus {
-                background: rgba(255,255,255,0.05);
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+                background: rgba(255,255,255,0.07);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
             }
             .amqFriendPlusAllUsersSearchInput::placeholder {
                 color: rgba(196, 206, 235, 0.8);
@@ -349,21 +490,21 @@
             .amqFriendPlusRow {
                 position: relative;
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 gap: 8px;
                 padding: 2px 8px 4px 8px;
                 border-radius: 6px;
                 background: rgba(255,255,255,0.025);
                 margin-bottom: 4px;
-                min-height: 80px;
+                min-height: 84px;
             }
             .amqFriendPlusRow:last-child {
                 margin-bottom: 0;
             }
             .amqFriendPlusAvatarWrap {
-                width: 64px;
-                height: 64px;
-                flex: 0 0 64px;
+                width: 68px;
+                height: 68px;
+                flex: 0 0 68px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -372,8 +513,6 @@
                 background: rgba(0,0,0,0.2);
                 overflow: hidden;
                 cursor: pointer;
-                align-self: flex-start;
-                margin-top: 2px;
             }
             .amqFriendPlusAvatarWrap img {
                 width: 100%;
@@ -605,7 +744,7 @@
             : [...favorites, name];
 
         setFavoriteFriendNames(nextFavorites);
-        scheduleFriendListRender(true);
+        updateFriendRow(name);
     };
 
     const renameFavoriteFriend = (oldName, newName) => {
@@ -642,8 +781,226 @@
             if (typeof socialTab?.removeFriend === "function") {
                 socialTab.removeFriend(name);
             }
-            scheduleFriendListRender(true);
+            updateFriendRow(name);
         });
+    };
+
+    const FRIEND_ALERT_SETTINGS_STORAGE_KEY = "amqFriendListPlus.friendAlerts";
+    const DEFAULT_FRIEND_ALERT_SETTINGS = {
+        friendConnect: "none",
+        friendDisconnect: "none",
+        friendJoinRoom: "none",
+        friendSpectate: "none",
+        friendLeaveRoom: "none",
+        friendPlayingToLobby: "none",
+        friendLobbyToPlaying: "none",
+    };
+    const FRIEND_ALERT_MESSAGES = {
+        friendConnect: "connected",
+        friendDisconnect: "disconnected",
+        friendJoinRoom: "joined the game",
+        friendSpectate: "is spectating",
+        friendLeaveRoom: "left the room",
+        friendPlayingToLobby: "went to the lobby",
+        friendLobbyToPlaying: "started playing",
+    };
+    const FRIEND_ALERT_LABELS = {
+        friendConnect: "Alert when friend connect",
+        friendDisconnect: "Alert when friend disconnect",
+        friendJoinRoom: "Alert when friend join a game",
+        friendSpectate: "Alert when a friend spectate a game",
+        friendLeaveRoom: "Alert when a friend leave a room",
+        friendPlayingToLobby: "Alert when friend goes from playing to lobby",
+        friendLobbyToPlaying: "Alert when friend goes from lobby to playing",
+    };
+    let friendAlertSettingsOpen = false;
+    let friendAlertStateSnapshot = new Map();
+    let friendAlertBaselineReady = false;
+
+    const getFriendAlertSettings = () => {
+        if (typeof localStorage === "undefined") return { ...DEFAULT_FRIEND_ALERT_SETTINGS };
+
+        try {
+            const raw = JSON.parse(localStorage.getItem(FRIEND_ALERT_SETTINGS_STORAGE_KEY) || "{}") || {};
+            return {
+                ...DEFAULT_FRIEND_ALERT_SETTINGS,
+                ...Object.fromEntries(Object.entries(DEFAULT_FRIEND_ALERT_SETTINGS).map(([key, defaultValue]) => [key, raw[key] ?? defaultValue])),
+            };
+        } catch (err) {
+            return { ...DEFAULT_FRIEND_ALERT_SETTINGS };
+        }
+    };
+
+    const setFriendAlertSettings = (settings) => {
+        if (typeof localStorage === "undefined") return;
+
+        const normalized = {
+            ...DEFAULT_FRIEND_ALERT_SETTINGS,
+            ...settings,
+        };
+
+        const next = Object.fromEntries(Object.entries(DEFAULT_FRIEND_ALERT_SETTINGS).map(([key, defaultValue]) => {
+            const value = normalized[key];
+            return [key, value === "favorite" || value === "all" || value === "none" ? value : defaultValue];
+        }));
+
+        try {
+            localStorage.setItem(FRIEND_ALERT_SETTINGS_STORAGE_KEY, JSON.stringify(next));
+        } catch (err) {
+            // Ignore storage failures.
+        }
+    };
+
+    const getFriendAlertModeForFriend = (alertKey, friendName) => {
+        if (!friendName) return "none";
+        const setting = getFriendAlertSettings()[alertKey] ?? "none";
+        if (setting === "favorite") return isFavoriteFriend(friendName) ? "favorite" : "none";
+        if (setting === "all") return "all";
+        return "none";
+    };
+
+    const popoutMessage = (head, body) => {
+        if (typeof popoutMessages?.displayPopoutMessage !== "function" || typeof format !== "function" || typeof escapeHtml !== "function") {
+            return false;
+        }
+        const htmlBody = format(popoutMessages.STANDARD_TEMPLATE, escapeHtml(head), escapeHtml(body));
+        popoutMessages.displayPopoutMessage(htmlBody);
+        return true;
+    };
+
+    // "joined the game in X" / "left the room in X" read as if the room name were a place
+    // inside the room, so these two skip the "in" connector entirely.
+    const FRIEND_ALERT_NO_PREPOSITION = new Set(["friendJoinRoom", "friendLeaveRoom"]);
+
+    const triggerFriendAlert = (alertKey, friendName, roomName = "") => {
+        if (!friendName) return;
+        if (getFriendAlertModeForFriend(alertKey, friendName) === "none") return;
+
+        const action = FRIEND_ALERT_MESSAGES[alertKey] || "updated";
+        const body = !roomName
+            ? action
+            : FRIEND_ALERT_NO_PREPOSITION.has(alertKey)
+                ? `${action} ${roomName}`
+                : `${action} in ${roomName}`;
+
+        popoutMessage(friendName, body);
+    };
+
+    const buildFriendAlertSnapshot = (entry) => {
+        if (!entry || !entry.name) return null;
+
+        const playingState = getFriendPlayingState(entry);
+        return {
+            roomId: playingState?.roomId ?? null,
+            roomName: playingState?.roomName ?? "",
+            inLobby: !!playingState?.inLobby,
+            isSpectator: !!playingState?.isSpectator,
+            offline: !!(entry.offline === true || Number(entry.status ?? 1) === 0),
+        };
+    };
+
+    const updateFriendAlertStateSnapshot = () => {
+        const current = new Map();
+        const entries = getFriendEntries();
+
+        entries.forEach((entry) => {
+            const snapshot = buildFriendAlertSnapshot(entry);
+            if (snapshot) {
+                current.set(entry.name, snapshot);
+            }
+        });
+
+        // Connect/disconnect are fired directly off the "friend state change" event instead of
+        // being inferred here (see that listener) — that event is AMQ's own authoritative
+        // offline<->online signal, whereas diffing this snapshot was prone to false positives
+        // for friends who were already online/playing (e.g. right after login).
+        if (friendAlertBaselineReady) {
+            const previousEntries = new Map(friendAlertStateSnapshot.entries());
+
+            previousEntries.forEach((previous, name) => {
+                const currentState = current.get(name);
+                if (!currentState || currentState.offline) return;
+
+                if (previous.roomId == null && currentState.roomId != null) {
+                    triggerFriendAlert("friendJoinRoom", name, currentState.roomName);
+                }
+
+                if (previous.roomId != null && currentState.roomId == null) {
+                    triggerFriendAlert("friendLeaveRoom", name, previous.roomName || "a room");
+                }
+
+                if (currentState.isSpectator && !previous.isSpectator) {
+                    triggerFriendAlert("friendSpectate", name, currentState.roomName);
+                }
+
+                if (previous.roomId != null && !previous.inLobby && currentState.inLobby && !currentState.isSpectator && currentState.roomId != null) {
+                    triggerFriendAlert("friendPlayingToLobby", name, currentState.roomName);
+                }
+
+                if (previous.roomId != null && previous.inLobby && !currentState.inLobby && !currentState.isSpectator && currentState.roomId != null) {
+                    triggerFriendAlert("friendLobbyToPlaying", name, currentState.roomName);
+                }
+            });
+        }
+
+        friendAlertStateSnapshot = current;
+    };
+
+    const renderFriendAlertSettingsPanel = ($friendList) => {
+        if (!$friendList || !$friendList.length) return;
+
+        let $panel = $friendList.find(".amqFriendPlusSettingsPanel");
+        if (!$panel.length) {
+            $panel = $("<div>", { class: "amqFriendPlusSettingsPanel" });
+            const $header = $("<div>", { class: "amqFriendPlusSettingsHeader" }).text("Friend Alerts");
+            const $body = $("<div>", { class: "amqFriendPlusSettingsBody" });
+            $panel.append($header, $body);
+            const $searchWrap = $friendList.find(".amqFriendPlusSearchWrap");
+            if ($searchWrap.length) {
+                $searchWrap.after($panel);
+            } else {
+                $friendList.prepend($panel);
+            }
+        }
+
+        const $body = $panel.find(".amqFriendPlusSettingsBody");
+        $body.empty();
+
+        Object.entries(FRIEND_ALERT_LABELS).forEach(([key, label]) => {
+            const settings = getFriendAlertSettings();
+            const $row = $("<div>", { class: "amqFriendPlusAlertRow" });
+            const $label = $("<div>", { class: "amqFriendPlusAlertLabel" }).text(label);
+            const $group = $("<div>", { class: "amqFriendPlusAlertModeGroup" });
+            const $select = $("<select>", {
+                class: "amqFriendPlusAlertModeSelect",
+                value: settings[key] || "none",
+            });
+
+            [
+                { value: "none", label: "None" },
+                { value: "favorite", label: "Favorite only" },
+                { value: "all", label: "All Friends" },
+            ].forEach(({ value, label: optionLabel }) => {
+                const $option = $("<option>", {
+                    value,
+                    text: optionLabel,
+                    selected: settings[key] === value,
+                });
+                $select.append($option);
+            });
+
+            $select.on("change", (event) => {
+                const nextSettings = getFriendAlertSettings();
+                nextSettings[key] = $(event.currentTarget).val() || "none";
+                setFriendAlertSettings(nextSettings);
+            });
+
+            $group.append($select);
+            $row.append($label, $group);
+            $body.append($row);
+        });
+
+        $panel.toggleClass("is-open", friendAlertSettingsOpen);
     };
 
     const getFriendEntries = () => {
@@ -711,7 +1068,10 @@
         if (match) {
             return {
                 roomId: match.roomId,
-                roomName: match.roomName || "Unknown room",
+                // Leave this empty rather than defaulting here: getFriendPlayingState falls back
+                // to the friend's own gameState.roomName next, and a truthy placeholder here would
+                // block that fallback from ever being used.
+                roomName: match.roomName || "",
                 inLobby: !!match.inLobby,
                 privateRoom: !!match.privateRoom,
                 soloRoom: !!match.soloRoom,
@@ -721,12 +1081,12 @@
 
         if (!fallbackGameState) return null;
 
-        const roomName = fallbackGameState.roomName || fallbackGameState.room?.roomName || "Unknown room";
+        const roomName = fallbackGameState.roomName || fallbackGameState.room?.roomName || "";
         const roomId = fallbackGameState.roomId ?? fallbackGameState.gameId ?? null;
 
         return {
             roomId,
-            roomName: roomName || "Unknown room",
+            roomName,
             inLobby: !!fallbackGameState.inLobby,
             privateRoom: !!fallbackGameState.private,
             soloRoom: !!fallbackGameState.soloGame,
@@ -747,7 +1107,7 @@
         const fallbackRoom = {
             roomId: browserRoom.id ?? roomId,
             host: browserRoom.host ?? selfName ?? null,
-            roomName: browserSettings.roomName || "Unknown room",
+            roomName: browserSettings.roomName || "",
             players: (browserRoom.allPlayers?.players ?? []).map((player) => player.name ?? player),
             spectators: (browserRoom.allPlayers?.spectators ?? []).map((player) => player.name ?? player),
             friendNames: Array.isArray(browserRoom._friendNames) ? browserRoom._friendNames.slice() : [],
@@ -1118,6 +1478,335 @@
         }
     };
 
+    const renderFriendRow = (entry, $friendList) => {
+        if (!entry || !entry.name) return null;
+
+        const roomInfo = getFriendPlayingState(entry);
+        const inOnlineMap = !!(socialTab?.onlineFriends && socialTab.onlineFriends[entry.name]);
+        const inOfflineMap = !!(socialTab?.offlineFriends && socialTab.offlineFriends[entry.name]);
+        const isOffline = inOfflineMap || (!inOnlineMap && (entry.offline === true || Number(entry.status ?? 1) === 0));
+        const isPlaying = !isOffline && !!roomInfo;
+        const status = Number(entry.status ?? (inOfflineMap ? 0 : 1));
+        const statusColor = statusColorByStatus[status] ?? statusColorByStatus[1];
+
+        const $row = $("<div>", {
+            class: "amqFriendPlusRow",
+            "data-friend-name": entry.name,
+            css: {
+                background: "linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.03) 52%, rgba(94, 112, 160, 0.18) 100%)",
+                boxShadow: "inset 0 0 0 1px rgba(120, 140, 185, 0.14)",
+            },
+        });
+
+        const applyRowProfileTint = async () => {
+            const profileTint = await getProfileTintColor(entry);
+            if (!profileTint) return;
+
+            $row.css({
+                background: `linear-gradient(90deg, ${hexToRgba(profileTint, 0.34)} 0%, rgba(255, 255, 255, 0.03) 52%, rgba(255, 255, 255, 0.025) 100%)`,
+                boxShadow: `inset 0 0 0 1px ${hexToRgba(profileTint, 0.18)}`,
+            });
+        };
+        applyRowProfileTint();
+
+        const $avatarWrap = $("<div>", {
+            class: "amqFriendPlusAvatarWrap",
+            css: { borderColor: statusColor },
+        });
+
+        const avatarDisplayHandler = new AvatarHeadDisplayHandler($avatarWrap);
+        const avatarInfo = entry.avatarInfo || {};
+
+        if (avatarInfo.animated && !avatarInfo.profileEmoteId) {
+            const jsonSrc = cdnFormater.newAnimatedAvatarJsonSrc(avatarInfo.avatarName, avatarInfo.outfitName);
+            const atlasSrc = cdnFormater.newAnimatedAvatarAtlasSrc(avatarInfo.avatarName, avatarInfo.outfitName);
+            avatarDisplayHandler.displayAvatarAnimated(
+                jsonSrc,
+                atlasSrc,
+                true,
+                {
+                    $lazyLoadContainer: $friendList,
+                    $lazyOffsetParent: $avatarWrap,
+                },
+                null,
+                avatarInfo.optionActive
+            );
+        } else if (avatarInfo.profileEmoteId != null && storeWindow?.getEmote) {
+            const emote = storeWindow.getEmote(avatarInfo.profileEmoteId);
+            avatarDisplayHandler.displayAvatarImage(emote?.src || "", emote?.srcSet || "", {
+                triggerLoad: true,
+                defaultSizes: "40px",
+                $lazyLoadContainer: $friendList,
+                $lazyOffsetParent: $avatarWrap,
+            });
+        } else if (avatarInfo.avatarName) {
+            const src = cdnFormater.newAvatarHeadSrc(
+                avatarInfo.avatarName,
+                avatarInfo.outfitName,
+                avatarInfo.optionName,
+                avatarInfo.optionActive,
+                avatarInfo.colorName,
+            );
+            const srcSet = cdnFormater.newAvatarHeadSrcSet(
+                avatarInfo.avatarName,
+                avatarInfo.outfitName,
+                avatarInfo.optionName,
+                avatarInfo.optionActive,
+                avatarInfo.colorName,
+            );
+            avatarDisplayHandler.displayAvatarImage(src, srcSet, {
+                triggerLoad: true,
+                defaultSizes: "40px",
+                $lazyLoadContainer: $friendList,
+                $lazyOffsetParent: $avatarWrap,
+            });
+        }
+
+        $avatarWrap.on("click", () => {
+            const isThisProfileOpen = !!(
+                playerProfileController.open &&
+                playerProfileController.currentProfile &&
+                playerProfileController.currentProfile.$profile.find(".ppPlayerName").text() === entry.name
+            );
+
+            if (isThisProfileOpen) {
+                playerProfileController.clearProfiles();
+                return;
+            }
+
+            if (playerProfileController.open && playerProfileController.currentProfile) {
+                playerProfileController.clearProfiles();
+            }
+
+            const $profileAnchor = createStableProfileAnchor($avatarWrap);
+            playerProfileController.loadProfileIfClosed(
+                entry.name,
+                $profileAnchor,
+                { x: 7 },
+                () => {
+                    $profileAnchor.remove();
+                    $avatarWrap.removeClass("playerProfileOpen");
+                },
+                !!isOffline
+            );
+        });
+
+        const $meta = $("<div>", { class: "amqFriendPlusMeta" });
+        const $nameRow = $("<div>", { class: "amqFriendPlusNameRow" });
+        const $favoriteToggle = $("<button>", {
+            type: "button",
+            class: "amqFriendPlusFavoriteToggle" + (isFavoriteFriend(entry.name) ? " is-favorite" : ""),
+            title: isFavoriteFriend(entry.name) ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`,
+            "aria-label": isFavoriteFriend(entry.name) ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`,
+        }).html('<i class="fa ' + (isFavoriteFriend(entry.name) ? "fa-star" : "fa-star-o") + '" aria-hidden="true"></i>');
+        $favoriteToggle.on("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleFavoriteFriend(entry.name);
+        });
+
+        const $name = $("<span>", { class: "amqFriendPlusName" }).text(entry.name);
+        applyFriendNameStyle($name, entry.currentNameColorClass, entry.currentNameGlowClass);
+
+        $nameRow.append($name);
+        $meta.append($nameRow);
+
+        const $removeBtn = $("<button>", {
+            type: "button",
+            class: "amqFriendPlusRemoveButton",
+            title: `Remove ${entry.name} from your friendlist`,
+            "aria-label": `Remove ${entry.name} from your friendlist`,
+        }).html('<i class="fa fa-times" aria-hidden="true"></i>');
+        $removeBtn.on("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            confirmRemoveFriend(entry.name);
+        });
+
+        const $actions = $("<div>", { class: "amqFriendPlusActions" });
+
+        if (!isOffline) {
+            const $dmBtn = $("<button>", {
+                class: "amqFriendPlusActionButton dm",
+                type: "button",
+                title: `DM ${entry.name}`,
+                "aria-label": `Send DM to ${entry.name}`,
+            }).html('<i class="fa fa-comment" aria-hidden="true"></i>');
+            $dmBtn.on("click", () => {
+                if (typeof socialTab?.startChat === "function") {
+                    socialTab.startChat(entry.name);
+                }
+            });
+
+            const $inviteBtn = $("<button>", {
+                class: "amqFriendPlusActionButton invite",
+                type: "button",
+                title: `Invite ${entry.name} to game`,
+                "aria-label": `Invite ${entry.name} to game`,
+            }).html('<i class="fa fa-gamepad" aria-hidden="true"></i>');
+            $inviteBtn.on("click", () => {
+                if (typeof socialTab?.sendGameInvite === "function") {
+                    socialTab.sendGameInvite(entry.name);
+                }
+            });
+
+            $actions.append($dmBtn, $inviteBtn);
+        }
+
+        if (isPlaying && roomInfo) {
+            const $roomIdTag = roomInfo.roomId ? $("<span>", { class: "amqFriendPlusRoomId" }).text(`#${roomInfo.roomId}`) : null;
+            const $room = $("<div>", { class: "amqFriendPlusRoomName" });
+            const roomModeName = getSpecialRoomModeName(entry, roomInfo);
+            const label = roomInfo.isSpectator ? "Spectating " : roomInfo.inLobby ? "In Lobby " : "Playing in ";
+            const $prefix = $("<span>", { class: "amqFriendPlusRoomLabel" }).text(label);
+            const roomDisplayName = roomModeName || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
+            const $roomName = $("<strong>", { class: "amqFriendPlusRoomValue" }).text(roomDisplayName);
+            $room.append($prefix, $roomName);
+            $meta.append($room);
+
+            if (roomInfo.privateRoom) {
+                const $lock = $("<div>", { class: "amqFriendPlusLock" }).html('<i class="fa fa-lock" aria-hidden="true"></i>');
+                $actions.append($lock);
+            }
+
+            if (!roomInfo.soloRoom) {
+                if (!roomModeName) {
+                    const $joinBtn = $("<button>", {
+                        class: "amqFriendPlusButton join",
+                        text: "Join",
+                        disabled: !roomInfo.inLobby,
+                    });
+                    $joinBtn.on("click", () => {
+                        if (roomInfo.privateRoom) {
+                            Swal.fire({
+                                title: localizationHandler.translate("room_browser.room_tile.password.title"),
+                                input: "password",
+                                inputPlaceholder: localizationHandler.translate("room_browser.room_tile.password.placeholder"),
+                                showCancelButton: true,
+                                confirmButtonText: localizationHandler.translate("room_browser.room_tile.password.confirm_button"),
+                                inputAttributes: { maxlength: 50, minlength: 1 },
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    roomBrowser.fireJoinLobby(roomInfo.roomId, result.value);
+                                }
+                            });
+                        } else {
+                            roomBrowser.fireJoinLobby(roomInfo.roomId);
+                        }
+                    });
+
+                    const $spectateBtn = $("<button>", {
+                        class: "amqFriendPlusButton spectate",
+                        text: "Spectate",
+                    });
+                    $spectateBtn.on("click", () => {
+                        if (roomInfo.privateRoom) {
+                            roomBrowser.spectateGameWithPassword(roomInfo.roomId);
+                        } else {
+                            roomBrowser.fireSpectateGame(roomInfo.roomId);
+                        }
+                    });
+
+                    $actions.append($joinBtn, $spectateBtn);
+                }
+
+                if ($roomIdTag) {
+                    $actions.append($roomIdTag);
+                }
+            } else if ($roomIdTag) {
+                const $inviteBtn = $actions.find(".amqFriendPlusActionButton.invite").last();
+                if ($inviteBtn.length) {
+                    $inviteBtn.after($roomIdTag);
+                } else {
+                    $actions.append($roomIdTag);
+                }
+            }
+        }
+
+        if ($actions.children().length) {
+            $meta.append($actions);
+        }
+
+        $row.append($avatarWrap, $meta, $favoriteToggle, $removeBtn);
+        return $row;
+    };
+
+    const getFriendRowSectionId = (entry) => {
+        if (!entry || !entry.name) return "onlineFriends";
+
+        const roomInfo = getFriendPlayingState(entry);
+        const inOnlineMap = !!(socialTab?.onlineFriends && socialTab.onlineFriends[entry.name]);
+        const inOfflineMap = !!(socialTab?.offlineFriends && socialTab.offlineFriends[entry.name]);
+        const isOffline = inOfflineMap || (!inOnlineMap && (entry.offline === true || Number(entry.status ?? 1) === 0));
+        const isPlaying = !isOffline && !!roomInfo;
+
+        if (isPlaying) return "playingFriends";
+        if (isOffline) return "offlineFriends";
+        return "onlineFriends";
+    };
+
+    const compareFriendOrder = (nameA, nameB) => {
+        const favoriteA = isFavoriteFriend(nameA);
+        const favoriteB = isFavoriteFriend(nameB);
+        if (favoriteA !== favoriteB) return favoriteA ? -1 : 1;
+        return String(nameA || "").localeCompare(String(nameB || ""));
+    };
+
+    const insertRowSorted = ($list, $row, friendName) => {
+        const insertBeforeRow = $list.children(".amqFriendPlusRow").toArray().find((rowEl) => {
+            return compareFriendOrder(friendName, $(rowEl).data("friendName")) < 0;
+        });
+
+        if (insertBeforeRow) {
+            $(insertBeforeRow).before($row);
+        } else {
+            $list.append($row);
+        }
+    };
+
+    // Updates a single friend's row in place instead of rebuilding the whole list, so unrelated
+    // friends don't flicker on every state change. Pass previousName when a friend was just renamed,
+    // since the existing row is still keyed by their old name.
+    const updateFriendRow = (friendName, previousName = friendName) => {
+        if (!friendName) return;
+
+        const $friendList = $("#friendlist");
+        if (!$friendList.length) return;
+
+        const matchingEntry = getFriendEntries().find((entry) => entry && entry.name === friendName);
+        const $existingRow = $friendList.find(".amqFriendPlusRow").filter(function () {
+            return $(this).data("friendName") === previousName;
+        }).first();
+
+        if (!matchingEntry) {
+            if ($existingRow.length) {
+                $existingRow.remove();
+            }
+            return;
+        }
+
+        const targetSection = $friendList.find(".amqFriendPlusSection").filter((index, element) => {
+            return $(element).attr("id") === getFriendRowSectionId(matchingEntry);
+        }).first();
+
+        if (!targetSection.length) {
+            // Sections haven't been built yet (e.g. first render still pending); fall back once.
+            scheduleFriendListRender(true);
+            return;
+        }
+
+        const $replacement = renderFriendRow(matchingEntry, $friendList);
+        if (!$replacement) return;
+
+        if ($existingRow.length) {
+            $existingRow.remove();
+        }
+
+        insertRowSorted(targetSection.find(".amqFriendPlusList"), $replacement, friendName);
+        $replacement.trigger("amqFriendPlus:updated");
+        applyFriendSearchFilter();
+    };
+
     const renderFriendListSections = () => {
         if (typeof socialTab === "undefined") return;
         addFriendListStyles();
@@ -1142,7 +1831,21 @@
                 friendListSearch = $(event.currentTarget).val() || "";
                 applyFriendSearchFilter();
             });
-            $searchWrap.append($searchInput);
+
+            const $gearButton = $("<button>", {
+                type: "button",
+                class: "amqFriendPlusSearchGearButton" + (friendAlertSettingsOpen ? " is-active" : ""),
+                title: "Friend alert settings",
+                "aria-label": "Friend alert settings",
+                html: '<i class="fa fa-gear" aria-hidden="true"></i>',
+            });
+            $gearButton.on("click", () => {
+                friendAlertSettingsOpen = !friendAlertSettingsOpen;
+                renderFriendAlertSettingsPanel($friendList);
+                $gearButton.toggleClass("is-active", friendAlertSettingsOpen);
+            });
+
+            $searchWrap.append($searchInput, $gearButton);
             $friendList.append($searchWrap);
         }
 
@@ -1151,7 +1854,13 @@
             $searchInput.val(friendListSearch);
         }
 
-        $friendList.children().not($searchWrap).remove();
+        const $gearButton = $searchWrap.find(".amqFriendPlusSearchGearButton");
+        if ($gearButton.length) {
+            $gearButton.toggleClass("is-active", friendAlertSettingsOpen);
+        }
+
+        renderFriendAlertSettingsPanel($friendList);
+        $friendList.children().not($searchWrap).not(".amqFriendPlusSettingsPanel").remove();
 
         const sections = [
             { id: "playingFriends", title: "Playing Friends" },
@@ -1171,211 +1880,18 @@
         const onlineSection = $("#onlineFriends .amqFriendPlusList");
         const offlineSection = $("#offlineFriends .amqFriendPlusList");
 
-        const entries = getFriendEntries().sort((a, b) => {
-            if (!a || !b) return 0;
-            const aFavorite = isFavoriteFriend(a.name);
-            const bFavorite = isFavoriteFriend(b.name);
-            if (aFavorite !== bFavorite) return aFavorite ? -1 : 1;
-            return String(a.name || "").localeCompare(String(b.name || ""));
-        });
+        const entries = getFriendEntries().sort((a, b) => compareFriendOrder(a?.name, b?.name));
 
         entries.forEach((entry) => {
             if (!entry || !entry.name) return;
+            const $row = renderFriendRow(entry, $friendList);
+            if (!$row) return;
 
             const roomInfo = getFriendPlayingState(entry);
             const inOnlineMap = !!(socialTab?.onlineFriends && socialTab.onlineFriends[entry.name]);
             const inOfflineMap = !!(socialTab?.offlineFriends && socialTab.offlineFriends[entry.name]);
             const isOffline = inOfflineMap || (!inOnlineMap && (entry.offline === true || Number(entry.status ?? 1) === 0));
             const isPlaying = !isOffline && !!roomInfo;
-            const status = Number(entry.status ?? (inOfflineMap ? 0 : 1));
-            const statusColor = statusColorByStatus[status] ?? statusColorByStatus[1];
-
-            const $row = $("<div>", {
-                class: "amqFriendPlusRow",
-                "data-friend-name": entry.name,
-                css: {
-                    background: "linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.03) 52%, rgba(94, 112, 160, 0.18) 100%)",
-                    boxShadow: "inset 0 0 0 1px rgba(120, 140, 185, 0.14)",
-                },
-            });
-
-            const applyRowProfileTint = async () => {
-                const profileTint = await getProfileTintColor(entry);
-                if (!profileTint) return;
-
-                $row.css({
-                    background: `linear-gradient(90deg, ${hexToRgba(profileTint, 0.34)} 0%, rgba(255, 255, 255, 0.03) 52%, rgba(255, 255, 255, 0.025) 100%)`,
-                    boxShadow: `inset 0 0 0 1px ${hexToRgba(profileTint, 0.18)}`,
-                });
-            };
-            applyRowProfileTint();
-
-            const $avatarWrap = $("<div>", {
-                class: "amqFriendPlusAvatarWrap",
-                css: { borderColor: statusColor },
-            });
-
-            const $avatar = $("<img>", {
-                alt: entry.name,
-                src: getFriendProfileImageSrc(entry.avatarInfo),
-            });
-
-            $avatarWrap.on("click", () => {
-                if (playerProfileController.open && playerProfileController.currentProfile) {
-                    playerProfileController.clearProfiles();
-                }
-
-                const $profileAnchor = createStableProfileAnchor($avatarWrap);
-                playerProfileController.loadProfileIfClosed(
-                    entry.name,
-                    $profileAnchor,
-                    { x: 7 },
-                    () => {
-                        $profileAnchor.remove();
-                        $avatarWrap.removeClass("playerProfileOpen");
-                    },
-                    !!isOffline
-                );
-            });
-            $avatarWrap.append($avatar);
-
-            const $meta = $("<div>", { class: "amqFriendPlusMeta" });
-            const $nameRow = $("<div>", { class: "amqFriendPlusNameRow" });
-            const $favoriteToggle = $("<button>", {
-                type: "button",
-                class: "amqFriendPlusFavoriteToggle" + (isFavoriteFriend(entry.name) ? " is-favorite" : ""),
-                title: isFavoriteFriend(entry.name) ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`,
-                "aria-label": isFavoriteFriend(entry.name) ? `Remove ${entry.name} from favorites` : `Add ${entry.name} to favorites`,
-            }).html('<i class="fa ' + (isFavoriteFriend(entry.name) ? "fa-star" : "fa-star-o") + '" aria-hidden="true"></i>');
-            $favoriteToggle.on("click", (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                toggleFavoriteFriend(entry.name);
-            });
-
-            const $name = $("<span>", { class: "amqFriendPlusName" }).text(entry.name);
-            applyFriendNameStyle($name, entry.currentNameColorClass, entry.currentNameGlowClass);
-
-            $nameRow.append($name);
-            $meta.append($nameRow);
-
-            const $removeBtn = $("<button>", {
-                type: "button",
-                class: "amqFriendPlusRemoveButton",
-                title: `Remove ${entry.name} from your friendlist`,
-                "aria-label": `Remove ${entry.name} from your friendlist`,
-            }).html('<i class="fa fa-times" aria-hidden="true"></i>');
-            $removeBtn.on("click", (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                confirmRemoveFriend(entry.name);
-            });
-
-            const $actions = $("<div>", { class: "amqFriendPlusActions" });
-
-            if (!isOffline) {
-                const $dmBtn = $("<button>", {
-                    class: "amqFriendPlusActionButton dm",
-                    type: "button",
-                    title: `DM ${entry.name}`,
-                    "aria-label": `Send DM to ${entry.name}`,
-                }).html('<i class="fa fa-comment" aria-hidden="true"></i>');
-                $dmBtn.on("click", () => {
-                    if (typeof socialTab?.startChat === "function") {
-                        socialTab.startChat(entry.name);
-                    }
-                });
-
-                const $inviteBtn = $("<button>", {
-                    class: "amqFriendPlusActionButton invite",
-                    type: "button",
-                    title: `Invite ${entry.name} to game`,
-                    "aria-label": `Invite ${entry.name} to game`,
-                }).html('<i class="fa fa-gamepad" aria-hidden="true"></i>');
-                $inviteBtn.on("click", () => {
-                    if (typeof socialTab?.sendGameInvite === "function") {
-                        socialTab.sendGameInvite(entry.name);
-                    }
-                });
-
-                $actions.append($dmBtn, $inviteBtn);
-            }
-
-            if (isPlaying && roomInfo) {
-                const $roomIdTag = roomInfo.roomId ? $("<span>", { class: "amqFriendPlusRoomId" }).text(`#${roomInfo.roomId}`) : null;
-                const $room = $("<div>", { class: "amqFriendPlusRoomName" });
-                const roomModeName = getSpecialRoomModeName(entry, roomInfo);
-                const label = roomInfo.isSpectator ? "Spectating " : roomInfo.inLobby ? "In Lobby " : "Playing in ";
-                const $prefix = $("<span>", { class: "amqFriendPlusRoomLabel" }).text(label);
-                const roomDisplayName = roomModeName || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
-                const $roomName = $("<strong>", { class: "amqFriendPlusRoomValue" }).text(roomDisplayName);
-                $room.append($prefix, $roomName);
-                $meta.append($room);
-
-                if (roomInfo.privateRoom) {
-                    const $lock = $("<div>", { class: "amqFriendPlusLock" }).html('<i class="fa fa-lock" aria-hidden="true"></i>');
-                    $actions.append($lock);
-                }
-
-                if (!roomInfo.soloRoom) {
-                    if (!roomModeName) {
-                        const $joinBtn = $("<button>", {
-                            class: "amqFriendPlusButton join",
-                            text: "Join",
-                            disabled: !roomInfo.inLobby,
-                        });
-                        $joinBtn.on("click", () => {
-                            if (roomInfo.privateRoom) {
-                                Swal.fire({
-                                    title: localizationHandler.translate("room_browser.room_tile.password.title"),
-                                    input: "password",
-                                    inputPlaceholder: localizationHandler.translate("room_browser.room_tile.password.placeholder"),
-                                    showCancelButton: true,
-                                    confirmButtonText: localizationHandler.translate("room_browser.room_tile.password.confirm_button"),
-                                    inputAttributes: { maxlength: 50, minlength: 1 },
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        roomBrowser.fireJoinLobby(roomInfo.roomId, result.value);
-                                    }
-                                });
-                            } else {
-                                roomBrowser.fireJoinLobby(roomInfo.roomId);
-                            }
-                        });
-
-                        const $spectateBtn = $("<button>", {
-                            class: "amqFriendPlusButton spectate",
-                            text: "Spectate",
-                        });
-                        $spectateBtn.on("click", () => {
-                            if (roomInfo.privateRoom) {
-                                roomBrowser.spectateGameWithPassword(roomInfo.roomId);
-                            } else {
-                                roomBrowser.fireSpectateGame(roomInfo.roomId);
-                            }
-                        });
-
-                        $actions.append($joinBtn, $spectateBtn);
-                    }
-
-                    if ($roomIdTag) {
-                        $actions.append($roomIdTag);
-                    }
-                } else if ($roomIdTag) {
-                    const $inviteBtn = $actions.find(".amqFriendPlusActionButton.invite").last();
-                    if ($inviteBtn.length) {
-                        $inviteBtn.after($roomIdTag);
-                    } else {
-                        $actions.append($roomIdTag);
-                    }
-                }
-            }
-
-            if ($actions.children().length) {
-                $meta.append($actions);
-            }
-
-            $row.append($avatarWrap, $meta, $favoriteToggle, $removeBtn);
 
             if (isPlaying) {
                 playingSection.append($row);
@@ -1452,6 +1968,7 @@
         friendRenderTimer = setTimeout(() => {
             friendRenderTimer = null;
             renderFriendListSections();
+            updateFriendAlertStateSnapshot();
         }, 0);
     };
 
@@ -1561,6 +2078,19 @@
 
     const normalizeRoomMemberName = (name) => String(name ?? "").trim().toLowerCase();
 
+    // room.friendNames isn't reliably populated for every room (notably rooms the current
+    // user hosts themselves), so derive the friends actually in a room from its real
+    // membership (host/players/spectators) instead of trusting that field alone.
+    const updateFriendRowsForRoom = (room) => {
+        if (!room) return;
+        const names = new Set([room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? [])]);
+        names.forEach((name) => {
+            if (name && friends.has(name)) {
+                updateFriendRow(name);
+            }
+        });
+    };
+
     const removeRoomMemberFromList = (room, listKey, name) => {
         if (!room || !name) return;
 
@@ -1647,36 +2177,39 @@
             targetList.push(memberName);
         }
         room[targetKey] = targetList;
-        scheduleFriendListRender(true);
+        updateFriendRow(memberName);
+        updateFriendAlertStateSnapshot();
     };
 
-    new Listener("login complete", () => {
+    // By the time #loadingScreen loses its "hidden" class, AMQ's own "login complete" handler
+    // has already run socialTab.setup() synchronously with the full friend roster (see
+    // setup.js), so there's nothing left to race against here — no delay or retry needed.
+    const setup = () => {
         patchAllPlayersListFiltering();
         ensureSocialTabSize();
         refreshFriends();
         snapshotFriendProfiles();
+        applyAllUsersSearchFilter();
+        scheduleFriendListRender(true);
+        // AMQ's own room browser sends this the same way (see roomBrowser.js openView) with no
+        // wait, and the response is handled whenever it lands by the "New Rooms" listener.
+        socket.sendCommand({
+            type: "roombrowser",
+            command: "get rooms",
+        });
+    };
 
+    new Listener("new friend", (friend) => {
+        const name = friend?.name;
         setTimeout(() => {
             ensureSocialTabSize();
             refreshFriends();
             snapshotFriendProfiles();
-            applyAllUsersSearchFilter();
-            scheduleFriendListRender(true);
-            setTimeout(() => {
-                socket.sendCommand({
-                    type: "roombrowser",
-                    command: "get rooms",
-                });
-            }, 3000);
-        }, 50);
-    }).bindListener();
-
-    new Listener("new friend", () => {
-        setTimeout(() => {
-            ensureSocialTabSize();
-            refreshFriends();
-            snapshotFriendProfiles();
-            scheduleFriendListRender(true);
+            if (name) {
+                updateFriendRow(name);
+            } else {
+                scheduleFriendListRender(true);
+            }
         }, 0);
     }).bindListener();
 
@@ -1690,17 +2223,39 @@
             if (typeof socialTab?.removeFriend === "function") {
                 socialTab.removeFriend(name);
             }
-            scheduleFriendListRender(true);
+            updateFriendRow(name);
         }, 0);
     }).bindListener();
 
-    new Listener("friend state change", () => {
+    new Listener("friend state change", (friend) => {
+        const name = friend?.name;
         // deferred so socialTab has updated its own lists first
         setTimeout(() => {
             ensureSocialTabSize();
             refreshFriends();
             snapshotFriendProfiles();
-            scheduleFriendListRender(true);
+            if (name) {
+                // This event only ever fires for a real offline<->online transition (the initial
+                // roster is populated separately, synchronously, before this listener can even
+                // run), so it's safe to fire the alert straight from it rather than inferring it.
+                if (friend.online) {
+                    // A friend who's already flagged as playing when this fires didn't
+                    // meaningfully "connect" from the list's point of view — room membership
+                    // persists through brief connection hiccups, so they were showing up under
+                    // Playing Friends the whole time. Only alert for a real online-and-idle arrival.
+                    const matchingEntry = getFriendEntries().find((entry) => entry && entry.name === name);
+                    if (!getFriendPlayingState(matchingEntry)) {
+                        triggerFriendAlert("friendConnect", name);
+                    }
+                } else {
+                    triggerFriendAlert("friendDisconnect", name);
+                }
+                updateFriendAlertStateSnapshot();
+                updateFriendRow(name);
+            } else {
+                updateFriendAlertStateSnapshot();
+                scheduleFriendListRender(true);
+            }
         }, 0);
     }).bindListener();
 
@@ -1717,7 +2272,7 @@
         }
 
         refreshFriends();
-        scheduleFriendListRender(true);
+        updateFriendRow(newName, oldName);
     }).bindListener();
 
     new Listener("friend profile image change", (payload) => {
@@ -1737,7 +2292,7 @@
             match.avatarInfo = payload.profileImage ?? match.avatarInfo;
         }
 
-        scheduleFriendListRender(true);
+        updateFriendRow(payload.name);
     }).bindListener();
 
     new Listener("friend profile name option change", (payload) => {
@@ -1759,7 +2314,7 @@
             match.currentNameGlowClass = payload.nameGlowClass ?? match.currentNameGlowClass;
         }
 
-        scheduleFriendListRender(true);
+        updateFriendRow(payload.name);
     }).bindListener();
 
     new Listener("friend social status change", (payload) => {
@@ -1780,19 +2335,11 @@
         const match = entries.find((entry) => entry && entry.name === name);
         if (!match) return;
 
-        if (socialStatus === 0 || gameState === null || gameState === undefined) {
-            match.status = socialStatus === 0 ? 0 : 1;
-            match.gameState = null;
-            if (typeof match.updateStatus === "function") {
-                match.updateStatus(match.status, null, false);
-            }
-            scheduleFriendListRender(true);
-            return;
-        }
-
         match.status = socialStatus;
         match.gameState = gameState;
-        match.updateStatus(socialStatus, gameState, false);
+        if (typeof match.updateStatus === "function") {
+            match.updateStatus(socialStatus, gameState, false);
+        }
 
         const idx = friendProfileSnapshot.findIndex((friend) => friend.name === name);
         if (idx !== -1) {
@@ -1800,7 +2347,8 @@
             friendProfileSnapshot[idx].nameGlow = match.currentNameGlowClass ?? friendProfileSnapshot[idx].nameGlow;
         }
 
-        scheduleFriendListRender(true);
+        updateFriendRow(name);
+        updateFriendAlertStateSnapshot();
     }).bindListener();
 
     new Listener("Player Changed To Spectator", (payload) => {
@@ -1834,7 +2382,8 @@
             room.host = null;
         }
 
-        scheduleFriendListRender(true);
+        updateFriendRow(name);
+        updateFriendAlertStateSnapshot();
     }).bindListener();
 
     // Full list on first call, then new rooms one by one.
@@ -1845,9 +2394,9 @@
 
         const isInitialRoomSnapshot = rooms.length === 0;
         const relevantIncoming = incoming.filter(isRelevantRoomUpdate);
-        const existingRelevant = rooms.some((existing) => incoming.some((room) => room.roomId === existing.roomId && isRelevantRoomUpdate(existing)));
+        const relevantExistingMatches = rooms.filter((existing) => incoming.some((room) => room.roomId === existing.roomId) && isRelevantRoomUpdate(existing));
 
-        if (!isInitialRoomSnapshot && !relevantIncoming.length && !existingRelevant) {
+        if (!isInitialRoomSnapshot && !relevantIncoming.length && !relevantExistingMatches.length) {
             return;
         }
 
@@ -1857,7 +2406,33 @@
         const ids = new Set(incoming.map((r) => r.roomId));
         rooms = rooms.filter((r) => !ids.has(r.roomId)).concat(incoming);
         restoreFriendProfiles();
-        scheduleFriendListRender(true);
+
+        if (isInitialRoomSnapshot) {
+            // The "get rooms" request is sent right after login with no artificial delay, so on a
+            // single ordered socket connection any "new friend"/"friend social status change"
+            // pushes the server had already queued are guaranteed to arrive before this response.
+            // That makes this batch a reliable point to start alert diffing — before it, friends
+            // whose data simply hadn't arrived yet would look like fresh connects instead of
+            // already-online friends.
+            friendAlertBaselineReady = true;
+            // First batch builds the list from scratch, so a full render is unavoidable here.
+            scheduleFriendListRender(true);
+            return;
+        }
+
+        // Later batches only ever touch a handful of rooms, so just update the friends they involve.
+        const affectedFriendNames = new Set();
+        [...relevantIncoming, ...relevantExistingMatches].forEach((room) => {
+            if (!room) return;
+            [room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? [])].forEach((name) => {
+                if (name && friends.has(name)) {
+                    affectedFriendNames.add(name);
+                }
+            });
+        });
+
+        affectedFriendNames.forEach((name) => updateFriendRow(name));
+        updateFriendAlertStateSnapshot();
     }).bindListener();
 
     new Listener("Room Change", (data) => {
@@ -1879,20 +2454,28 @@
                     removeRoomMemberFromList(room, "players", data.playerName);
                     removeRoomMemberFromList(room, "spectators", data.playerName);
                     pendingRoomMemberLeaves.delete(roomLeaveKey);
+                    updateFriendRow(data.playerName);
+                    updateFriendAlertStateSnapshot();
                     break;
                 }
 
                 if (alreadyMarkedSpectator) {
                     removeRoomMemberFromList(room, "players", data.playerName);
+                    updateFriendRow(data.playerName);
+                    updateFriendAlertStateSnapshot();
                     break;
                 }
 
                 if (Number.isFinite(playerCount) && playerCount === 0) {
                     removeRoomMemberFromList(room, "players", data.playerName);
                     removeRoomMemberFromList(room, "spectators", data.playerName);
+                    updateFriendRow(data.playerName);
+                    updateFriendAlertStateSnapshot();
                     break;
                 }
                 syncRoomMemberState(room, "players", data.playerName, data.playerCount);
+                updateFriendRow(data.playerName);
+                updateFriendAlertStateSnapshot();
                 break;
             }
             case "spectators": {
@@ -1900,15 +2483,21 @@
                 const spectatorCount = Number(data.spectatorCount ?? 0);
                 if (Number.isFinite(spectatorCount) && spectatorCount === 0) {
                     removeRoomMemberFromList(room, "spectators", data.playerName);
+                    updateFriendRow(data.playerName);
+                    updateFriendAlertStateSnapshot();
                     break;
                 }
                 removeRoomMemberFromList(room, "players", data.playerName);
                 syncRoomMemberState(room, "spectators", data.playerName, data.spectatorCount);
+                updateFriendRow(data.playerName);
+                updateFriendAlertStateSnapshot();
                 break;
             }
             case "game start":
             case "game over": {
                 room.inLobby = data.changeType === "game over";
+                updateFriendRowsForRoom(room);
+                updateFriendAlertStateSnapshot();
                 break;
             }
             case "settings": {
@@ -1916,6 +2505,8 @@
                     if (!(key in data.change)) continue;
                     room[key] = data.change[key];
                 }
+                updateFriendRowsForRoom(room);
+                updateFriendAlertStateSnapshot();
                 break;
             }
             case "Room Closed": {
@@ -1923,7 +2514,5 @@
                 break;
             }
         }
-
-        scheduleFriendListRender(true);
     }).bindListener();
 })();
