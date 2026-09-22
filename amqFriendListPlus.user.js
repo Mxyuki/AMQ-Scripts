@@ -721,6 +721,21 @@
         return roomInfo ? { ...roomInfo, soloRoom: !!roomInfo.soloRoom } : null;
     };
 
+    const getSpecialRoomModeName = (entry, roomInfo = null) => {
+        const gameState = entry?.gameState ?? null;
+        if (!gameState) return null;
+
+        if (gameState.inNexusLobby) return "Nexus";
+        if (gameState.isQuizOfTheDay) return "Quiz of The Day";
+        if (gameState.isJam) return "Jam";
+
+        if (roomInfo && roomInfo.isSpectator && gameState.isSpectator) {
+            if (gameState.inNexusLobby) return "Nexus";
+        }
+
+        return null;
+    };
+
     const getFriendProfileImageSrc = (avatarInfo) => {
         if (!avatarInfo) return "";
 
@@ -1174,9 +1189,10 @@
             if (isPlaying && roomInfo) {
                 const $roomIdTag = roomInfo.roomId ? $("<span>", { class: "amqFriendPlusRoomId" }).text(`#${roomInfo.roomId}`) : null;
                 const $room = $("<div>", { class: "amqFriendPlusRoomName" });
-                const label = roomInfo.isSpectator ? "Spectating in " : roomInfo.inLobby ? "In Lobby " : "Playing in ";
+                const roomModeName = getSpecialRoomModeName(entry, roomInfo);
+                const label = roomInfo.isSpectator ? "Spectating " : roomInfo.inLobby ? "In Lobby " : "Playing in ";
                 const $prefix = $("<span>", { class: "amqFriendPlusRoomLabel" }).text(label);
-                const roomDisplayName = roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room";
+                const roomDisplayName = roomModeName || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
                 const $roomName = $("<strong>", { class: "amqFriendPlusRoomValue" }).text(roomDisplayName);
                 $room.append($prefix, $roomName);
                 $meta.append($room);
@@ -1187,43 +1203,46 @@
                 }
 
                 if (!roomInfo.soloRoom) {
-                    const $joinBtn = $("<button>", {
-                        class: "amqFriendPlusButton join",
-                        text: "Join",
-                        disabled: !roomInfo.inLobby,
-                    });
-                    $joinBtn.on("click", () => {
-                        if (roomInfo.privateRoom) {
-                            Swal.fire({
-                                title: localizationHandler.translate("room_browser.room_tile.password.title"),
-                                input: "password",
-                                inputPlaceholder: localizationHandler.translate("room_browser.room_tile.password.placeholder"),
-                                showCancelButton: true,
-                                confirmButtonText: localizationHandler.translate("room_browser.room_tile.password.confirm_button"),
-                                inputAttributes: { maxlength: 50, minlength: 1 },
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    roomBrowser.fireJoinLobby(roomInfo.roomId, result.value);
-                                }
-                            });
-                        } else {
-                            roomBrowser.fireJoinLobby(roomInfo.roomId);
-                        }
-                    });
+                    if (!roomModeName) {
+                        const $joinBtn = $("<button>", {
+                            class: "amqFriendPlusButton join",
+                            text: "Join",
+                            disabled: !roomInfo.inLobby,
+                        });
+                        $joinBtn.on("click", () => {
+                            if (roomInfo.privateRoom) {
+                                Swal.fire({
+                                    title: localizationHandler.translate("room_browser.room_tile.password.title"),
+                                    input: "password",
+                                    inputPlaceholder: localizationHandler.translate("room_browser.room_tile.password.placeholder"),
+                                    showCancelButton: true,
+                                    confirmButtonText: localizationHandler.translate("room_browser.room_tile.password.confirm_button"),
+                                    inputAttributes: { maxlength: 50, minlength: 1 },
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        roomBrowser.fireJoinLobby(roomInfo.roomId, result.value);
+                                    }
+                                });
+                            } else {
+                                roomBrowser.fireJoinLobby(roomInfo.roomId);
+                            }
+                        });
 
-                    const $spectateBtn = $("<button>", {
-                        class: "amqFriendPlusButton spectate",
-                        text: "Spectate",
-                    });
-                    $spectateBtn.on("click", () => {
-                        if (roomInfo.privateRoom) {
-                            roomBrowser.spectateGameWithPassword(roomInfo.roomId);
-                        } else {
-                            roomBrowser.fireSpectateGame(roomInfo.roomId);
-                        }
-                    });
+                        const $spectateBtn = $("<button>", {
+                            class: "amqFriendPlusButton spectate",
+                            text: "Spectate",
+                        });
+                        $spectateBtn.on("click", () => {
+                            if (roomInfo.privateRoom) {
+                                roomBrowser.spectateGameWithPassword(roomInfo.roomId);
+                            } else {
+                                roomBrowser.fireSpectateGame(roomInfo.roomId);
+                            }
+                        });
 
-                    $actions.append($joinBtn, $spectateBtn);
+                        $actions.append($joinBtn, $spectateBtn);
+                    }
+
                     if ($roomIdTag) {
                         $actions.append($roomIdTag);
                     }
