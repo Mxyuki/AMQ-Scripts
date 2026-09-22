@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.0
+// @version      1.1
 // @description  Update the Friends List to provide more information and make friend interactions more accessible.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -146,6 +146,36 @@
             });
         }
 
+        const $allUserList = $("#allUserList");
+        if ($allUserList.length) {
+            const $searchWrap = $allUserList.find(".amqFriendPlusAllUsersSearchWrap");
+            if (!$searchWrap.length) {
+                const $newSearchWrap = $("<div>", { class: "amqFriendPlusAllUsersSearchWrap" });
+                const $searchInput = $("<input>", {
+                    type: "text",
+                    class: "amqFriendPlusAllUsersSearchInput",
+                    placeholder: "Search players...",
+                    value: allUsersSearch,
+                });
+                $searchInput.on("input", (event) => {
+                    allUsersSearch = $(event.currentTarget).val() || "";
+                    applyAllUsersSearchFilter();
+                });
+                $newSearchWrap.append($searchInput);
+                const $list = $allUserList.find("ul").first();
+                if ($list.length) {
+                    $list.before($newSearchWrap);
+                } else {
+                    $allUserList.prepend($newSearchWrap);
+                }
+            }
+
+            const $input = $allUserList.find(".amqFriendPlusAllUsersSearchInput");
+            if ($input.length) {
+                $input.val(allUsersSearch);
+            }
+        }
+
         setupSocialTabResizeHandle();
     };
 
@@ -255,6 +285,40 @@
                 box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
             }
             .amqFriendPlusSearchInput::placeholder {
+                color: rgba(196, 206, 235, 0.8);
+                text-transform: uppercase;
+            }
+            .amqFriendPlusAllUsersSearchWrap {
+                position: sticky;
+                top: 0;
+                z-index: 12;
+                padding: 0 0 8px 0;
+                background: rgba(0,0,0,0.18);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 8px;
+                overflow: hidden;
+                margin-bottom: 8px;
+            }
+            .amqFriendPlusAllUsersSearchInput {
+                width: 100%;
+                box-sizing: border-box;
+                border: none;
+                border-radius: 0;
+                background: rgba(255,255,255,0.03);
+                color: #dfe7ff;
+                padding: 8px 10px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                outline: none;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+            .amqFriendPlusAllUsersSearchInput:focus {
+                background: rgba(255,255,255,0.05);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+            .amqFriendPlusAllUsersSearchInput::placeholder {
                 color: rgba(196, 206, 235, 0.8);
                 text-transform: uppercase;
             }
@@ -1006,6 +1070,54 @@
         }
     };
 
+    let allUsersSearch = "";
+
+    const applyAllUsersSearchFilter = () => {
+        const $allUserList = $("#allUserList");
+        if (!$allUserList.length) return;
+
+        const searchText = (allUsersSearch || "").trim().toLowerCase();
+        $allUserList.find(".socialTabPlayerEntry").each(function () {
+            const $entry = $(this);
+            const name = ($entry.find("h4").first().text() || "").toLowerCase();
+            $entry.toggle(!searchText || name.includes(searchText));
+        });
+
+        const $searchInput = $allUserList.find(".amqFriendPlusAllUsersSearchInput");
+        if ($searchInput.length) {
+            $searchInput.val(allUsersSearch);
+        }
+    };
+
+    const patchAllPlayersListFiltering = () => {
+        if (typeof AllPlayersList === "undefined" || !AllPlayersList.prototype) return;
+
+        if (AllPlayersList.prototype.__amqFriendPlusPatchedForSearch) return;
+        AllPlayersList.prototype.__amqFriendPlusPatchedForSearch = true;
+
+        const originalInsertPlayer = AllPlayersList.prototype.insertPlayer;
+        if (typeof originalInsertPlayer === "function") {
+            AllPlayersList.prototype.insertPlayer = function (name) {
+                const $entry = originalInsertPlayer.call(this, name);
+                setTimeout(() => {
+                    applyAllUsersSearchFilter();
+                }, 0);
+                return $entry;
+            };
+        }
+
+        const originalLoadAllOnline = AllPlayersList.prototype.loadAllOnline;
+        if (typeof originalLoadAllOnline === "function") {
+            AllPlayersList.prototype.loadAllOnline = function () {
+                const result = originalLoadAllOnline.call(this);
+                setTimeout(() => {
+                    applyAllUsersSearchFilter();
+                }, 0);
+                return result;
+            };
+        }
+    };
+
     const renderFriendListSections = () => {
         if (typeof socialTab === "undefined") return;
         addFriendListStyles();
@@ -1013,6 +1125,9 @@
 
         const $friendList = $("#friendlist");
         if (!$friendList.length) return;
+
+        const previousScrollTop = $friendList.scrollTop();
+        const previousScrollMax = Math.max(0, ($friendList[0]?.scrollHeight || 0) - ($friendList[0]?.clientHeight || 0));
 
         let $searchWrap = $friendList.find(".amqFriendPlusSearchWrap");
         if (!$searchWrap.length) {
@@ -1272,6 +1387,13 @@
         });
 
         applyFriendSearchFilter();
+
+        const nextScrollMax = Math.max(0, ($friendList[0]?.scrollHeight || 0) - ($friendList[0]?.clientHeight || 0));
+        const nextScrollTop = Math.min(previousScrollTop, nextScrollMax || 0);
+        if (nextScrollMax > 0 || previousScrollMax > 0) {
+            $friendList.scrollTop(nextScrollTop);
+        }
+
         lastFriendRenderSignature = getFriendRenderSignature();
     };
 
@@ -1529,6 +1651,7 @@
     };
 
     new Listener("login complete", () => {
+        patchAllPlayersListFiltering();
         ensureSocialTabSize();
         refreshFriends();
         snapshotFriendProfiles();
@@ -1537,6 +1660,7 @@
             ensureSocialTabSize();
             refreshFriends();
             snapshotFriendProfiles();
+            applyAllUsersSearchFilter();
             scheduleFriendListRender(true);
             setTimeout(() => {
                 socket.sendCommand({
