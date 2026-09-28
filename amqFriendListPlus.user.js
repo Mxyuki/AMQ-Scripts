@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.2
+// @version      1.3
 // @description  Update the Friends List to provide more information and make friend interactions more accessible.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -21,13 +21,11 @@
         }
     }, 500);
 
-    // closeView without the "remove roombrowser listners" socket command
+    // Same as AMQ's closeView, minus the command that stops room browser updates.
     RoomBrowser.prototype.closeView = function () {
         this.$view.addClass("hidden");
         roomFilter.reset();
-        //Remove all listnters
         this._roomListner.unbindListener();
-        //Remove all tiles
         Object.values(this.activeRooms).forEach((room) => {
             room.delete();
         });
@@ -35,6 +33,48 @@
         this.nexusRoomBrowser.stopListening();
         this.updateNumberOfRoomsText();
     };
+
+    // Ranked hides which game a friend is in, so learn tiers from the rosters of ranked games we join or spectate.
+    const RANKED_ROSTERS_STORAGE_KEY = "amqFriendListPlus.rankedRosters";
+    const RANKED_ROSTER_MAX_AGE_MS = 90 * 60 * 1000;
+    let rankedGames = null;
+
+    const getRankedRosters = () => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(RANKED_ROSTERS_STORAGE_KEY) || "{}") || {};
+            return Object.fromEntries(Object.entries(parsed).filter(([, roster]) => {
+                const startedAt = Date.parse(roster?.startTime);
+                return Array.isArray(roster?.names) && Number.isFinite(startedAt) && Date.now() - startedAt < RANKED_ROSTER_MAX_AGE_MS;
+            }));
+        } catch (err) {
+            return {};
+        }
+    };
+
+    const setRankedRosters = (rosters) => {
+        try {
+            localStorage.setItem(RANKED_ROSTERS_STORAGE_KEY, JSON.stringify(rosters));
+        } catch (err) {
+        }
+    };
+
+    if (typeof Ranked !== "undefined" && typeof Ranked.prototype?.updateState === "function" && !Ranked.prototype.__amqFriendPlusPatched) {
+        Ranked.prototype.__amqFriendPlusPatched = true;
+        const originalUpdateState = Ranked.prototype.updateState;
+        Ranked.prototype.updateState = function (state, serieId, games) {
+            rankedGames = games ?? null;
+            const ids = this.RANKED_STATE_IDS ?? {};
+            const endedStates = [ids.OFFLINE, ids.FINISHED, ids.CHAMP_OFFLINE, ids.CHAMP_FINISHED, ids.BREAK_DAY, ids.THEMED_OFFLINE, ids.THEMED_FINISHED];
+            if (endedStates.includes(state)) {
+                setRankedRosters({});
+            }
+            const result = originalUpdateState.apply(this, arguments);
+            if (typeof socialTab !== "undefined") {
+                scheduleFriendListRender();
+            }
+            return result;
+        };
+    }
 
     const SOCIAL_TAB_SIZE_STORAGE_KEY = "amqFriendListPlus.socialTabSize";
 
@@ -64,7 +104,6 @@
         try {
             localStorage.setItem(SOCIAL_TAB_SIZE_STORAGE_KEY, JSON.stringify(size));
         } catch (err) {
-            // Ignore storage failures.
         }
     };
 
@@ -399,10 +438,6 @@
                 background-color: rgba(255,255,255,0.06);
             }
             .amqFriendPlusAlertModeSelect option {
-                /* Chrome renders the native option list with a solid, flattened version of the
-                   select's background instead of respecting its transparency, which can end up
-                   light instead of dark — so give options an explicit solid dark background here
-                   rather than relying on the translucent one above. */
                 background-color: #1b1f29;
                 color: #dfe7ff;
             }
@@ -847,7 +882,6 @@
         try {
             localStorage.setItem(FRIEND_ALERT_SETTINGS_STORAGE_KEY, JSON.stringify(next));
         } catch (err) {
-            // Ignore storage failures.
         }
     };
 
@@ -868,8 +902,6 @@
         return true;
     };
 
-    // "joined the game in X" / "left the room in X" read as if the room name were a place
-    // inside the room, so these two skip the "in" connector entirely.
     const FRIEND_ALERT_NO_PREPOSITION = new Set(["friendJoinRoom", "friendLeaveRoom"]);
 
     const triggerFriendAlert = (alertKey, friendName, roomName = "") => {
@@ -910,10 +942,7 @@
             }
         });
 
-        // Connect/disconnect are fired directly off the "friend state change" event instead of
-        // being inferred here (see that listener) — that event is AMQ's own authoritative
-        // offline<->online signal, whereas diffing this snapshot was prone to false positives
-        // for friends who were already online/playing (e.g. right after login).
+        // Connect/disconnect alerts are fired from the "friend state change" listener instead.
         if (friendAlertBaselineReady) {
             const previousEntries = new Map(friendAlertStateSnapshot.entries());
 
@@ -1056,7 +1085,11 @@
             if (!friendName || !fallbackGameState) return null;
         }
 
-        const match = rooms.find((room) => {
+        // Prefer the friend's own gameId; room membership lists can be stale.
+        const gameId = fallbackGameState?.gameId ?? null;
+        const match = gameId != null
+            ? (rooms.find((room) => room && String(room.roomId) === String(gameId)) ?? findRoomFromRoomIdOrBrowser(gameId))
+            : rooms.find((room) => {
             if (!room) return false;
             if (room.host === friendName) return true;
             if ((room.players ?? []).map((name) => String(name).trim().toLowerCase()).includes(String(friendName).trim().toLowerCase())) return true;
@@ -1068,14 +1101,17 @@
         if (match) {
             return {
                 roomId: match.roomId,
-                // Leave this empty rather than defaulting here: getFriendPlayingState falls back
-                // to the friend's own gameState.roomName next, and a truthy placeholder here would
-                // block that fallback from ever being used.
                 roomName: match.roomName || "",
                 inLobby: !!match.inLobby,
                 privateRoom: !!match.privateRoom,
                 soloRoom: !!match.soloRoom,
-                isSpectator: !!((match.spectators ?? []).some((name) => String(name).trim().toLowerCase() === String(friendName).trim().toLowerCase())),
+                isSpectator: (() => {
+                    const target = String(friendName).trim().toLowerCase();
+                    const inList = (list) => (list ?? []).some((name) => String(name).trim().toLowerCase() === target);
+                    if (inList(match.spectators)) return true;
+                    if (inList(match.players)) return false;
+                    return !!fallbackGameState?.isSpectator;
+                })(),
             };
         }
 
@@ -1128,7 +1164,7 @@
 
         if (gameState) {
             const soloRoom = !!gameState.soloGame || !!roomInfo?.soloRoom || (gameState.roomName === "Solo");
-            const roomName = roomInfo?.roomName || gameState.roomName || "Unknown room";
+            const roomName = roomInfo?.roomName || gameState.roomName || getSpecialRoomModeName(entry, roomInfo) || "Unknown room";
             const isSpectator = roomInfo ? !!roomInfo.isSpectator : !!gameState.isSpectator;
             const isInLobby = roomInfo ? (!!roomInfo.inLobby && !isSpectator) : (!!gameState.inLobby && !isSpectator);
 
@@ -1145,12 +1181,65 @@
         return roomInfo ? { ...roomInfo, soloRoom: !!roomInfo.soloRoom } : null;
     };
 
+    const getRankedTierFromName = (name) => {
+        if (/novice/i.test(String(name || ""))) return "Novice";
+        if (/expert/i.test(String(name || ""))) return "Expert";
+        return null;
+    };
+
+    // Remember everyone in a ranked game we just joined or spectated, under that game's tier.
+    const recordRankedRoster = (data) => {
+        const settings = data?.settings ?? {};
+        if (data?.error || settings.gameMode !== "Ranked") return;
+
+        const tier = getRankedTierFromName(settings.roomName ?? data.quizDescription?.roomName);
+        if (!tier) return;
+
+        const quizId = data.quizDescription?.quizId ?? null;
+        const names = [...(data.quizState?.players ?? data.players ?? []), ...(data.spectators ?? [])]
+            .map((member) => normalizeRoomMemberName(member?.name ?? member))
+            .filter(Boolean);
+
+        const rosters = getRankedRosters();
+        const previous = rosters[tier];
+        const merged = previous && previous.quizId === quizId ? new Set([...previous.names, ...names]) : new Set(names);
+        rosters[tier] = {
+            quizId,
+            startTime: data.quizDescription?.startTime ?? new Date().toISOString(),
+            names: [...merged],
+        };
+        setRankedRosters(rosters);
+        scheduleFriendListRender(true);
+    };
+
+    // A friend's ranked tier, from the recorded rosters.
+    const getRankedType = (entry) => {
+        const gameState = entry?.gameState ?? null;
+        if (!gameState?.isQuizOfTheDay) return null;
+
+        const name = normalizeRoomMemberName(entry.name);
+        const rosters = getRankedRosters();
+        const knownTiers = Object.keys(rosters);
+        const tierWithFriend = knownTiers.find((tier) => rosters[tier].names.includes(name));
+        if (tierWithFriend) return tierWithFriend;
+
+        // Only one tier known: a friend playing ranked who isn't in it is in the other tier.
+        if (knownTiers.length === 1 && rankedGames?.novice && rankedGames?.expert && !gameState.isSpectator) {
+            return knownTiers[0] === "Novice" ? "Expert" : "Novice";
+        }
+
+        return null;
+    };
+
     const getSpecialRoomModeName = (entry, roomInfo = null) => {
         const gameState = entry?.gameState ?? null;
         if (!gameState) return null;
 
         if (gameState.inNexusLobby) return "Nexus";
-        if (gameState.isQuizOfTheDay) return "Quiz of The Day";
+        if (gameState.isQuizOfTheDay) {
+            const rankedType = getRankedType(entry);
+            return rankedType ? `Ranked ${rankedType}` : "Ranked";
+        }
         if (gameState.isJam) return "Jam";
 
         if (roomInfo && roomInfo.isSpectator && gameState.isSpectator) {
@@ -1380,7 +1469,6 @@
                     if (value) return value.trim();
                 }
             } catch (err) {
-                // Ignore cross-origin or protected stylesheets.
             }
         }
         return "";
@@ -1660,6 +1748,9 @@
             const label = roomInfo.isSpectator ? "Spectating " : roomInfo.inLobby ? "In Lobby " : "Playing in ";
             const $prefix = $("<span>", { class: "amqFriendPlusRoomLabel" }).text(label);
             const roomDisplayName = roomModeName || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
+            if (!roomModeName && !roomInfo.soloRoom && (!roomInfo.roomName || roomInfo.roomName === "Unknown room")) {
+                requestRoomRefresh(roomInfo.roomId);
+            }
             const $roomName = $("<strong>", { class: "amqFriendPlusRoomValue" }).text(roomDisplayName);
             $room.append($prefix, $roomName);
             $meta.append($room);
@@ -1708,6 +1799,26 @@
                     });
 
                     $actions.append($joinBtn, $spectateBtn);
+                } else if (entry.gameState?.isQuizOfTheDay || entry.gameState?.isJam) {
+                    const isJam = !!entry.gameState.isJam;
+                    const gameId = entry.gameState.gameId ?? roomInfo.roomId ?? null;
+
+                    // Ranked hides the gameId from friends, so there's nothing to spectate by.
+                    if (gameId != null || isJam) {
+                        const $spectateBtn = $("<button>", {
+                            class: "amqFriendPlusButton spectate",
+                            text: "Spectate",
+                            title: isJam ? `Spectate ${entry.name}'s Jam game` : `Spectate ${roomDisplayName}`,
+                        });
+                        $spectateBtn.on("click", () => {
+                            if (gameId != null) {
+                                roomBrowser.fireSpectateGame(gameId);
+                            } else {
+                                roomBrowser.fireJoinJamGame();
+                            }
+                        });
+                        $actions.append($spectateBtn);
+                    }
                 }
 
                 if ($roomIdTag) {
@@ -1764,9 +1875,7 @@
         }
     };
 
-    // Updates a single friend's row in place instead of rebuilding the whole list, so unrelated
-    // friends don't flicker on every state change. Pass previousName when a friend was just renamed,
-    // since the existing row is still keyed by their old name.
+    // Re-render a single friend's row in place (previousName: the row's name before a rename).
     const updateFriendRow = (friendName, previousName = friendName) => {
         if (!friendName) return;
 
@@ -1790,7 +1899,6 @@
         }).first();
 
         if (!targetSection.length) {
-            // Sections haven't been built yet (e.g. first render still pending); fall back once.
             scheduleFriendListRender(true);
             return;
         }
@@ -1920,6 +2028,32 @@
     let friendRenderTimer = null;
     let lastFriendRenderSignature = "";
     const pendingRoomMemberLeaves = new Map();
+    const requestedRoomRefreshIds = new Set();
+    let roomRefreshTimer = null;
+
+    // Re-request the room list for a room we don't know yet, once per room, debounced.
+    const requestRoomRefresh = (roomId) => {
+        if (roomId == null || requestedRoomRefreshIds.has(String(roomId))) return;
+        requestedRoomRefreshIds.add(String(roomId));
+        if (roomRefreshTimer) return;
+
+        roomRefreshTimer = setTimeout(() => {
+            roomRefreshTimer = null;
+            // The open room browser already keeps the room list up to date.
+            if (roomBrowser?.$view && !roomBrowser.$view.hasClass("hidden")) return;
+            socket.sendCommand({
+                type: "roombrowser",
+                command: "get rooms",
+            });
+        }, 1500);
+    };
+
+    const getFriendNamesInGame = (roomId) => {
+        if (roomId == null) return [];
+        return getFriendEntries()
+            .filter((entry) => entry?.gameState?.gameId != null && String(entry.gameState.gameId) === String(roomId))
+            .map((entry) => entry.name);
+    };
 
     const markPendingRoomLeave = (roomId, name) => {
         if (!roomId || !name) return;
@@ -1950,6 +2084,7 @@
                 privateRoom: playingState?.privateRoom ?? false,
                 soloRoom: playingState?.soloRoom ?? false,
                 isSpectator: playingState?.isSpectator ?? false,
+                mode: getSpecialRoomModeName(entry, roomInfo) ?? "",
                 color: entry?.currentNameColorClass ?? "",
                 glow: entry?.currentNameGlowClass ?? "",
                 favorite: isFavoriteFriend(entry?.name),
@@ -2028,7 +2163,6 @@
         });
     };
 
-    // name is optional: covers a friend who just left (no longer in the lists)
     const hasFriend = (room, name) => {
         refreshFriends();
 
@@ -2036,6 +2170,7 @@
         if (selfName && (room.host === selfName || (room.players ?? []).includes(selfName) || (room.spectators ?? []).includes(selfName))) return true;
         if (room.host && friends.has(room.host)) return true;
         if (Array.isArray(room.friendNames) && room.friendNames.some((n) => friends.has(n))) return true;
+        if (getFriendNamesInGame(room.roomId).length) return true;
 
         return (
             (room.players ?? []).some((n) => friends.has(n)) ||
@@ -2065,7 +2200,6 @@
         return hasFriend(room);
     };
 
-    // Name in list: remove it (returns false). Name not in list: add it (returns true).
     const toggle = (list, name) => {
         const i = list.indexOf(name);
         if (i === -1) {
@@ -2078,12 +2212,9 @@
 
     const normalizeRoomMemberName = (name) => String(name ?? "").trim().toLowerCase();
 
-    // room.friendNames isn't reliably populated for every room (notably rooms the current
-    // user hosts themselves), so derive the friends actually in a room from its real
-    // membership (host/players/spectators) instead of trusting that field alone.
     const updateFriendRowsForRoom = (room) => {
         if (!room) return;
-        const names = new Set([room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? [])]);
+        const names = new Set([room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? []), ...getFriendNamesInGame(room.roomId)]);
         names.forEach((name) => {
             if (name && friends.has(name)) {
                 updateFriendRow(name);
@@ -2181,9 +2312,6 @@
         updateFriendAlertStateSnapshot();
     };
 
-    // By the time #loadingScreen loses its "hidden" class, AMQ's own "login complete" handler
-    // has already run socialTab.setup() synchronously with the full friend roster (see
-    // setup.js), so there's nothing left to race against here — no delay or retry needed.
     const setup = () => {
         patchAllPlayersListFiltering();
         ensureSocialTabSize();
@@ -2191,8 +2319,6 @@
         snapshotFriendProfiles();
         applyAllUsersSearchFilter();
         scheduleFriendListRender(true);
-        // AMQ's own room browser sends this the same way (see roomBrowser.js openView) with no
-        // wait, and the response is handled whenever it lands by the "New Rooms" listener.
         socket.sendCommand({
             type: "roombrowser",
             command: "get rooms",
@@ -2235,14 +2361,8 @@
             refreshFriends();
             snapshotFriendProfiles();
             if (name) {
-                // This event only ever fires for a real offline<->online transition (the initial
-                // roster is populated separately, synchronously, before this listener can even
-                // run), so it's safe to fire the alert straight from it rather than inferring it.
                 if (friend.online) {
-                    // A friend who's already flagged as playing when this fires didn't
-                    // meaningfully "connect" from the list's point of view — room membership
-                    // persists through brief connection hiccups, so they were showing up under
-                    // Playing Friends the whole time. Only alert for a real online-and-idle arrival.
+                    // Friends already in a game didn't really go offline from the list's point of view.
                     const matchingEntry = getFriendEntries().find((entry) => entry && entry.name === name);
                     if (!getFriendPlayingState(matchingEntry)) {
                         triggerFriendAlert("friendConnect", name);
@@ -2351,6 +2471,10 @@
         updateFriendAlertStateSnapshot();
     }).bindListener();
 
+    // Both carry the full player and spectator lists of the game we just entered.
+    new Listener("Spectate Game", recordRankedRoster).bindListener();
+    new Listener("Join Game", recordRankedRoster).bindListener();
+
     new Listener("Player Changed To Spectator", (payload) => {
         const data = payload?.data ?? payload;
         const name = data?.spectatorDescription?.name ?? data?.playerDescription?.name ?? data?.name;
@@ -2386,8 +2510,7 @@
         updateFriendAlertStateSnapshot();
     }).bindListener();
 
-    // Full list on first call, then new rooms one by one.
-    // The first batch is the authoritative room snapshot, even when no current friend is in a room yet.
+    // Full room list on first call, then new rooms one by one.
     new Listener("New Rooms", (data) => {
         const incoming = (data.standard ?? []).map(parseRoom);
         if (!incoming.length) return;
@@ -2396,6 +2519,10 @@
         const relevantIncoming = incoming.filter(isRelevantRoomUpdate);
         const relevantExistingMatches = rooms.filter((existing) => incoming.some((room) => room.roomId === existing.roomId) && isRelevantRoomUpdate(existing));
 
+        // Keep every room so friends who join one later still get its name.
+        const ids = new Set(incoming.map((r) => r.roomId));
+        rooms = rooms.filter((r) => !ids.has(r.roomId)).concat(incoming);
+
         if (!isInitialRoomSnapshot && !relevantIncoming.length && !relevantExistingMatches.length) {
             return;
         }
@@ -2403,28 +2530,19 @@
         ensureSocialTabSize();
         refreshFriends();
         snapshotFriendProfiles();
-        const ids = new Set(incoming.map((r) => r.roomId));
-        rooms = rooms.filter((r) => !ids.has(r.roomId)).concat(incoming);
         restoreFriendProfiles();
 
         if (isInitialRoomSnapshot) {
-            // The "get rooms" request is sent right after login with no artificial delay, so on a
-            // single ordered socket connection any "new friend"/"friend social status change"
-            // pushes the server had already queued are guaranteed to arrive before this response.
-            // That makes this batch a reliable point to start alert diffing — before it, friends
-            // whose data simply hadn't arrived yet would look like fresh connects instead of
-            // already-online friends.
+            // First batch: the friend roster is loaded, so alert diffing can start.
             friendAlertBaselineReady = true;
-            // First batch builds the list from scratch, so a full render is unavoidable here.
             scheduleFriendListRender(true);
             return;
         }
 
-        // Later batches only ever touch a handful of rooms, so just update the friends they involve.
         const affectedFriendNames = new Set();
         [...relevantIncoming, ...relevantExistingMatches].forEach((room) => {
             if (!room) return;
-            [room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? [])].forEach((name) => {
+            [room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? []), ...getFriendNamesInGame(room.roomId)].forEach((name) => {
                 if (name && friends.has(name)) {
                     affectedFriendNames.add(name);
                 }
@@ -2438,6 +2556,12 @@
     new Listener("Room Change", (data) => {
         if (!data || !data.roomId) return;
         if (data.changeType === "songsLeft") return;
+
+        if (data.changeType === "Room Closed") {
+            rooms = rooms.filter((r) => r && r.roomId !== data.roomId);
+            requestedRoomRefreshIds.delete(String(data.roomId));
+            return;
+        }
 
         const room = findRoomFromRoomIdOrBrowser(data.roomId) ?? rooms.find((r) => r && r.roomId === data.roomId);
         if (!room || !isRelevantRoomUpdate(room)) return;
@@ -2507,10 +2631,6 @@
                 }
                 updateFriendRowsForRoom(room);
                 updateFriendAlertStateSnapshot();
-                break;
-            }
-            case "Room Closed": {
-                rooms = rooms.filter((r) => r && r.roomId !== data.roomId);
                 break;
             }
         }
