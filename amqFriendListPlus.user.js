@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3
+// @version      1.3.1
 // @description  Update the Friends List to provide more information and make friend interactions more accessible.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -34,40 +34,11 @@
         this.updateNumberOfRoomsText();
     };
 
-    // Ranked hides which game a friend is in, so learn tiers from the rosters of ranked games we join or spectate.
-    const RANKED_ROSTERS_STORAGE_KEY = "amqFriendListPlus.rankedRosters";
-    const RANKED_ROSTER_MAX_AGE_MS = 90 * 60 * 1000;
-    let rankedGames = null;
-
-    const getRankedRosters = () => {
-        try {
-            const parsed = JSON.parse(localStorage.getItem(RANKED_ROSTERS_STORAGE_KEY) || "{}") || {};
-            return Object.fromEntries(Object.entries(parsed).filter(([, roster]) => {
-                const startedAt = Date.parse(roster?.startTime);
-                return Array.isArray(roster?.names) && Number.isFinite(startedAt) && Date.now() - startedAt < RANKED_ROSTER_MAX_AGE_MS;
-            }));
-        } catch (err) {
-            return {};
-        }
-    };
-
-    const setRankedRosters = (rosters) => {
-        try {
-            localStorage.setItem(RANKED_ROSTERS_STORAGE_KEY, JSON.stringify(rosters));
-        } catch (err) {
-        }
-    };
-
+    // Re-render when the daily quiz changes state, since that decides whether it shows as Ranked or Themed.
     if (typeof Ranked !== "undefined" && typeof Ranked.prototype?.updateState === "function" && !Ranked.prototype.__amqFriendPlusPatched) {
         Ranked.prototype.__amqFriendPlusPatched = true;
         const originalUpdateState = Ranked.prototype.updateState;
-        Ranked.prototype.updateState = function (state, serieId, games) {
-            rankedGames = games ?? null;
-            const ids = this.RANKED_STATE_IDS ?? {};
-            const endedStates = [ids.OFFLINE, ids.FINISHED, ids.CHAMP_OFFLINE, ids.CHAMP_FINISHED, ids.BREAK_DAY, ids.THEMED_OFFLINE, ids.THEMED_FINISHED];
-            if (endedStates.includes(state)) {
-                setRankedRosters({});
-            }
+        Ranked.prototype.updateState = function () {
             const result = originalUpdateState.apply(this, arguments);
             if (typeof socialTab !== "undefined") {
                 scheduleFriendListRender();
@@ -1080,172 +1051,40 @@
         });
     };
 
-    const getFriendRoomInfo = (friendName, fallbackGameState = null) => {
-        if (!friendName || !Array.isArray(rooms)) {
-            if (!friendName || !fallbackGameState) return null;
-        }
+    // Everything about where a friend is comes from the gameState the server sends with their status.
+    // The room list is only used to put a name on the gameId, since gameState doesn't carry one.
+    const getFriendPlayingState = (entry) => {
+        const gameState = entry?.gameState;
+        if (!gameState) return null;
 
-        // Prefer the friend's own gameId; room membership lists can be stale.
-        const gameId = fallbackGameState?.gameId ?? null;
-        const match = gameId != null
-            ? (rooms.find((room) => room && String(room.roomId) === String(gameId)) ?? findRoomFromRoomIdOrBrowser(gameId))
-            : rooms.find((room) => {
-            if (!room) return false;
-            if (room.host === friendName) return true;
-            if ((room.players ?? []).map((name) => String(name).trim().toLowerCase()).includes(String(friendName).trim().toLowerCase())) return true;
-            if ((room.spectators ?? []).map((name) => String(name).trim().toLowerCase()).includes(String(friendName).trim().toLowerCase())) return true;
-            if ((room.friendNames ?? []).map((name) => String(name).trim().toLowerCase()).includes(String(friendName).trim().toLowerCase())) return true;
-            return false;
-        });
-
-        if (match) {
-            return {
-                roomId: match.roomId,
-                roomName: match.roomName || "",
-                inLobby: !!match.inLobby,
-                privateRoom: !!match.privateRoom,
-                soloRoom: !!match.soloRoom,
-                isSpectator: (() => {
-                    const target = String(friendName).trim().toLowerCase();
-                    const inList = (list) => (list ?? []).some((name) => String(name).trim().toLowerCase() === target);
-                    if (inList(match.spectators)) return true;
-                    if (inList(match.players)) return false;
-                    return !!fallbackGameState?.isSpectator;
-                })(),
-            };
-        }
-
-        if (!fallbackGameState) return null;
-
-        const roomName = fallbackGameState.roomName || fallbackGameState.room?.roomName || "";
-        const roomId = fallbackGameState.roomId ?? fallbackGameState.gameId ?? null;
+        const roomId = gameState.gameId ?? null;
+        const soloRoom = !!gameState.soloGame;
+        const isSpectator = !!gameState.isSpectator;
 
         return {
             roomId,
-            roomName,
-            inLobby: !!fallbackGameState.inLobby,
-            privateRoom: !!fallbackGameState.private,
-            soloRoom: !!fallbackGameState.soloGame,
-            isSpectator: !!fallbackGameState.isSpectator,
+            roomName: soloRoom ? "Solo" : roomNamesById.get(String(roomId)) || getSpecialRoomModeName(entry) || "Unknown room",
+            inLobby: !!gameState.inLobby,
+            privateRoom: !!gameState.private,
+            soloRoom,
+            isSpectator,
         };
     };
 
-    const findRoomFromRoomIdOrBrowser = (roomId) => {
-        if (!roomId) return null;
-
-        const fromRooms = rooms.find((room) => room && room.roomId === roomId);
-        if (fromRooms) return fromRooms;
-
-        const browserRoom = roomBrowser?.activeRooms?.[roomId] ?? Object.values(roomBrowser?.activeRooms ?? {}).find((room) => room?.id === roomId);
-        if (!browserRoom) return null;
-
-        const browserSettings = browserRoom.settings ?? {};
-        const fallbackRoom = {
-            roomId: browserRoom.id ?? roomId,
-            host: browserRoom.host ?? selfName ?? null,
-            roomName: browserSettings.roomName || "",
-            players: (browserRoom.allPlayers?.players ?? []).map((player) => player.name ?? player),
-            spectators: (browserRoom.allPlayers?.spectators ?? []).map((player) => player.name ?? player),
-            friendNames: Array.isArray(browserRoom._friendNames) ? browserRoom._friendNames.slice() : [],
-            inLobby: !!browserRoom._inLobby,
-            privateRoom: !!browserRoom._private,
-            soloRoom: !!browserSettings.soloMode || browserSettings.gameMode === "Solo" || (typeof browserSettings.roomName === "string" && browserSettings.roomName.toLowerCase() === "solo"),
-        };
-
-        rooms = rooms.filter((room) => room && room.roomId !== roomId).concat(fallbackRoom);
-        return fallbackRoom;
+    // The daily quiz is either Ranked or Themed depending on the day; friends only tell us it's the daily quiz.
+    const isThemedQuizDay = () => {
+        if (typeof ranked === "undefined" || !ranked?.RANKED_STATE_IDS) return false;
+        const ids = ranked.RANKED_STATE_IDS;
+        return [ids.THEMED_OFFLINE, ids.THEMED_LOBBY, ids.THEMED_RUNNING, ids.THEMED_FINISHED].includes(ranked.currentState);
     };
 
-    const getFriendPlayingState = (entry) => {
-        if (!entry || !entry.name) return null;
-
-        const gameState = entry.gameState ?? null;
-        const roomInfo = getFriendRoomInfo(entry.name, gameState);
-
-        if (gameState) {
-            const soloRoom = !!gameState.soloGame || !!roomInfo?.soloRoom || (gameState.roomName === "Solo");
-            const roomName = roomInfo?.roomName || gameState.roomName || getSpecialRoomModeName(entry, roomInfo) || "Unknown room";
-            const isSpectator = roomInfo ? !!roomInfo.isSpectator : !!gameState.isSpectator;
-            const isInLobby = roomInfo ? (!!roomInfo.inLobby && !isSpectator) : (!!gameState.inLobby && !isSpectator);
-
-            return {
-                roomId: roomInfo?.roomId ?? gameState.gameId ?? null,
-                roomName: soloRoom ? "Solo" : roomName,
-                inLobby: isInLobby,
-                privateRoom: roomInfo?.privateRoom ?? !!gameState.private,
-                soloRoom,
-                isSpectator,
-            };
-        }
-
-        return roomInfo ? { ...roomInfo, soloRoom: !!roomInfo.soloRoom } : null;
-    };
-
-    const getRankedTierFromName = (name) => {
-        if (/novice/i.test(String(name || ""))) return "Novice";
-        if (/expert/i.test(String(name || ""))) return "Expert";
-        return null;
-    };
-
-    // Remember everyone in a ranked game we just joined or spectated, under that game's tier.
-    const recordRankedRoster = (data) => {
-        const settings = data?.settings ?? {};
-        if (data?.error || settings.gameMode !== "Ranked") return;
-
-        const tier = getRankedTierFromName(settings.roomName ?? data.quizDescription?.roomName);
-        if (!tier) return;
-
-        const quizId = data.quizDescription?.quizId ?? null;
-        const names = [...(data.quizState?.players ?? data.players ?? []), ...(data.spectators ?? [])]
-            .map((member) => normalizeRoomMemberName(member?.name ?? member))
-            .filter(Boolean);
-
-        const rosters = getRankedRosters();
-        const previous = rosters[tier];
-        const merged = previous && previous.quizId === quizId ? new Set([...previous.names, ...names]) : new Set(names);
-        rosters[tier] = {
-            quizId,
-            startTime: data.quizDescription?.startTime ?? new Date().toISOString(),
-            names: [...merged],
-        };
-        setRankedRosters(rosters);
-        scheduleFriendListRender(true);
-    };
-
-    // A friend's ranked tier, from the recorded rosters.
-    const getRankedType = (entry) => {
-        const gameState = entry?.gameState ?? null;
-        if (!gameState?.isQuizOfTheDay) return null;
-
-        const name = normalizeRoomMemberName(entry.name);
-        const rosters = getRankedRosters();
-        const knownTiers = Object.keys(rosters);
-        const tierWithFriend = knownTiers.find((tier) => rosters[tier].names.includes(name));
-        if (tierWithFriend) return tierWithFriend;
-
-        // Only one tier known: a friend playing ranked who isn't in it is in the other tier.
-        if (knownTiers.length === 1 && rankedGames?.novice && rankedGames?.expert && !gameState.isSpectator) {
-            return knownTiers[0] === "Novice" ? "Expert" : "Novice";
-        }
-
-        return null;
-    };
-
-    const getSpecialRoomModeName = (entry, roomInfo = null) => {
-        const gameState = entry?.gameState ?? null;
+    const getSpecialRoomModeName = (entry) => {
+        const gameState = entry?.gameState;
         if (!gameState) return null;
 
         if (gameState.inNexusLobby) return "Nexus";
-        if (gameState.isQuizOfTheDay) {
-            const rankedType = getRankedType(entry);
-            return rankedType ? `Ranked ${rankedType}` : "Ranked";
-        }
+        if (gameState.isQuizOfTheDay) return isThemedQuizDay() ? "Themed" : "Ranked";
         if (gameState.isJam) return "Jam";
-
-        if (roomInfo && roomInfo.isSpectator && gameState.isSpectator) {
-            if (gameState.inNexusLobby) return "Nexus";
-        }
-
         return null;
     };
 
@@ -1744,8 +1583,9 @@
         if (isPlaying && roomInfo) {
             const $roomIdTag = roomInfo.roomId ? $("<span>", { class: "amqFriendPlusRoomId" }).text(`#${roomInfo.roomId}`) : null;
             const $room = $("<div>", { class: "amqFriendPlusRoomName" });
-            const roomModeName = getSpecialRoomModeName(entry, roomInfo);
-            const label = roomInfo.isSpectator ? "Spectating " : roomInfo.inLobby ? "In Lobby " : "Playing in ";
+            const roomModeName = getSpecialRoomModeName(entry);
+            // In a lobby, player/spectator switches don't send a status update, so don't show which one.
+            const label = roomInfo.inLobby ? "In Lobby " : roomInfo.isSpectator ? "Spectating " : "Playing in ";
             const $prefix = $("<span>", { class: "amqFriendPlusRoomLabel" }).text(label);
             const roomDisplayName = roomModeName || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
             if (!roomModeName && !roomInfo.soloRoom && (!roomInfo.roomName || roomInfo.roomName === "Unknown room")) {
@@ -1801,7 +1641,7 @@
                     $actions.append($joinBtn, $spectateBtn);
                 } else if (entry.gameState?.isQuizOfTheDay || entry.gameState?.isJam) {
                     const isJam = !!entry.gameState.isJam;
-                    const gameId = entry.gameState.gameId ?? roomInfo.roomId ?? null;
+                    const gameId = roomInfo.roomId;
 
                     // Ranked hides the gameId from friends, so there's nothing to spectate by.
                     if (gameId != null || isJam) {
@@ -1995,15 +1835,10 @@
             const $row = renderFriendRow(entry, $friendList);
             if (!$row) return;
 
-            const roomInfo = getFriendPlayingState(entry);
-            const inOnlineMap = !!(socialTab?.onlineFriends && socialTab.onlineFriends[entry.name]);
-            const inOfflineMap = !!(socialTab?.offlineFriends && socialTab.offlineFriends[entry.name]);
-            const isOffline = inOfflineMap || (!inOnlineMap && (entry.offline === true || Number(entry.status ?? 1) === 0));
-            const isPlaying = !isOffline && !!roomInfo;
-
-            if (isPlaying) {
+            const sectionId = getFriendRowSectionId(entry);
+            if (sectionId === "playingFriends") {
                 playingSection.append($row);
-            } else if (isOffline) {
+            } else if (sectionId === "offlineFriends") {
                 offlineSection.append($row);
             } else {
                 onlineSection.append($row);
@@ -2021,13 +1856,11 @@
         lastFriendRenderSignature = getFriendRenderSignature();
     };
 
-    let rooms = [];
-    let friends = new Set();
-    let friendProfileSnapshot = [];
+    // Room names by gameId, from the room browser feed.
+    const roomNamesById = new Map();
     let friendListSearch = "";
     let friendRenderTimer = null;
     let lastFriendRenderSignature = "";
-    const pendingRoomMemberLeaves = new Map();
     const requestedRoomRefreshIds = new Set();
     let roomRefreshTimer = null;
 
@@ -2055,41 +1888,16 @@
             .map((entry) => entry.name);
     };
 
-    const markPendingRoomLeave = (roomId, name) => {
-        if (!roomId || !name) return;
-        pendingRoomMemberLeaves.set(`${roomId}:${normalizeRoomMemberName(name)}`, Date.now());
-    };
-
-    const consumePendingRoomLeave = (roomId, name) => {
-        if (!roomId || !name) return false;
-        const key = `${roomId}:${normalizeRoomMemberName(name)}`;
-        const existed = pendingRoomMemberLeaves.has(key);
-        pendingRoomMemberLeaves.delete(key);
-        return existed;
-    };
-
     const getFriendRenderSignature = () => {
-        const entries = getFriendEntries();
-        return JSON.stringify(entries.map((entry) => {
-            const roomInfo = getFriendRoomInfo(entry?.name, entry?.gameState);
-            const playingState = getFriendPlayingState(entry);
-
-            return {
-                name: entry?.name ?? "",
-                status: Number(entry?.status ?? 0),
-                offline: !!entry?.offline,
-                roomId: playingState?.roomId ?? roomInfo?.roomId ?? null,
-                roomName: playingState?.roomName ?? roomInfo?.roomName ?? "",
-                inLobby: playingState?.inLobby ?? false,
-                privateRoom: playingState?.privateRoom ?? false,
-                soloRoom: playingState?.soloRoom ?? false,
-                isSpectator: playingState?.isSpectator ?? false,
-                mode: getSpecialRoomModeName(entry, roomInfo) ?? "",
-                color: entry?.currentNameColorClass ?? "",
-                glow: entry?.currentNameGlowClass ?? "",
-                favorite: isFavoriteFriend(entry?.name),
-            };
-        }));
+        return JSON.stringify(getFriendEntries().map((entry) => ({
+            name: entry?.name ?? "",
+            status: Number(entry?.status ?? 0),
+            offline: !!entry?.offline,
+            playing: getFriendPlayingState(entry),
+            color: entry?.currentNameColorClass ?? "",
+            glow: entry?.currentNameGlowClass ?? "",
+            favorite: isFavoriteFriend(entry?.name),
+        })));
     };
 
     const scheduleFriendListRender = (force = false) => {
@@ -2107,216 +1915,9 @@
         }, 0);
     };
 
-    const refreshFriends = () => {
-        if (typeof socialTab === "undefined") return;
-        friends = new Set([
-            ...Object.keys(socialTab.onlineFriends),
-            ...Object.keys(socialTab.offlineFriends),
-        ]);
-    };
-
-    const snapshotFriendProfiles = () => {
-        if (typeof socialTab === "undefined") return [];
-
-        const allEntries = [
-            ...Object.values(socialTab.onlineFriends ?? {}),
-            ...Object.values(socialTab.offlineFriends ?? {}),
-        ];
-
-        friendProfileSnapshot = allEntries
-            .map((entry) => {
-                if (!entry || !entry.name) return null;
-
-                const avatarInfo = entry.avatarInfo ? { ...entry.avatarInfo } : null;
-                const saved = {
-                    name: entry.name,
-                    nameColor: entry.currentNameColorClass || null,
-                    nameGlow: entry.currentNameGlowClass || null,
-                    avatarInfo,
-                };
-
-                return avatarInfo || saved.nameColor || saved.nameGlow ? saved : null;
-            })
-            .filter(Boolean);
-
-        return friendProfileSnapshot;
-    };
-
-    const restoreFriendProfiles = () => {
-        if (typeof socialTab === "undefined" || !friendProfileSnapshot.length) return;
-
-        const savedMap = new Map(friendProfileSnapshot.map((friend) => [friend.name, friend]));
-        const entries = [
-            ...Object.values(socialTab.onlineFriends ?? {}),
-            ...Object.values(socialTab.offlineFriends ?? {}),
-        ];
-
-        entries.forEach((entry) => {
-            const saved = savedMap.get(entry.name);
-            if (!saved) return;
-
-            if (saved.avatarInfo) {
-                entry.updateAvatar(saved.avatarInfo);
-            }
-
-            entry.updateNameOptions(saved.nameColor, saved.nameGlow);
-        });
-    };
-
-    const hasFriend = (room, name) => {
-        refreshFriends();
-
-        if (name && friends.has(name)) return true;
-        if (selfName && (room.host === selfName || (room.players ?? []).includes(selfName) || (room.spectators ?? []).includes(selfName))) return true;
-        if (room.host && friends.has(room.host)) return true;
-        if (Array.isArray(room.friendNames) && room.friendNames.some((n) => friends.has(n))) return true;
-        if (getFriendNamesInGame(room.roomId).length) return true;
-
-        return (
-            (room.players ?? []).some((n) => friends.has(n)) ||
-            (room.spectators ?? []).some((n) => friends.has(n))
-        );
-    };
-
-    const parseRoom = (r) => ({
-        roomId: r.id,
-        host: r.host,
-        roomName: r.settings?.roomName,
-        players: (r.allPlayers?.players ?? []).map((p) => p.name),
-        spectators: (r.allPlayers?.spectators ?? []).map((p) => p.name),
-        friendNames: Array.isArray(r.friendNames) ? r.friendNames : [],
-        inLobby: r.inLobby,
-        privateRoom: r.settings?.privateRoom,
-        soloRoom:
-            !!r.settings?.soloMode ||
-            !!r.soloMode ||
-            r.settings?.gameMode === "Solo" ||
-            (typeof r.settings?.roomName === "string" && r.settings.roomName.toLowerCase() === "solo"),
-    });
-
-    const isRelevantRoomUpdate = (room) => {
-        if (!room) return false;
-        refreshFriends();
-        return hasFriend(room);
-    };
-
-    const toggle = (list, name) => {
-        const i = list.indexOf(name);
-        if (i === -1) {
-            list.push(name);
-            return true;
-        }
-        list.splice(i, 1);
-        return false;
-    };
-
-    const normalizeRoomMemberName = (name) => String(name ?? "").trim().toLowerCase();
-
-    const updateFriendRowsForRoom = (room) => {
-        if (!room) return;
-        const names = new Set([room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? []), ...getFriendNamesInGame(room.roomId)]);
-        names.forEach((name) => {
-            if (name && friends.has(name)) {
-                updateFriendRow(name);
-            }
-        });
-    };
-
-    const removeRoomMemberFromList = (room, listKey, name) => {
-        if (!room || !name) return;
-
-        const targetList = Array.isArray(room[listKey]) ? room[listKey] : [];
-        const normalizedName = normalizeRoomMemberName(name);
-        const nextIndex = targetList.findIndex((entry) => normalizeRoomMemberName(entry) === normalizedName);
-
-        if (nextIndex >= 0) {
-            targetList.splice(nextIndex, 1);
-            room[listKey] = targetList;
-        }
-    };
-
-    const syncRoomMemberState = (room, listKey, name, countOverride = null) => {
-        if (!room || !name) return;
-
-        const targetList = Array.isArray(room[listKey]) ? room[listKey] : [];
-        const oppositeKey = listKey === "players" ? "spectators" : "players";
-        const oppositeList = Array.isArray(room[oppositeKey]) ? room[oppositeKey] : [];
-
-        const count = Number(countOverride);
-        const hasExplicitEmptyState = Number.isFinite(count) && count === 0;
-
-        if (hasExplicitEmptyState) {
-            removeRoomMemberFromList(room, listKey, name);
-            removeRoomMemberFromList(room, oppositeKey, name);
-            return;
-        }
-
-        const normalizedName = normalizeRoomMemberName(name);
-        const alreadyInTarget = targetList.some((entry) => normalizeRoomMemberName(entry) === normalizedName);
-        if (!alreadyInTarget) {
-            targetList.push(name);
-        }
-
-        const oppositeIndex = oppositeList.findIndex((entry) => normalizeRoomMemberName(entry) === normalizedName);
-        if (oppositeIndex >= 0) {
-            oppositeList.splice(oppositeIndex, 1);
-        }
-
-        room[listKey] = targetList;
-        room[oppositeKey] = oppositeList;
-    };
-
-    const findRoomByMemberName = (memberName, preferredRoomId = null) => {
-        if (!memberName) return null;
-
-        const normalizedName = normalizeRoomMemberName(memberName);
-
-        if (preferredRoomId) {
-            const preferredRoom = findRoomFromRoomIdOrBrowser(preferredRoomId) ?? rooms.find((room) => room && room.roomId === preferredRoomId);
-            if (preferredRoom) {
-                const hasMember = [
-                    preferredRoom.host,
-                    ...(preferredRoom.players ?? []),
-                    ...(preferredRoom.spectators ?? []),
-                ].some((entry) => normalizeRoomMemberName(entry) === normalizedName);
-                if (hasMember) return preferredRoom;
-            }
-        }
-
-        return rooms.find((room) => room && (
-            normalizeRoomMemberName(room.host) === normalizedName ||
-            (room.players ?? []).some((entry) => normalizeRoomMemberName(entry) === normalizedName) ||
-            (room.spectators ?? []).some((entry) => normalizeRoomMemberName(entry) === normalizedName)
-        )) ?? null;
-    };
-
-    const applyExplicitMemberRole = (memberName, role, preferredRoomId = null) => {
-        if (!memberName) return;
-
-        const room = findRoomByMemberName(memberName, preferredRoomId);
-        if (!room) return;
-
-        const targetKey = role === "spectator" ? "spectators" : "players";
-        const oppositeKey = targetKey === "players" ? "spectators" : "players";
-        const normalizedName = normalizeRoomMemberName(memberName);
-
-        removeRoomMemberFromList(room, targetKey, memberName);
-        removeRoomMemberFromList(room, oppositeKey, memberName);
-
-        const targetList = Array.isArray(room[targetKey]) ? room[targetKey] : [];
-        if (!targetList.some((entry) => normalizeRoomMemberName(entry) === normalizedName)) {
-            targetList.push(memberName);
-        }
-        room[targetKey] = targetList;
-        updateFriendRow(memberName);
-        updateFriendAlertStateSnapshot();
-    };
-
     const setup = () => {
         patchAllPlayersListFiltering();
         ensureSocialTabSize();
-        refreshFriends();
-        snapshotFriendProfiles();
         applyAllUsersSearchFilter();
         scheduleFriendListRender(true);
         socket.sendCommand({
@@ -2325,12 +1926,12 @@
         });
     };
 
+    const findFriendEntry = (name) => getFriendEntries().find((entry) => entry && entry.name === name);
+
     new Listener("new friend", (friend) => {
         const name = friend?.name;
         setTimeout(() => {
             ensureSocialTabSize();
-            refreshFriends();
-            snapshotFriendProfiles();
             if (name) {
                 updateFriendRow(name);
             } else {
@@ -2345,7 +1946,6 @@
 
         setTimeout(() => {
             ensureSocialTabSize();
-            refreshFriends();
             if (typeof socialTab?.removeFriend === "function") {
                 socialTab.removeFriend(name);
             }
@@ -2358,13 +1958,10 @@
         // deferred so socialTab has updated its own lists first
         setTimeout(() => {
             ensureSocialTabSize();
-            refreshFriends();
-            snapshotFriendProfiles();
             if (name) {
                 if (friend.online) {
                     // Friends already in a game didn't really go offline from the list's point of view.
-                    const matchingEntry = getFriendEntries().find((entry) => entry && entry.name === name);
-                    if (!getFriendPlayingState(matchingEntry)) {
+                    if (!getFriendPlayingState(findFriendEntry(name))) {
                         triggerFriendAlert("friendConnect", name);
                     }
                 } else {
@@ -2385,29 +1982,13 @@
         if (!oldName || !newName || oldName === newName) return;
 
         renameFavoriteFriend(oldName, newName);
-
-        const idx = friendProfileSnapshot.findIndex((friend) => friend.name === oldName);
-        if (idx !== -1) {
-            friendProfileSnapshot[idx].name = newName;
-        }
-
-        refreshFriends();
         updateFriendRow(newName, oldName);
     }).bindListener();
 
     new Listener("friend profile image change", (payload) => {
         if (!payload || !payload.name) return;
 
-        const idx = friendProfileSnapshot.findIndex((friend) => friend.name === payload.name);
-        if (idx !== -1) {
-            friendProfileSnapshot[idx].avatarInfo = payload.profileImage ?? friendProfileSnapshot[idx].avatarInfo;
-        }
-
-        const entries = [
-            ...Object.values(socialTab?.onlineFriends ?? {}),
-            ...Object.values(socialTab?.offlineFriends ?? {}),
-        ];
-        const match = entries.find((entry) => entry && entry.name === payload.name);
+        const match = findFriendEntry(payload.name);
         if (match) {
             match.avatarInfo = payload.profileImage ?? match.avatarInfo;
         }
@@ -2418,17 +1999,7 @@
     new Listener("friend profile name option change", (payload) => {
         if (!payload || !payload.name) return;
 
-        const idx = friendProfileSnapshot.findIndex((friend) => friend.name === payload.name);
-        if (idx !== -1) {
-            friendProfileSnapshot[idx].nameColor = payload.nameColorClass ?? friendProfileSnapshot[idx].nameColor;
-            friendProfileSnapshot[idx].nameGlow = payload.nameGlowClass ?? friendProfileSnapshot[idx].nameGlow;
-        }
-
-        const entries = [
-            ...Object.values(socialTab?.onlineFriends ?? {}),
-            ...Object.values(socialTab?.offlineFriends ?? {}),
-        ];
-        const match = entries.find((entry) => entry && entry.name === payload.name);
+        const match = findFriendEntry(payload.name);
         if (match) {
             match.currentNameColorClass = payload.nameColorClass ?? match.currentNameColorClass;
             match.currentNameGlowClass = payload.nameGlowClass ?? match.currentNameGlowClass;
@@ -2437,202 +2008,58 @@
         updateFriendRow(payload.name);
     }).bindListener();
 
+    // The server's own description of where the friend is: lobby/playing/spectating, private, solo, gameId.
     new Listener("friend social status change", (payload) => {
         const data = payload?.data ?? payload;
         const name = data?.name;
         if (!name) return;
 
-        refreshFriends();
-
-        const socialStatus = data.socialStatus ?? 1;
-        const gameState = data.gameState ?? null;
-
-        const entries = [
-            ...Object.values(socialTab?.onlineFriends ?? {}),
-            ...Object.values(socialTab?.offlineFriends ?? {}),
-        ];
-
-        const match = entries.find((entry) => entry && entry.name === name);
+        const match = findFriendEntry(name);
         if (!match) return;
 
-        match.status = socialStatus;
-        match.gameState = gameState;
-        if (typeof match.updateStatus === "function") {
-            match.updateStatus(socialStatus, gameState, false);
-        }
-
-        const idx = friendProfileSnapshot.findIndex((friend) => friend.name === name);
-        if (idx !== -1) {
-            friendProfileSnapshot[idx].nameColor = match.currentNameColorClass ?? friendProfileSnapshot[idx].nameColor;
-            friendProfileSnapshot[idx].nameGlow = match.currentNameGlowClass ?? friendProfileSnapshot[idx].nameGlow;
-        }
+        // AMQ's social tab applies this too, but ours may run first.
+        match.status = data.socialStatus ?? 1;
+        match.gameState = data.gameState ?? null;
 
         updateFriendRow(name);
         updateFriendAlertStateSnapshot();
     }).bindListener();
 
-    // Both carry the full player and spectator lists of the game we just entered.
-    new Listener("Spectate Game", recordRankedRoster).bindListener();
-    new Listener("Join Game", recordRankedRoster).bindListener();
-
-    new Listener("Player Changed To Spectator", (payload) => {
-        const data = payload?.data ?? payload;
-        const name = data?.spectatorDescription?.name ?? data?.playerDescription?.name ?? data?.name;
-        if (!name) return;
-
-        applyExplicitMemberRole(name, "spectator", data?.roomId ?? null);
-    }).bindListener();
-
-    new Listener("Spectator Change To Player", (payload) => {
-        const data = payload?.data ?? payload;
-        const name = data?.name ?? data?.playerDescription?.name ?? data?.spectatorDescription?.name;
-        if (!name) return;
-
-        applyExplicitMemberRole(name, "player", data?.roomId ?? null);
-    }).bindListener();
-
-    new Listener("Player Left", (payload) => {
-        const data = payload?.data ?? payload;
-        const name = data?.player?.name ?? data?.name;
-        if (!name) return;
-
-        const room = findRoomByMemberName(name);
-        if (!room) return;
-
-        markPendingRoomLeave(room.roomId, name);
-        removeRoomMemberFromList(room, "players", name);
-        removeRoomMemberFromList(room, "spectators", name);
-        if (room.host && normalizeRoomMemberName(room.host) === normalizeRoomMemberName(name)) {
-            room.host = null;
-        }
-
-        updateFriendRow(name);
-        updateFriendAlertStateSnapshot();
-    }).bindListener();
-
-    // Full room list on first call, then new rooms one by one.
+    // Full room list on first call, then new rooms one by one. Only their names are needed.
     new Listener("New Rooms", (data) => {
-        const incoming = (data.standard ?? []).map(parseRoom);
+        const incoming = data.standard ?? [];
         if (!incoming.length) return;
 
-        const isInitialRoomSnapshot = rooms.length === 0;
-        const relevantIncoming = incoming.filter(isRelevantRoomUpdate);
-        const relevantExistingMatches = rooms.filter((existing) => incoming.some((room) => room.roomId === existing.roomId) && isRelevantRoomUpdate(existing));
+        incoming.forEach((room) => roomNamesById.set(String(room.id), room.settings?.roomName || ""));
 
-        // Keep every room so friends who join one later still get its name.
-        const ids = new Set(incoming.map((r) => r.roomId));
-        rooms = rooms.filter((r) => !ids.has(r.roomId)).concat(incoming);
-
-        if (!isInitialRoomSnapshot && !relevantIncoming.length && !relevantExistingMatches.length) {
-            return;
-        }
-
-        ensureSocialTabSize();
-        refreshFriends();
-        snapshotFriendProfiles();
-        restoreFriendProfiles();
-
-        if (isInitialRoomSnapshot) {
+        if (!friendAlertBaselineReady) {
             // First batch: the friend roster is loaded, so alert diffing can start.
             friendAlertBaselineReady = true;
             scheduleFriendListRender(true);
             return;
         }
 
-        const affectedFriendNames = new Set();
-        [...relevantIncoming, ...relevantExistingMatches].forEach((room) => {
-            if (!room) return;
-            [room.host, ...(room.players ?? []), ...(room.spectators ?? []), ...(room.friendNames ?? []), ...getFriendNamesInGame(room.roomId)].forEach((name) => {
-                if (name && friends.has(name)) {
-                    affectedFriendNames.add(name);
-                }
-            });
-        });
+        const affectedFriendNames = incoming.flatMap((room) => getFriendNamesInGame(room.id));
+        if (!affectedFriendNames.length) return;
 
+        ensureSocialTabSize();
         affectedFriendNames.forEach((name) => updateFriendRow(name));
         updateFriendAlertStateSnapshot();
     }).bindListener();
 
     new Listener("Room Change", (data) => {
-        if (!data || !data.roomId) return;
-        if (data.changeType === "songsLeft") return;
+        if (!data || data.roomId == null) return;
+        const roomKey = String(data.roomId);
 
         if (data.changeType === "Room Closed") {
-            rooms = rooms.filter((r) => r && r.roomId !== data.roomId);
-            requestedRoomRefreshIds.delete(String(data.roomId));
+            roomNamesById.delete(roomKey);
+            requestedRoomRefreshIds.delete(roomKey);
             return;
         }
 
-        const room = findRoomFromRoomIdOrBrowser(data.roomId) ?? rooms.find((r) => r && r.roomId === data.roomId);
-        if (!room || !isRelevantRoomUpdate(room)) return;
-
-        switch (data.changeType) {
-            case "players": {
-                if (!data.playerName) break;
-                const playerCount = Number(data.playerCount ?? 0);
-                const roomLeaveKey = `${data.roomId}:${normalizeRoomMemberName(data.playerName)}`;
-                const normalizedName = normalizeRoomMemberName(data.playerName);
-                const alreadyMarkedSpectator = (room.spectators ?? []).some((entry) => normalizeRoomMemberName(entry) === normalizedName);
-
-                if (pendingRoomMemberLeaves.has(roomLeaveKey)) {
-                    removeRoomMemberFromList(room, "players", data.playerName);
-                    removeRoomMemberFromList(room, "spectators", data.playerName);
-                    pendingRoomMemberLeaves.delete(roomLeaveKey);
-                    updateFriendRow(data.playerName);
-                    updateFriendAlertStateSnapshot();
-                    break;
-                }
-
-                if (alreadyMarkedSpectator) {
-                    removeRoomMemberFromList(room, "players", data.playerName);
-                    updateFriendRow(data.playerName);
-                    updateFriendAlertStateSnapshot();
-                    break;
-                }
-
-                if (Number.isFinite(playerCount) && playerCount === 0) {
-                    removeRoomMemberFromList(room, "players", data.playerName);
-                    removeRoomMemberFromList(room, "spectators", data.playerName);
-                    updateFriendRow(data.playerName);
-                    updateFriendAlertStateSnapshot();
-                    break;
-                }
-                syncRoomMemberState(room, "players", data.playerName, data.playerCount);
-                updateFriendRow(data.playerName);
-                updateFriendAlertStateSnapshot();
-                break;
-            }
-            case "spectators": {
-                if (!data.playerName) break;
-                const spectatorCount = Number(data.spectatorCount ?? 0);
-                if (Number.isFinite(spectatorCount) && spectatorCount === 0) {
-                    removeRoomMemberFromList(room, "spectators", data.playerName);
-                    updateFriendRow(data.playerName);
-                    updateFriendAlertStateSnapshot();
-                    break;
-                }
-                removeRoomMemberFromList(room, "players", data.playerName);
-                syncRoomMemberState(room, "spectators", data.playerName, data.spectatorCount);
-                updateFriendRow(data.playerName);
-                updateFriendAlertStateSnapshot();
-                break;
-            }
-            case "game start":
-            case "game over": {
-                room.inLobby = data.changeType === "game over";
-                updateFriendRowsForRoom(room);
-                updateFriendAlertStateSnapshot();
-                break;
-            }
-            case "settings": {
-                for (const key of ["roomName", "privateRoom"]) {
-                    if (!(key in data.change)) continue;
-                    room[key] = data.change[key];
-                }
-                updateFriendRowsForRoom(room);
-                updateFriendAlertStateSnapshot();
-                break;
-            }
+        if (data.changeType === "settings" && data.change && "roomName" in data.change) {
+            roomNamesById.set(roomKey, data.change.roomName || "");
+            getFriendNamesInGame(data.roomId).forEach((name) => updateFriendRow(name));
         }
     }).bindListener();
 })();
