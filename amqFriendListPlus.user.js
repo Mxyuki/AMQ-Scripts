@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.1
+// @version      1.3.2
 // @description  Update the Friends List to provide more information and make friend interactions more accessible.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -408,6 +408,41 @@
                 border-color: rgba(255,255,255,0.18);
                 background-color: rgba(255,255,255,0.06);
             }
+            .amqFriendPlusToggleRow {
+                cursor: pointer;
+                margin: 0;
+            }
+            .amqFriendPlusToggle {
+                appearance: none;
+                -webkit-appearance: none;
+                position: relative;
+                flex: 0 0 auto;
+                width: 34px;
+                height: 18px;
+                margin: 0;
+                border-radius: 999px;
+                border: 1px solid rgba(255,255,255,0.12);
+                background: rgba(255,255,255,0.08);
+                cursor: pointer;
+                transition: background 0.15s ease;
+            }
+            .amqFriendPlusToggle::after {
+                content: "";
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #dfe7ff;
+                transition: transform 0.15s ease;
+            }
+            .amqFriendPlusToggle:checked {
+                background: #4f7cff;
+            }
+            .amqFriendPlusToggle:checked::after {
+                transform: translateX(16px);
+            }
             .amqFriendPlusAlertModeSelect option {
                 background-color: #1b1f29;
                 color: #dfe7ff;
@@ -487,6 +522,27 @@
                 color: #dfe7ff;
                 background: rgba(0,0,0,0.18);
                 border-bottom: 1px solid rgba(255,255,255,0.08);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                cursor: pointer;
+                user-select: none;
+            }
+            .amqFriendPlusSectionTitle:hover {
+                background: rgba(0,0,0,0.28);
+            }
+            .amqFriendPlusSectionArrow {
+                font-size: 11px;
+                transition: transform 0.15s ease;
+            }
+            .amqFriendPlusSection.is-collapsed .amqFriendPlusSectionTitle {
+                border-bottom: none;
+            }
+            .amqFriendPlusSection.is-collapsed .amqFriendPlusSectionArrow {
+                transform: rotate(-90deg);
+            }
+            .amqFriendPlusSection.is-collapsed .amqFriendPlusList {
+                display: none;
             }
             .amqFriendPlusList {
                 display: block;
@@ -507,18 +563,12 @@
             .amqFriendPlusRow:last-child {
                 margin-bottom: 0;
             }
-            .amqFriendPlusAvatarWrap {
-                width: 68px;
-                height: 68px;
-                flex: 0 0 68px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 6px;
-                border: 2px solid #7d7d7d;
-                background: rgba(0,0,0,0.2);
-                overflow: hidden;
-                cursor: pointer;
+            /* Clicking the avatar opens the profile, so don't let it get text-selected or dragged. */
+            .amqFriendPlusAvatarWrap,
+            .amqFriendPlusAvatarWrap * {
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-user-drag: none;
             }
             .amqFriendPlusAvatarWrap img {
                 width: 100%;
@@ -606,6 +656,15 @@
                 margin-top: 0;
                 padding-top: 0;
                 align-self: flex-start;
+            }
+            /* Offline friends: grayscale also washes out custom name colors and glows. */
+            .amqFriendPlusRow.is-offline .amqFriendPlusName {
+                filter: grayscale(0.85) brightness(0.85);
+                opacity: 0.6;
+            }
+            .amqFriendPlusRow.is-offline .amqFriendPlusAvatarWrap {
+                filter: grayscale(0.6);
+                opacity: 0.75;
             }
             .amqFriendPlusRoomName {
                 font-size: 13px;
@@ -701,11 +760,6 @@
             .amqFriendPlusButton.join {
                 background: #6f7ef8;
             }
-            .amqFriendPlusEmpty {
-                color: #aeb9d8;
-                font-size: 11px;
-                padding: 8px 10px;
-            }
         `;
         document.head.appendChild(style);
     };
@@ -718,6 +772,41 @@
     };
 
     const FAVORITE_STORAGE_KEY = "amqFriendListPlus.favorites";
+    const FAVORITE_SECTION_STORAGE_KEY = "amqFriendListPlus.favoriteSection";
+
+    const isFavoriteSectionEnabled = () => {
+        try {
+            return localStorage.getItem(FAVORITE_SECTION_STORAGE_KEY) === "true";
+        } catch (err) {
+            return false;
+        }
+    };
+
+    const setFavoriteSectionEnabled = (enabled) => {
+        try {
+            localStorage.setItem(FAVORITE_SECTION_STORAGE_KEY, enabled ? "true" : "false");
+        } catch (err) {
+        }
+    };
+
+    const COLLAPSED_SECTIONS_STORAGE_KEY = "amqFriendListPlus.collapsedSections";
+
+    const getCollapsedSectionIds = () => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(COLLAPSED_SECTIONS_STORAGE_KEY) || "[]");
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+            return [];
+        }
+    };
+
+    const setSectionCollapsed = (sectionId, collapsed) => {
+        const others = getCollapsedSectionIds().filter((id) => id !== sectionId);
+        try {
+            localStorage.setItem(COLLAPSED_SECTIONS_STORAGE_KEY, JSON.stringify(collapsed ? [...others, sectionId] : others));
+        } catch (err) {
+        }
+    };
 
     const getFavoriteFriendNames = () => {
         if (typeof localStorage === "undefined") return [];
@@ -819,7 +908,7 @@
         friendPlayingToLobby: "Alert when friend goes from playing to lobby",
         friendLobbyToPlaying: "Alert when friend goes from lobby to playing",
     };
-    let friendAlertSettingsOpen = false;
+    let friendsSettingsOpen = false;
     let friendAlertStateSnapshot = new Map();
     let friendAlertBaselineReady = false;
 
@@ -946,13 +1035,13 @@
         friendAlertStateSnapshot = current;
     };
 
-    const renderFriendAlertSettingsPanel = ($friendList) => {
+    const renderFriendsSettingsPanel = ($friendList) => {
         if (!$friendList || !$friendList.length) return;
 
         let $panel = $friendList.find(".amqFriendPlusSettingsPanel");
         if (!$panel.length) {
             $panel = $("<div>", { class: "amqFriendPlusSettingsPanel" });
-            const $header = $("<div>", { class: "amqFriendPlusSettingsHeader" }).text("Friend Alerts");
+            const $header = $("<div>", { class: "amqFriendPlusSettingsHeader" }).text("Friends Settings");
             const $body = $("<div>", { class: "amqFriendPlusSettingsBody" });
             $panel.append($header, $body);
             const $searchWrap = $friendList.find(".amqFriendPlusSearchWrap");
@@ -965,6 +1054,20 @@
 
         const $body = $panel.find(".amqFriendPlusSettingsBody");
         $body.empty();
+
+        const $favoriteSectionRow = $("<label>", { class: "amqFriendPlusAlertRow amqFriendPlusToggleRow" });
+        const $favoriteSectionLabel = $("<div>", { class: "amqFriendPlusAlertLabel" }).text("Show a Favorite Friends section");
+        const $favoriteSectionToggle = $("<input>", {
+            type: "checkbox",
+            class: "amqFriendPlusToggle",
+            checked: isFavoriteSectionEnabled(),
+        });
+        $favoriteSectionToggle.on("change", (event) => {
+            setFavoriteSectionEnabled($(event.currentTarget).is(":checked"));
+            scheduleFriendListRender(true);
+        });
+        $favoriteSectionRow.append($favoriteSectionLabel, $favoriteSectionToggle);
+        $body.append($favoriteSectionRow);
 
         Object.entries(FRIEND_ALERT_LABELS).forEach(([key, label]) => {
             const settings = getFriendAlertSettings();
@@ -1000,7 +1103,7 @@
             $body.append($row);
         });
 
-        $panel.toggleClass("is-open", friendAlertSettingsOpen);
+        $panel.toggleClass("is-open", friendsSettingsOpen);
     };
 
     const getFriendEntries = () => {
@@ -1347,7 +1450,8 @@
 
         $friendList.find(".amqFriendPlusSection").each(function () {
             const $section = $(this);
-            const hasVisibleRows = $section.find(".amqFriendPlusRow:visible").length > 0;
+            // Rows in a collapsed section aren't :visible, so check the filter's own display toggle.
+            const hasVisibleRows = $section.find(".amqFriendPlusRow").filter((_, rowEl) => rowEl.style.display !== "none").length > 0;
             $section.toggle(hasVisibleRows || !searchText);
         });
 
@@ -1417,7 +1521,7 @@
         const statusColor = statusColorByStatus[status] ?? statusColorByStatus[1];
 
         const $row = $("<div>", {
-            class: "amqFriendPlusRow",
+            class: "amqFriendPlusRow" + (isOffline ? " is-offline" : ""),
             "data-friend-name": entry.name,
             css: {
                 background: "linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.03) 52%, rgba(94, 112, 160, 0.18) 100%)",
@@ -1682,7 +1786,8 @@
         return $row;
     };
 
-    const getFriendRowSectionId = (entry) => {
+    // Where a friend belongs by what they're doing, ignoring the favorite section.
+    const getFriendActivitySectionId = (entry) => {
         if (!entry || !entry.name) return "onlineFriends";
 
         const roomInfo = getFriendPlayingState(entry);
@@ -1696,16 +1801,31 @@
         return "onlineFriends";
     };
 
-    const compareFriendOrder = (nameA, nameB) => {
-        const favoriteA = isFavoriteFriend(nameA);
-        const favoriteB = isFavoriteFriend(nameB);
-        if (favoriteA !== favoriteB) return favoriteA ? -1 : 1;
-        return String(nameA || "").localeCompare(String(nameB || ""));
+    const FRIEND_ACTIVITY_RANK = { playingFriends: 0, onlineFriends: 1, offlineFriends: 2 };
+
+    const getFriendRowSectionId = (entry) => {
+        if (entry?.name && isFavoriteSectionEnabled() && isFavoriteFriend(entry.name)) return "favoriteFriends";
+        return getFriendActivitySectionId(entry);
     };
 
-    const insertRowSorted = ($list, $row, friendName) => {
+    // Favorites first, then by name. In the favorite section: playing, then online, then offline.
+    const compareFriendEntries = (entryA, entryB) => {
+        const favoriteA = isFavoriteFriend(entryA?.name);
+        const favoriteB = isFavoriteFriend(entryB?.name);
+        if (favoriteA !== favoriteB) return favoriteA ? -1 : 1;
+
+        if (favoriteA && isFavoriteSectionEnabled()) {
+            const rankDiff = FRIEND_ACTIVITY_RANK[getFriendActivitySectionId(entryA)] - FRIEND_ACTIVITY_RANK[getFriendActivitySectionId(entryB)];
+            if (rankDiff) return rankDiff;
+        }
+
+        return String(entryA?.name || "").localeCompare(String(entryB?.name || ""));
+    };
+
+    const insertRowSorted = ($list, $row, entry) => {
+        const entriesByName = new Map(getFriendEntries().map((friend) => [friend.name, friend]));
         const insertBeforeRow = $list.children(".amqFriendPlusRow").toArray().find((rowEl) => {
-            return compareFriendOrder(friendName, $(rowEl).data("friendName")) < 0;
+            return compareFriendEntries(entry, entriesByName.get($(rowEl).data("friendName"))) < 0;
         });
 
         if (insertBeforeRow) {
@@ -1750,8 +1870,7 @@
             $existingRow.remove();
         }
 
-        insertRowSorted(targetSection.find(".amqFriendPlusList"), $replacement, friendName);
-        $replacement.trigger("amqFriendPlus:updated");
+        insertRowSorted(targetSection.find(".amqFriendPlusList"), $replacement, matchingEntry);
         applyFriendSearchFilter();
     };
 
@@ -1782,15 +1901,15 @@
 
             const $gearButton = $("<button>", {
                 type: "button",
-                class: "amqFriendPlusSearchGearButton" + (friendAlertSettingsOpen ? " is-active" : ""),
-                title: "Friend alert settings",
-                "aria-label": "Friend alert settings",
+                class: "amqFriendPlusSearchGearButton" + (friendsSettingsOpen ? " is-active" : ""),
+                title: "Friends settings",
+                "aria-label": "Friends settings",
                 html: '<i class="fa fa-gear" aria-hidden="true"></i>',
             });
             $gearButton.on("click", () => {
-                friendAlertSettingsOpen = !friendAlertSettingsOpen;
-                renderFriendAlertSettingsPanel($friendList);
-                $gearButton.toggleClass("is-active", friendAlertSettingsOpen);
+                friendsSettingsOpen = !friendsSettingsOpen;
+                renderFriendsSettingsPanel($friendList);
+                $gearButton.toggleClass("is-active", friendsSettingsOpen);
             });
 
             $searchWrap.append($searchInput, $gearButton);
@@ -1804,45 +1923,46 @@
 
         const $gearButton = $searchWrap.find(".amqFriendPlusSearchGearButton");
         if ($gearButton.length) {
-            $gearButton.toggleClass("is-active", friendAlertSettingsOpen);
+            $gearButton.toggleClass("is-active", friendsSettingsOpen);
         }
 
-        renderFriendAlertSettingsPanel($friendList);
+        renderFriendsSettingsPanel($friendList);
         $friendList.children().not($searchWrap).not(".amqFriendPlusSettingsPanel").remove();
 
         const sections = [
+            ...(isFavoriteSectionEnabled() ? [{ id: "favoriteFriends", title: "Favorite Friends" }] : []),
             { id: "playingFriends", title: "Playing Friends" },
             { id: "onlineFriends", title: "Online Friends" },
             { id: "offlineFriends", title: "Offline Friends" },
         ];
 
+        const collapsedSectionIds = getCollapsedSectionIds();
+        const sectionLists = {};
         sections.forEach(({ id, title }) => {
-            const $section = $("<div>", { id, class: "amqFriendPlusSection" });
-            const $title = $("<div>", { class: "amqFriendPlusSectionTitle" }).text(title);
+            const $section = $("<div>", {
+                id,
+                class: "amqFriendPlusSection" + (collapsedSectionIds.includes(id) ? " is-collapsed" : ""),
+            });
+            const $title = $("<div>", { class: "amqFriendPlusSectionTitle" }).append(
+                $("<span>").text(title),
+                $("<i>", { class: "fa fa-chevron-down amqFriendPlusSectionArrow", "aria-hidden": "true" }),
+            );
+            $title.on("click", () => {
+                $section.toggleClass("is-collapsed");
+                setSectionCollapsed(id, $section.hasClass("is-collapsed"));
+            });
             const $list = $("<div>", { class: "amqFriendPlusList" });
             $section.append($title, $list);
             $friendList.append($section);
+            sectionLists[id] = $list;
         });
 
-        const playingSection = $("#playingFriends .amqFriendPlusList");
-        const onlineSection = $("#onlineFriends .amqFriendPlusList");
-        const offlineSection = $("#offlineFriends .amqFriendPlusList");
-
-        const entries = getFriendEntries().sort((a, b) => compareFriendOrder(a?.name, b?.name));
-
-        entries.forEach((entry) => {
+        getFriendEntries().sort(compareFriendEntries).forEach((entry) => {
             if (!entry || !entry.name) return;
             const $row = renderFriendRow(entry, $friendList);
             if (!$row) return;
 
-            const sectionId = getFriendRowSectionId(entry);
-            if (sectionId === "playingFriends") {
-                playingSection.append($row);
-            } else if (sectionId === "offlineFriends") {
-                offlineSection.append($row);
-            } else {
-                onlineSection.append($row);
-            }
+            sectionLists[getFriendRowSectionId(entry)].append($row);
         });
 
         applyFriendSearchFilter();
@@ -1897,6 +2017,7 @@
             color: entry?.currentNameColorClass ?? "",
             glow: entry?.currentNameGlowClass ?? "",
             favorite: isFavoriteFriend(entry?.name),
+            section: getFriendRowSectionId(entry),
         })));
     };
 
