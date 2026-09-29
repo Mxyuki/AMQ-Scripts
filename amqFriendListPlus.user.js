@@ -5,8 +5,8 @@
 // @description  Update the Friends List to provide more information and make friend interactions more accessible.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
-// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFriendListPlus.user.js
-// @updateURL	 https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqFriendListPlus.user.js
+// @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqFriendListPlus.user.js
+// @updateURL	 https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqFriendListPlus.user.js
 // ==/UserScript==
 
 (function () {
