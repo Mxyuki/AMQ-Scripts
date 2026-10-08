@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.3.2
-// @description  Update the Friends List to provide more information and make friend interactions more accessible.
+// @version      1.4.0
+// @description  Update the Friends List to provide more information and make friend interactions more accessible, and rework the player profile with a roomier, tabbed editor.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/refs/heads/main/amqFriendListPlus.user.js
@@ -563,6 +563,11 @@
             .amqFriendPlusRow:last-child {
                 margin-bottom: 0;
             }
+            /* Outline, since the row's tint lives in an inline box-shadow. */
+            .amqFriendPlusRow.is-profile-open {
+                outline: 2px solid #4497ea;
+                outline-offset: -2px;
+            }
             /* Clicking the avatar opens the profile, so don't let it get text-selected or dragged. */
             .amqFriendPlusAvatarWrap,
             .amqFriendPlusAvatarWrap * {
@@ -785,6 +790,24 @@
     const setFavoriteSectionEnabled = (enabled) => {
         try {
             localStorage.setItem(FAVORITE_SECTION_STORAGE_KEY, enabled ? "true" : "false");
+        } catch (err) {
+        }
+    };
+
+    // When on, profiles open through AMQ's own code, untouched by this script.
+    const LEGACY_PROFILE_STORAGE_KEY = "amqFriendListPlus.legacyProfile";
+
+    const isLegacyProfileEnabled = () => {
+        try {
+            return localStorage.getItem(LEGACY_PROFILE_STORAGE_KEY) === "true";
+        } catch (err) {
+            return false;
+        }
+    };
+
+    const setLegacyProfileEnabled = (enabled) => {
+        try {
+            localStorage.setItem(LEGACY_PROFILE_STORAGE_KEY, enabled ? "true" : "false");
         } catch (err) {
         }
     };
@@ -1055,19 +1078,23 @@
         const $body = $panel.find(".amqFriendPlusSettingsBody");
         $body.empty();
 
-        const $favoriteSectionRow = $("<label>", { class: "amqFriendPlusAlertRow amqFriendPlusToggleRow" });
-        const $favoriteSectionLabel = $("<div>", { class: "amqFriendPlusAlertLabel" }).text("Show a Favorite Friends section");
-        const $favoriteSectionToggle = $("<input>", {
-            type: "checkbox",
-            class: "amqFriendPlusToggle",
-            checked: isFavoriteSectionEnabled(),
-        });
-        $favoriteSectionToggle.on("change", (event) => {
-            setFavoriteSectionEnabled($(event.currentTarget).is(":checked"));
-            scheduleFriendListRender(true);
-        });
-        $favoriteSectionRow.append($favoriteSectionLabel, $favoriteSectionToggle);
-        $body.append($favoriteSectionRow);
+        const createToggleRow = (label, checked, onChange) => {
+            const $toggle = $("<input>", { type: "checkbox", class: "amqFriendPlusToggle", checked });
+            $toggle.on("change", (event) => onChange($(event.currentTarget).is(":checked")));
+            return $("<label>", { class: "amqFriendPlusAlertRow amqFriendPlusToggleRow" }).append(
+                $("<div>", { class: "amqFriendPlusAlertLabel" }).text(label),
+                $toggle,
+            );
+        };
+
+        $body.append(
+            createToggleRow("Show a Favorite Friends section", isFavoriteSectionEnabled(), (enabled) => {
+                setFavoriteSectionEnabled(enabled);
+                scheduleFriendListRender(true);
+            }),
+            // An open profile keeps its style; the setting applies from the next one opened.
+            createToggleRow("Use AMQ's original profile", isLegacyProfileEnabled(), setLegacyProfileEnabled),
+        );
 
         Object.entries(FRIEND_ALERT_LABELS).forEach(([key, label]) => {
             const settings = getFriendAlertSettings();
@@ -1341,7 +1368,18 @@
         image.src = imageUrl;
     });
 
-    const getProfileTintColor = async (entry) => {
+    // Sampling an image is slow, and the friend list and profile ask for the same players' colors.
+    const profileTintCache = new Map();
+    const getProfileTintColor = (entry) => {
+        const avatarInfo = entry?.avatarInfo ?? {};
+        const key = `${entry?.name || ""}|${avatarInfo.colorName || ""}|${getFriendProfileImageSrc(avatarInfo)}`;
+        if (!profileTintCache.has(key)) {
+            profileTintCache.set(key, computeProfileTintColor(entry));
+        }
+        return profileTintCache.get(key);
+    };
+
+    const computeProfileTintColor = async (entry) => {
         const avatarInfo = entry?.avatarInfo ?? {};
 
         const namedColors = {
@@ -1509,6 +1547,84 @@
         }
     };
 
+    const getRoomDisplayName = (entry, roomInfo) => getSpecialRoomModeName(entry) || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
+
+    // Join/Spectate for the room a friend is in. Shared by the friend rows and the profile.
+    const createRoomButtons = (entry, roomInfo) => {
+        if (!roomInfo || roomInfo.soloRoom) return [];
+
+        if (!getSpecialRoomModeName(entry)) {
+            const $joinBtn = $("<button>", {
+                class: "amqFriendPlusButton join",
+                text: "Join",
+                disabled: !roomInfo.inLobby,
+            });
+            $joinBtn.on("click", () => {
+                if (roomInfo.privateRoom) {
+                    Swal.fire({
+                        title: localizationHandler.translate("room_browser.room_tile.password.title"),
+                        input: "password",
+                        inputPlaceholder: localizationHandler.translate("room_browser.room_tile.password.placeholder"),
+                        showCancelButton: true,
+                        confirmButtonText: localizationHandler.translate("room_browser.room_tile.password.confirm_button"),
+                        inputAttributes: { maxlength: 50, minlength: 1 },
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            roomBrowser.fireJoinLobby(roomInfo.roomId, result.value);
+                        }
+                    });
+                } else {
+                    roomBrowser.fireJoinLobby(roomInfo.roomId);
+                }
+            });
+
+            const $spectateBtn = $("<button>", {
+                class: "amqFriendPlusButton spectate",
+                text: "Spectate",
+            });
+            $spectateBtn.on("click", () => {
+                if (roomInfo.privateRoom) {
+                    roomBrowser.spectateGameWithPassword(roomInfo.roomId);
+                } else {
+                    roomBrowser.fireSpectateGame(roomInfo.roomId);
+                }
+            });
+
+            return [$joinBtn, $spectateBtn];
+        }
+
+        if (entry.gameState?.isQuizOfTheDay || entry.gameState?.isJam) {
+            const isJam = !!entry.gameState.isJam;
+            const gameId = roomInfo.roomId;
+
+            // Ranked hides the gameId from friends, so there's nothing to spectate by.
+            if (gameId != null || isJam) {
+                const $spectateBtn = $("<button>", {
+                    class: "amqFriendPlusButton spectate",
+                    text: "Spectate",
+                    title: isJam ? `Spectate ${entry.name}'s Jam game` : `Spectate ${getRoomDisplayName(entry, roomInfo)}`,
+                });
+                $spectateBtn.on("click", () => {
+                    if (gameId != null) {
+                        roomBrowser.fireSpectateGame(gameId);
+                    } else {
+                        roomBrowser.fireJoinJamGame();
+                    }
+                });
+                return [$spectateBtn];
+            }
+        }
+
+        return [];
+    };
+
+    // Highlights the row of the friend whose profile is open (name null clears it).
+    const markProfileOpenRow = (name) => {
+        $("#friendlist .amqFriendPlusRow").each(function () {
+            $(this).toggleClass("is-profile-open", !!name && $(this).data("friendName") === name);
+        });
+    };
+
     const renderFriendRow = (entry, $friendList) => {
         if (!entry || !entry.name) return null;
 
@@ -1520,8 +1636,9 @@
         const status = Number(entry.status ?? (inOfflineMap ? 0 : 1));
         const statusColor = statusColorByStatus[status] ?? statusColorByStatus[1];
 
+        const isProfileOpen = !!(playerProfileController.open && playerProfileController.currentProfile?.name === entry.name);
         const $row = $("<div>", {
-            class: "amqFriendPlusRow" + (isOffline ? " is-offline" : ""),
+            class: "amqFriendPlusRow" + (isOffline ? " is-offline" : "") + (isProfileOpen ? " is-profile-open" : ""),
             "data-friend-name": entry.name,
             css: {
                 background: "linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.03) 52%, rgba(94, 112, 160, 0.18) 100%)",
@@ -1610,6 +1727,7 @@
             }
 
             const $profileAnchor = createStableProfileAnchor($avatarWrap);
+            profileDockName = entry.name;
             playerProfileController.loadProfileIfClosed(
                 entry.name,
                 $profileAnchor,
@@ -1691,7 +1809,7 @@
             // In a lobby, player/spectator switches don't send a status update, so don't show which one.
             const label = roomInfo.inLobby ? "In Lobby " : roomInfo.isSpectator ? "Spectating " : "Playing in ";
             const $prefix = $("<span>", { class: "amqFriendPlusRoomLabel" }).text(label);
-            const roomDisplayName = roomModeName || (roomInfo.soloRoom ? "Solo" : roomInfo.roomName || "Unknown room");
+            const roomDisplayName = getRoomDisplayName(entry, roomInfo);
             if (!roomModeName && !roomInfo.soloRoom && (!roomInfo.roomName || roomInfo.roomName === "Unknown room")) {
                 requestRoomRefresh(roomInfo.roomId);
             }
@@ -1705,65 +1823,7 @@
             }
 
             if (!roomInfo.soloRoom) {
-                if (!roomModeName) {
-                    const $joinBtn = $("<button>", {
-                        class: "amqFriendPlusButton join",
-                        text: "Join",
-                        disabled: !roomInfo.inLobby,
-                    });
-                    $joinBtn.on("click", () => {
-                        if (roomInfo.privateRoom) {
-                            Swal.fire({
-                                title: localizationHandler.translate("room_browser.room_tile.password.title"),
-                                input: "password",
-                                inputPlaceholder: localizationHandler.translate("room_browser.room_tile.password.placeholder"),
-                                showCancelButton: true,
-                                confirmButtonText: localizationHandler.translate("room_browser.room_tile.password.confirm_button"),
-                                inputAttributes: { maxlength: 50, minlength: 1 },
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    roomBrowser.fireJoinLobby(roomInfo.roomId, result.value);
-                                }
-                            });
-                        } else {
-                            roomBrowser.fireJoinLobby(roomInfo.roomId);
-                        }
-                    });
-
-                    const $spectateBtn = $("<button>", {
-                        class: "amqFriendPlusButton spectate",
-                        text: "Spectate",
-                    });
-                    $spectateBtn.on("click", () => {
-                        if (roomInfo.privateRoom) {
-                            roomBrowser.spectateGameWithPassword(roomInfo.roomId);
-                        } else {
-                            roomBrowser.fireSpectateGame(roomInfo.roomId);
-                        }
-                    });
-
-                    $actions.append($joinBtn, $spectateBtn);
-                } else if (entry.gameState?.isQuizOfTheDay || entry.gameState?.isJam) {
-                    const isJam = !!entry.gameState.isJam;
-                    const gameId = roomInfo.roomId;
-
-                    // Ranked hides the gameId from friends, so there's nothing to spectate by.
-                    if (gameId != null || isJam) {
-                        const $spectateBtn = $("<button>", {
-                            class: "amqFriendPlusButton spectate",
-                            text: "Spectate",
-                            title: isJam ? `Spectate ${entry.name}'s Jam game` : `Spectate ${roomDisplayName}`,
-                        });
-                        $spectateBtn.on("click", () => {
-                            if (gameId != null) {
-                                roomBrowser.fireSpectateGame(gameId);
-                            } else {
-                                roomBrowser.fireJoinJamGame();
-                            }
-                        });
-                        $actions.append($spectateBtn);
-                    }
-                }
+                $actions.append(...createRoomButtons(entry, roomInfo));
 
                 if ($roomIdTag) {
                     $actions.append($roomIdTag);
@@ -2183,4 +2243,1982 @@
             getFriendNamesInGame(data.roomId).forEach((name) => updateFriendRow(name));
         }
     }).bindListener();
+
+    // ===================================================================================
+    // Player profile
+    // Replaces AMQ's profile popup everywhere it's opened. Same data and socket commands
+    // as the original, laid out as a card that grows into a tabbed editor for your own profile.
+    // ===================================================================================
+
+    const PROFILE_EDIT_TAB_STORAGE_KEY = "amqFriendListPlus.profileEditTab";
+    const PROFILE_CARD_WIDTH = 360;
+    // Same values as AMQ's ProfileBadgeOptionContainer / ProfileOptionChatBadgeSlot.
+    const PROFILE_BADGE_TYPES = [1, 2, 3, 4, 6, 7];
+    const BADGE_TYPE_ORDER_WEIGHT = { 1: 90, 2: 100, 3: 1, 4: 10, 5: 1, 6: 95, 7: 100 };
+    const CHAT_BADGE_ORDER_WEIGHT = { 1: 100, 2: 100, 3: 10, 4: 100, 5: 1 };
+    // domain: where the favicon comes from.
+    const LIST_SITES = {
+        1: { name: "AniList", url: "https://anilist.co/user/", domain: "anilist.co" },
+        2: { name: "Kitsu", url: "https://kitsu.app/users/", domain: "kitsu.app" },
+        3: { name: "MyAnimeList", url: "https://myanimelist.net/profile/", domain: "myanimelist.net" },
+        4: { name: "AnimeOshi", url: "https://animeoshi.com/profile/", domain: "animeoshi.com" },
+    };
+    // Slot 1 is AMQ's big center badge; the profile shows all slots in one row in slot order.
+    const BADGE_SLOT_LABELS = { 1: "Main slot", 2: "Slot 2", 3: "Slot 3", 4: "Slot 4", 5: "Slot 5", 6: "Slot 6", 7: "Slot 7", 8: "Slot 8", 9: "Slot 9" };
+    // AMQ's SocialStatus ids; 4 is invisible, which friends see as offline.
+    const STATUS_LABELS = {
+        0: ["offline", "Offline"],
+        1: ["online", "Online"],
+        2: ["do_not_disturb", "Do Not Disturb"],
+        3: ["away", "Away"],
+        4: ["invisible", "Invisible"],
+    };
+
+    // Set when the friend list opens a profile, so the card docks beside the list instead of over it.
+    let profileDockName = null;
+    // The element AMQ positions the profile against, captured from calculateOffset.
+    let lastProfileAnchorEl = null;
+
+    // The profile payload doesn't include another player's chat badges; their game chat messages do.
+    const chatBadgesByPlayer = new Map();
+    const rememberChatBadges = (message) => {
+        if (message?.sender && Array.isArray(message.badges)) {
+            chatBadgesByPlayer.set(message.sender, message.badges);
+        }
+    };
+    new Listener("Game Chat Message", rememberChatBadges).bindListener();
+    new Listener("game chat update", (payload) => (payload?.messages || []).forEach(rememberChatBadges)).bindListener();
+
+    const translate = (key, fallback = "") => {
+        if (!key) return fallback;
+        try {
+            const value = localizationHandler.translate(key);
+            return value && value !== key ? value : fallback || key;
+        } catch (err) {
+            return fallback || key;
+        }
+    };
+
+    // Badge names/descriptions come as { key, values } objects.
+    const translateInfo = (info) => {
+        if (!info) return "";
+        if (typeof info === "string") return translate(info);
+        try {
+            return localizationHandler.translate(info.key, info.values, true) || "";
+        } catch (err) {
+            return info.key || "";
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        const [key, fallback] = STATUS_LABELS[status] || STATUS_LABELS[0];
+        return translate(`menu_bar.friend_list.statuses.${key}`, fallback);
+    };
+
+    const sendProfileCommand = (command, data) => {
+        socket.sendCommand({ type: "social", command, data });
+    };
+
+    const getStoredProfileTab = () => {
+        try {
+            return localStorage.getItem(PROFILE_EDIT_TAB_STORAGE_KEY) || "image";
+        } catch (err) {
+            return "image";
+        }
+    };
+
+    const setStoredProfileTab = (tab) => {
+        try {
+            localStorage.setItem(PROFILE_EDIT_TAB_STORAGE_KEY, tab);
+        } catch (err) {
+        }
+    };
+
+    // The profile color drives borders and selections, so very dark colors get lifted until they read on #424242.
+    const getVisibleAccent = (color) => {
+        const match = hexToRgba(color, 1).match(/rgba\((\d+), (\d+), (\d+)/);
+        if (!match) return "#4497ea";
+        let [r, g, b] = match.slice(1).map(Number);
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        const minLuminance = 0.5;
+        if (luminance < minLuminance) {
+            const mix = (minLuminance - luminance) / (1 - luminance);
+            r = Math.round(r + (255 - r) * mix);
+            g = Math.round(g + (255 - g) * mix);
+            b = Math.round(b + (255 - b) * mix);
+        }
+        return `rgb(${r}, ${g}, ${b})`;
+    };
+
+    const applyProfileTint = (element, color) => {
+        const accent = getVisibleAccent(color);
+        element.style.setProperty("--app-accent", accent);
+        element.style.setProperty("--app-accent-soft", hexToRgba(accent, 0.18));
+        element.style.setProperty("--app-tint-strong", hexToRgba(color, 0.6));
+        element.style.setProperty("--app-tint-weak", hexToRgba(color, 0.14));
+    };
+
+    const addProfileStyles = () => {
+        // The editor reuses the friend list's toggle switch and Join/Spectate buttons.
+        addFriendListStyles();
+        if (document.getElementById("amqFriendListPlusProfileStyles")) return;
+
+        const style = document.createElement("style");
+        style.id = "amqFriendListPlusProfileStyles";
+        style.textContent = `
+            .amqProfilePlus {
+                --app-accent: #4497ea;
+                --app-accent-soft: rgba(68, 151, 234, 0.18);
+                --app-tint-strong: rgba(68, 151, 234, 0.4);
+                --app-tint-weak: rgba(68, 151, 234, 0.1);
+                position: absolute;
+                z-index: 500;
+                width: ${PROFILE_CARD_WIDTH}px;
+                display: flex;
+                color: #dfe7ff;
+                background-color: #424242;
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 10px;
+                box-shadow: 0 0 10px 2px #000;
+                font-size: 13px;
+                overflow: hidden;
+            }
+            .amqProfilePlus *,
+            .amqProfilePlus *::before,
+            .amqProfilePlus *::after {
+                box-sizing: border-box;
+            }
+            .amqProfilePlus.is-editing {
+                position: fixed;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%);
+                width: min(1000px, calc(100vw - 32px));
+                height: min(680px, calc(100vh - 32px));
+            }
+            /* The profile color fades in from the top-left, like the tint on friend rows. */
+            .amqProfilePlus .appMain {
+                position: relative;
+                flex: 0 0 auto;
+                width: ${PROFILE_CARD_WIDTH - 2}px;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                overflow-x: hidden;
+                background: linear-gradient(165deg, var(--app-tint-strong) 0%, var(--app-tint-weak) 40%, rgba(66,66,66,0) 75%);
+            }
+            .amqProfilePlus.is-editing .appMain {
+                width: 340px;
+                border-right: 1px solid rgba(255,255,255,0.08);
+            }
+            .appMain,
+            .appScroll {
+                scrollbar-color: rgba(121, 146, 210, 0.7) rgba(15, 18, 26, 0.42);
+            }
+            .appMain::-webkit-scrollbar,
+            .appScroll::-webkit-scrollbar {
+                width: 9px;
+            }
+            .appMain::-webkit-scrollbar-track,
+            .appScroll::-webkit-scrollbar-track {
+                background: rgba(15, 18, 26, 0.5);
+                border-radius: 999px;
+            }
+            .appMain::-webkit-scrollbar-thumb,
+            .appScroll::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg, rgba(152, 177, 255, 0.85), rgba(101, 120, 177, 0.62));
+                border: 2px solid rgba(15, 18, 26, 0.8);
+                border-radius: 999px;
+            }
+
+            /* ----- Header: avatar, name, list, join date ----- */
+            .amqProfilePlus .appHeader {
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px 14px 14px 14px;
+            }
+            /* Blurred copy of the profile picture behind the header, fading out downwards. */
+            .amqProfilePlus .appHeaderArt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transform: scale(1.3);
+                filter: blur(22px) saturate(1.3);
+                opacity: 0.3;
+                pointer-events: none;
+                -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent);
+                mask-image: linear-gradient(to bottom, #000 20%, transparent);
+            }
+            .amqProfilePlus .appAvatar {
+                position: relative;
+                flex: 0 0 88px;
+                width: 88px;
+                height: 88px;
+                border-radius: 12px;
+                border: 3px solid #8d9098;
+                background: rgba(0,0,0,0.35);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            }
+            /* AMQ's avatar handler sizes this one (it adds .avatarDisplay), so it gets its own box. */
+            .amqProfilePlus .appAvatarInner {
+                position: absolute;
+                inset: 0;
+                width: auto;
+                height: auto;
+                border-radius: 9px;
+                overflow: hidden;
+            }
+            .amqProfilePlus .appAvatarInner .avatarImage {
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .amqProfilePlus.is-editing .appAvatar {
+                cursor: pointer;
+            }
+            .amqProfilePlus.is-editing .appAvatar::after {
+                content: "\\f040";
+                font-family: FontAwesome;
+                position: absolute;
+                left: -6px;
+                top: -6px;
+                width: 22px;
+                height: 22px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 5px;
+                background: #4497ea;
+                color: white;
+                font-size: 11px;
+            }
+            .amqProfilePlus .appLevel {
+                position: absolute;
+                right: -8px;
+                bottom: -8px;
+                min-width: 32px;
+                height: 22px;
+                padding: 0 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 5px;
+                background: #1b1b1b;
+                border: 2px solid var(--app-accent);
+                color: #fff;
+                font-size: 12px;
+                font-weight: 800;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            }
+            .amqProfilePlus .appIdentity {
+                position: relative;
+                color: #fff;
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .amqProfilePlus .appNameLine {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                min-width: 0;
+                padding-right: 28px;
+            }
+            .amqProfilePlus .appHeader.has-edit .appNameLine {
+                padding-right: 92px;
+            }
+            .amqProfilePlus.is-editing .appHeader.has-edit .appNameLine {
+                padding-right: 0;
+            }
+            /* Also carries AMQ's ppPlayerName class, whose rules position it absolutely. Color is left to the name color classes. */
+            .amqProfilePlus .appName {
+                position: static;
+                transform: none;
+                width: auto;
+                word-break: normal;
+                margin: 0;
+                font-size: 20px;
+                font-weight: 700;
+                line-height: 1.2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                min-width: 0;
+            }
+            .amqProfilePlus .appNameBadges {
+                display: inline-flex;
+                align-items: center;
+                gap: 2px;
+                flex: 0 0 auto;
+            }
+            .amqProfilePlus .appNameBadges img {
+                width: 20px;
+                height: 20px;
+                object-fit: contain;
+            }
+            .amqProfilePlus .appIconButton.appNicknameButton {
+                display: none;
+            }
+            .amqProfilePlus.is-editing .appIconButton.appNicknameButton {
+                display: inline-flex;
+            }
+            .amqProfilePlus .appMetaLine {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                min-width: 0;
+                font-size: 12px;
+                color: #b9c1d4;
+                white-space: nowrap;
+            }
+            .amqProfilePlus .appListIcon {
+                flex: 0 0 16px;
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+            }
+            .amqProfilePlus .appListSite {
+                color: #dfe7ff;
+                font-weight: 700;
+            }
+            .amqProfilePlus .appMetaValue {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .amqProfilePlus .appListLine .appMetaValue a {
+                color: #80c7ff;
+                font-weight: 700;
+            }
+            .amqProfilePlus .appMetaLine.is-hidden .appMetaValue,
+            .amqProfilePlus .appRow.is-hidden .appRowValue {
+                opacity: 0.5;
+            }
+            .amqProfilePlus .appHiddenText {
+                font-style: italic;
+                font-weight: 600;
+                color: rgba(217,217,217,0.5);
+            }
+            .amqProfilePlus .appListSelect {
+                display: none;
+                flex: 0 1 auto;
+                max-width: 120px;
+                padding: 2px 4px;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 4px;
+                background: #1b1b1b;
+                color: #dfe7ff;
+                font-size: 12px;
+            }
+            .amqProfilePlus.is-editing .appListSelect {
+                display: block;
+            }
+            .amqProfilePlus.is-editing .appListSite {
+                display: none;
+            }
+            .amqProfilePlus .appHeaderButtons {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                gap: 4px;
+                z-index: 2;
+            }
+            .amqProfilePlus .appIconButton {
+                height: 26px;
+                min-width: 26px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                flex: 0 0 auto;
+                padding: 0;
+                border: none;
+                border-radius: 5px;
+                background: transparent;
+                color: rgba(223,231,255,0.8);
+                cursor: pointer;
+                font-size: 15px;
+            }
+            .amqProfilePlus .appIconButton:hover {
+                background: rgba(255,255,255,0.12);
+                color: white;
+            }
+            .amqProfilePlus .appEyeToggle {
+                height: 20px;
+                min-width: 20px;
+                font-size: 11px;
+                color: rgba(217,217,217,0.45);
+            }
+            .amqProfilePlus .is-hidden > .appEyeToggle {
+                color: #f2c94c;
+            }
+            /* ppFooterOptionIcon additional: AMQ's tutorial highlights the edit button through these classes. */
+            .amqProfilePlus .appIconButton.appEditButton {
+                position: static;
+                width: auto;
+                height: 26px;
+                margin: 0;
+                padding: 0 9px;
+                opacity: 1;
+                overflow: visible;
+                border-radius: 5px;
+                background: rgba(0,0,0,0.25);
+                font-size: 13px;
+                font-weight: 700;
+            }
+            .amqProfilePlus .appIconButton.appEditButton > i {
+                position: static;
+                transform: none;
+                font-size: 13px;
+            }
+            .amqProfilePlus.is-editing .appEditButton {
+                display: none;
+            }
+
+            /* ----- Badges: one row, slot order ----- */
+            .amqProfilePlus .appBadgeRow {
+                display: grid;
+                grid-template-columns: repeat(9, 1fr);
+                gap: 5px;
+                padding: 2px 14px 14px 14px;
+            }
+            .amqProfilePlus .appBadgeSlot {
+                position: relative;
+                aspect-ratio: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 3px;
+                border-radius: 8px;
+                background: rgba(0,0,0,0.28);
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+            .amqProfilePlus .appBadgeSlot.is-main {
+                border-color: var(--app-accent);
+                box-shadow: inset 0 0 8px var(--app-accent-soft);
+            }
+            .amqProfilePlus .appBadgeSlot.is-empty {
+                display: none;
+            }
+            .amqProfilePlus .appBadgeSlot img {
+                max-width: 100%;
+                max-height: 100%;
+            }
+            .amqProfilePlus.is-editing .appBadgeSlot {
+                display: flex;
+                cursor: pointer;
+            }
+            .amqProfilePlus.is-editing .appBadgeSlot.is-empty {
+                border-style: dashed;
+                border-color: rgba(255,255,255,0.18);
+                background: rgba(0,0,0,0.15);
+            }
+            .amqProfilePlus.is-editing .appBadgeSlot:hover {
+                border-color: rgba(255,255,255,0.4);
+            }
+            .amqProfilePlus.is-editing .appBadgeSlot.is-selected {
+                border: 2px solid var(--app-accent);
+                background: var(--app-accent-soft);
+            }
+            .amqProfilePlus .appBadgeSlotClear {
+                display: none;
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                width: 16px;
+                height: 16px;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                border: none;
+                border-radius: 50%;
+                background: #d9534f;
+                color: white;
+                font-size: 9px;
+                cursor: pointer;
+                z-index: 1;
+            }
+            .amqProfilePlus.is-editing .appBadgeSlot:not(.is-empty):hover .appBadgeSlotClear {
+                display: inline-flex;
+            }
+
+            /* ----- Rows: room, stats ----- */
+            .amqProfilePlus .appRow {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 44px;
+                padding: 8px 14px;
+                border-top: 1px solid rgba(255,255,255,0.08);
+            }
+            .amqProfilePlus .appRowIcon {
+                flex: 0 0 22px;
+                text-align: center;
+                font-size: 17px;
+                color: rgba(223,231,255,0.7);
+            }
+            .amqProfilePlus .appRowLabel {
+                flex: 1;
+                min-width: 0;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .amqProfilePlus .appRowValue {
+                font-weight: 800;
+                color: #fff;
+            }
+            .amqProfilePlus .appRow.is-room {
+                background: linear-gradient(90deg, rgba(56, 210, 105, 0.16) 0%, rgba(56, 210, 105, 0) 75%);
+            }
+            .amqProfilePlus .appRow.is-room .appRowIcon {
+                color: #38d269;
+            }
+            .amqProfilePlus .appRow.is-room .appRowLabel {
+                font-weight: 400;
+                color: #b9c1d4;
+            }
+            .amqProfilePlus .appRow.is-room strong {
+                color: #fff;
+                font-weight: 800;
+            }
+            .amqProfilePlus .appRoomButtons {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex: 0 0 auto;
+            }
+
+            /* ----- Footer: icon actions ----- */
+            .amqProfilePlus .appFooter {
+                display: flex;
+                justify-content: space-around;
+                padding: 6px 8px;
+                border-top: 1px solid rgba(255,255,255,0.08);
+                background: rgba(0,0,0,0.15);
+            }
+            .amqProfilePlus .appFooterButton {
+                width: 46px;
+                height: 36px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                border: none;
+                border-radius: 6px;
+                background: transparent;
+                color: rgba(223,231,255,0.8);
+                font-size: 18px;
+                cursor: pointer;
+                transition: background 0.15s ease, color 0.15s ease;
+            }
+            .amqProfilePlus .appFooterButton:hover:not(:disabled) {
+                background: rgba(255,255,255,0.08);
+                color: #fff;
+            }
+            .amqProfilePlus .appFooterButton.is-danger:hover:not(:disabled) {
+                background: rgba(255, 99, 99, 0.15);
+                color: #ff9a9a;
+            }
+            .amqProfilePlus .appFooterButton:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+            /* ----- Shared buttons (editor) ----- */
+            .appButton {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 4px;
+                background: rgba(255,255,255,0.06);
+                color: #dfe7ff;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: background 0.15s ease, box-shadow 0.15s ease;
+            }
+            .appButton:hover:not(:disabled) {
+                background: rgba(255,255,255,0.12);
+            }
+            /* AMQ's own primary button. */
+            .appButton.is-primary {
+                background-color: #4497ea;
+                border-color: #006ab7;
+                color: white;
+            }
+            .appButton.is-primary:hover:not(:disabled) {
+                background-color: #4497ea;
+                box-shadow: 0 0 10px 2px rgba(0, 106, 183, 0.65);
+            }
+
+            .appEditor {
+                display: none;
+                flex: 1;
+                min-width: 0;
+                flex-direction: column;
+            }
+            .amqProfilePlus.is-editing .appEditor {
+                display: flex;
+            }
+            .appEditorTop {
+                display: flex;
+                align-items: stretch;
+                background: #1b1b1b;
+                border-bottom: 2px solid var(--app-accent);
+            }
+            .appTabs {
+                flex: 1;
+                display: flex;
+            }
+            .appTab {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 13px 16px 10px 16px;
+                border: none;
+                border-bottom: 3px solid transparent;
+                background: transparent;
+                color: rgba(217,217,217,0.6);
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                cursor: pointer;
+            }
+            .appTab:hover {
+                color: white;
+                background: rgba(255,255,255,0.04);
+            }
+            .appTab.is-active {
+                color: white;
+                background: var(--app-accent-soft);
+                border-bottom-color: var(--app-accent);
+            }
+            .appDone {
+                align-self: center;
+                margin: 0 12px;
+            }
+            .appPanel {
+                display: none;
+                flex: 1;
+                min-height: 0;
+                flex-direction: column;
+            }
+            .appPanel.is-active {
+                display: flex;
+            }
+            /* Toolbar and search match the friend list's search bar. */
+            .appToolbar {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 12px 16px 10px 16px;
+                padding: 6px 10px 6px 8px;
+                background: rgb(59, 59, 59);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 8px;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+            .appSearch {
+                flex: 1;
+                min-width: 0;
+                border: none;
+                border-radius: 6px;
+                background: rgba(255,255,255,0.05);
+                color: #dfe7ff;
+                padding: 8px 10px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                outline: none;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+            .appSearch:focus {
+                background: rgba(255,255,255,0.07);
+            }
+            .appSearch::placeholder {
+                color: rgba(196, 206, 235, 0.8);
+            }
+            .appUnlockedToggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: #dfe7ff;
+                white-space: nowrap;
+                cursor: pointer;
+            }
+            .appHint {
+                margin: 0 16px 10px 16px;
+                font-size: 12px;
+                color: #b9c1d4;
+            }
+            .appHint strong {
+                color: var(--app-accent);
+            }
+            .appScroll {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                padding: 0 16px 16px 16px;
+            }
+            .appGroupTitle {
+                margin: 12px 0 8px 0;
+                padding: 6px 10px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #dfe7ff;
+                background: rgba(0,0,0,0.18);
+                border-radius: 6px;
+            }
+            .appGroupTitle:first-child {
+                margin-top: 0;
+            }
+            .appGrid {
+                display: grid;
+                gap: 6px;
+            }
+            .appGrid.is-images {
+                grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+            }
+            .appGrid.is-badges {
+                grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+            }
+            .appGrid.is-names {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            .appTile {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                aspect-ratio: 1;
+                padding: 6px;
+                border: 2px solid transparent;
+                border-radius: 6px;
+                background: rgba(0,0,0,0.22);
+                cursor: pointer;
+                transition: background 0.12s ease, border-color 0.12s ease;
+            }
+            .appTile:hover {
+                background: rgba(255,255,255,0.06);
+                border-color: rgba(255,255,255,0.12);
+            }
+            .appTile img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                pointer-events: none;
+            }
+            .appTile.is-selected,
+            .appTile.is-selected:hover {
+                border-color: var(--app-accent);
+                background: var(--app-accent-soft);
+            }
+            .appTile.is-locked {
+                cursor: default;
+            }
+            .appTile.is-locked img,
+            .appTile.is-locked .appNamePreview {
+                opacity: 0.3;
+                filter: grayscale(0.8);
+            }
+            .appTile.is-locked::after {
+                content: "\\f023";
+                font-family: FontAwesome;
+                position: absolute;
+                right: 5px;
+                bottom: 3px;
+                font-size: 12px;
+                color: rgba(217,217,217,0.6);
+            }
+            .appTile.is-avatar {
+                flex-direction: column;
+                gap: 2px;
+            }
+            .appTile.is-avatar img {
+                max-height: calc(100% - 16px);
+            }
+            .appTileCaption {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+            .appTileTag {
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                padding: 0 4px;
+                border-radius: 3px;
+                background: #1b1b1b;
+                border: 1px solid var(--app-accent);
+                color: var(--app-accent);
+                font-size: 9px;
+                font-weight: 700;
+                line-height: 13px;
+            }
+            .appTile.is-name {
+                aspect-ratio: auto;
+                flex-direction: column;
+                gap: 2px;
+                padding: 10px 8px;
+                min-height: 60px;
+            }
+            .appNamePreview {
+                max-width: 100%;
+                font-size: 16px;
+                font-weight: 700;
+                color: #d9d9d9;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .appNameOptionName {
+                max-width: 100%;
+                font-size: 11px;
+                color: #b9c1d4;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .appEmpty {
+                padding: 30px;
+                text-align: center;
+                color: rgba(217,217,217,0.5);
+            }
+            .appChatPreview {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                margin: 0 16px 10px 16px;
+                padding: 8px 12px;
+                border-radius: 6px;
+                background: #1b1b1b;
+                min-height: 40px;
+            }
+            .appChatPreviewBadges {
+                display: inline-flex;
+                gap: 3px;
+            }
+            .appChatPreview img {
+                width: 22px;
+                height: 22px;
+                object-fit: contain;
+            }
+            .appChatPreviewName {
+                margin-left: 4px;
+                font-size: 15px;
+                font-weight: 700;
+            }
+            .appInfoBar {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 62px;
+                padding: 10px 16px;
+                background: #1b1b1b;
+            }
+            .appInfoBar img {
+                width: 42px;
+                height: 42px;
+                object-fit: contain;
+                flex: 0 0 42px;
+            }
+            .appInfoText {
+                min-width: 0;
+                flex: 1;
+            }
+            .appInfoTitle {
+                font-size: 13px;
+                font-weight: 700;
+                color: white;
+            }
+            .appInfoDescription {
+                font-size: 12px;
+                color: #b9c1d4;
+            }
+            .appInfoStatus {
+                flex: 0 0 auto;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: var(--app-accent);
+            }
+            .appInfoStatus.is-locked {
+                color: #f2c94c;
+            }
+        `;
+        document.head.appendChild(style);
+    };
+
+    const getAvatarHeadSources = (avatarInfo) => {
+        if (!avatarInfo?.avatarName) return { src: "", srcSet: "" };
+        const args = [avatarInfo.avatarName, avatarInfo.outfitName, avatarInfo.optionName, avatarInfo.optionActive, avatarInfo.colorName];
+        return {
+            src: cdnFormater.newAvatarHeadSrc(...args),
+            srcSet: cdnFormater.newAvatarHeadSrcSet(...args),
+        };
+    };
+
+    // draggable goes through attr: as a $("<img>", props) key, jQuery would call jQuery UI's .draggable()
+    // on the image, which adds an inline position: relative.
+    const createLazyImage = (src, srcSet, sizes) => $("<img>", {
+        src,
+        srcset: srcSet || undefined,
+        sizes,
+        loading: "lazy",
+        decoding: "async",
+        attr: { draggable: "false" },
+    });
+
+    const createBadgeImage = (fileName, sizes) => createLazyImage(cdnFormater.newBadgeSrc(fileName), cdnFormater.newBadgeSrcSet(fileName), sizes);
+
+    const sortBadges = (badges) => [...badges].sort((a, b) => {
+        if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
+        const weightDiff = (BADGE_TYPE_ORDER_WEIGHT[b.type] || 0) - (BADGE_TYPE_ORDER_WEIGHT[a.type] || 0);
+        if (weightDiff) return weightDiff;
+        if (a.type === b.type && (a.type === 1 || a.type === 2)) {
+            return String(a.fileName).localeCompare(String(b.fileName), undefined, { numeric: true, sensitivity: "base" });
+        }
+        return a.id - b.id;
+    });
+
+    const sortNameOptions = (options) => [...options].sort((a, b) => {
+        if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
+        return a.option.id - b.option.id;
+    });
+
+    class PlayerProfilePlus {
+        constructor(profileInfo, offset, onClose, offline, inGame, placement = {}) {
+            this.info = profileInfo;
+            this.onClose = onClose;
+            this.offline = !!offline;
+            this.inGame = !!inGame;
+            this.name = profileInfo.name;
+            this.isSelf = profileInfo.name === selfName;
+            this.editing = false;
+            this.editorBuilt = false;
+            this.viewOffset = offset;
+            this.anchorEl = placement.anchorEl || null;
+            this.dockToFriendList = !!placement.dockToFriendList;
+            this.tintToken = 0;
+
+            // Badges by id; for other players allBadges is empty and only the shown ones are sent.
+            this.badges = new Map();
+            (profileInfo.allBadges?.length ? profileInfo.allBadges : profileInfo.badges || []).forEach((badge) => {
+                this.badges.set(badge.id, { ...badge });
+            });
+            this.slotBadges = {};
+            for (let slot = 1; slot <= 9; slot++) this.slotBadges[slot] = null;
+            (profileInfo.badges || []).forEach((badge) => {
+                this.slotBadges[badge.slot] = badge.id;
+            });
+            this.selectedSlot = null;
+
+            this.avatarImage = !!profileInfo.avatarProfileImage;
+            this.emoteId = profileInfo.profileEmoteId;
+            this.nameColorClass = profileInfo.nameColorClass || null;
+            this.nameGlowClass = profileInfo.nameGlowClass || null;
+
+            this.build();
+            this.$profile.css({ top: `${offset.y}px`, left: `${offset.x}px` });
+
+            this.keyHandler = (event) => {
+                if (event.key !== "Escape") return;
+                // Escape belongs to whatever dialog is on top (block confirm, nickname modal, ...).
+                if ($(".swal2-container").length || $(".modal.in").length) return;
+                const $target = $(event.target);
+                if ($target.is(".appSearch") && $target.val()) {
+                    $target.val("").trigger("input");
+                    return;
+                }
+                if (this.editing) {
+                    this.toggleEdit(false);
+                } else {
+                    playerProfileController.clearProfiles();
+                }
+            };
+            $(document).on("keydown.amqProfilePlus", this.keyHandler);
+        }
+
+        build() {
+            addProfileStyles();
+
+            this.presence = this.getPresence();
+            this.$profile = $("<div>", { class: "amqProfilePlus" });
+            this.$main = $("<div>", { class: "appMain" });
+            this.$main.append(this.buildHeader(), this.buildBadgeRow(), this.buildRoomRow(), ...this.buildStatRows(), this.buildFooter());
+            this.$editor = $("<div>", { class: "appEditor" });
+            this.$profile.append(this.$main, this.$editor);
+            this.renderProfileImage();
+            this.renderNameBadges();
+        }
+
+        // Steam-style presence: status for anyone, and the room for friends in one.
+        getPresence() {
+            if (this.isSelf) {
+                const status = Number(socialTab?.socialStatus?.currentStatus ?? 1);
+                return { status, text: getStatusLabel(status) };
+            }
+
+            const entry = findFriendEntry(this.name);
+            if (entry) {
+                if (getFriendActivitySectionId(entry) === "offlineFriends") return { status: 0, text: getStatusLabel(0) };
+
+                const status = Number(entry.status ?? 1);
+                const roomInfo = getFriendPlayingState(entry);
+                if (!roomInfo) return { status, text: getStatusLabel(status) };
+
+                // In a lobby, player/spectator switches don't send a status update, so don't show which one.
+                return {
+                    status,
+                    text: roomInfo.inLobby ? "In Lobby" : roomInfo.isSpectator ? "Spectating" : "Playing in",
+                    inRoom: true,
+                    entry,
+                    roomInfo,
+                };
+            }
+
+            return this.offline ? { status: 0, text: getStatusLabel(0) } : { status: 1, text: getStatusLabel(1) };
+        }
+
+        // Visibility of a stat the server lets you hide, plus its eye toggle when it's your own profile.
+        // Every place showing the stat registers a renderer, so the toggle refreshes all of them.
+        createStatField(fieldName, field) {
+            const stat = {
+                hidden: !!field?.hidden,
+                canSee: this.isSelf || !!field?.adminView,
+                renderers: [],
+                $toggle: null,
+            };
+            stat.render = () => stat.renderers.forEach((render) => render());
+            stat.showHidden = () => stat.hidden && !stat.canSee;
+
+            if (this.isSelf) {
+                const $toggle = $("<button>", { type: "button", class: "appIconButton appEyeToggle" });
+                const renderToggle = () => {
+                    $toggle.html(`<i class="fa ${stat.hidden ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`);
+                    $toggle.attr("title", stat.hidden ? "Hidden from other players, click to show" : "Visible to other players, click to hide");
+                };
+                $toggle.on("click", () => {
+                    stat.hidden = !stat.hidden;
+                    sendProfileCommand("player profile toggle hide", { fieldName });
+                    renderToggle();
+                    stat.render();
+                });
+                renderToggle();
+                stat.$toggle = $toggle;
+            }
+            return stat;
+        }
+
+        createHiddenText() {
+            return $("<span>", { class: "appHiddenText" }).text(translate("player_profile.hidden", "Hidden"));
+        }
+
+        buildHeader() {
+            const $header = $("<div>", { class: "appHeader" + (this.isSelf ? " has-edit" : "") });
+            this.$headerArt = $("<img>", { class: "appHeaderArt", alt: "", attr: { draggable: "false" } });
+
+            const statusColor = statusColorByStatus[this.presence.status] ?? statusColorByStatus[0];
+            this.$avatar = $("<div>", { class: "appAvatar", title: this.presence.text, css: { borderColor: statusColor } });
+            this.$avatarInner = $("<div>", { class: "appAvatarInner" });
+            this.avatarDisplayHandler = new AvatarHeadDisplayHandler(this.$avatarInner);
+            this.$avatar.append(this.$avatarInner, $("<div>", { class: "appLevel", title: `Level ${this.info.level}` }).text(this.info.level));
+            this.$avatar.on("click", () => {
+                if (this.editing) this.showTab("image");
+            });
+
+            const $identity = $("<div>", { class: "appIdentity" });
+
+            const $nameLine = $("<div>", { class: "appNameLine" });
+            // ppPlayerName: the friend list uses it to tell whose profile is open.
+            this.$name = $("<h3>", { class: "appName ppPlayerName" }).text(this.name);
+            if (this.info.originalName && this.info.originalName !== this.name) {
+                this.$name.attr("title", `Originally ${this.info.originalName}`);
+            }
+            this.$nameBadges = $("<span>", { class: "appNameBadges" });
+            $nameLine.append(this.$name, this.$nameBadges);
+            if (this.isSelf) {
+                const $nicknameButton = $("<button>", {
+                    type: "button",
+                    class: "appIconButton appNicknameButton",
+                    title: translate("player_profile.change_nickname", "Change Nickname"),
+                    html: '<i class="fa fa-pencil" aria-hidden="true"></i>',
+                });
+                $nicknameButton.on("click", () => nameChangeModal.show());
+                $nameLine.append($nicknameButton);
+            }
+
+            $identity.append($nameLine, this.buildListLine(), this.buildJoinedLine());
+
+            const $buttons = $("<div>", { class: "appHeaderButtons" });
+            if (this.isSelf) {
+                const $edit = $("<button>", {
+                    type: "button",
+                    class: "appIconButton appEditButton ppFooterOptionIcon additional",
+                    title: translate("player_profile.edit", "Edit"),
+                    html: '<i class="fa fa-pencil" aria-hidden="true"></i>',
+                }).append($("<span>").text(translate("player_profile.edit", "Edit")));
+                $edit.on("click", () => this.toggleEdit(true));
+                $buttons.append($edit);
+            }
+            const $close = $("<button>", {
+                type: "button",
+                class: "appIconButton",
+                title: "Close",
+                html: '<i class="fa fa-times" aria-hidden="true"></i>',
+            });
+            $close.on("click", () => playerProfileController.clearProfiles());
+            $buttons.append($close);
+
+            this.applyNameEffects();
+            $header.append(this.$headerArt, this.$avatar, $identity, $buttons);
+            return $header;
+        }
+
+        buildListLine() {
+            const list = this.info.list || {};
+            const stat = this.createStatField("list", list);
+            this.listState = { listId: LIST_SITES[list.listId] ? list.listId : 1, user: list.listUser, urlUser: list.listUserUrl };
+
+            const $line = $("<div>", { class: "appMetaLine appListLine" });
+            const $icon = $("<img>", { class: "appListIcon", alt: "", attr: { draggable: "false" } });
+            $icon.on("error", () => $icon.css("visibility", "hidden"));
+            const $site = $("<span>", { class: "appListSite" });
+            const $value = $("<span>", { class: "appMetaValue" });
+            $line.append($icon, $site);
+
+            if (this.isSelf) {
+                const $select = $("<select>", { class: "appListSelect", title: "Which list to show on your profile" });
+                Object.entries(LIST_SITES).forEach(([id, site]) => {
+                    $select.append($("<option>", { value: id, text: site.name, selected: Number(id) === this.listState.listId }));
+                });
+                $select.on("change", () => {
+                    const listId = Number($select.val());
+                    const user = options.getListUsername(listId);
+                    this.listState = { listId, user, urlUser: user };
+                    stat.render();
+                    sendProfileCommand("player profile set list", { listId });
+                });
+                $line.append($select);
+            }
+            $line.append($value, stat.$toggle);
+
+            stat.renderers.push(() => {
+                const site = LIST_SITES[this.listState.listId];
+                $icon.css("visibility", "").attr("src", `https://www.google.com/s2/favicons?domain=${site.domain}&sz=32`);
+                $site.text(`${site.name}:`);
+                $line.toggleClass("is-hidden", stat.hidden);
+                if (stat.showHidden()) {
+                    $value.empty().append(this.createHiddenText());
+                } else if (this.listState.user) {
+                    $value.empty().append($("<a>", {
+                        href: site.url + encodeURIComponent(this.listState.urlUser || this.listState.user),
+                        target: "_blank",
+                        rel: "noopener",
+                    }).text(this.listState.user));
+                } else {
+                    $value.text("-");
+                }
+            });
+            stat.render();
+            return $line;
+        }
+
+        buildJoinedLine() {
+            const stat = this.createStatField("creationDate", this.info.creationDate);
+            const $line = $("<div>", { class: "appMetaLine" });
+            const $value = $("<span>", { class: "appMetaValue" });
+            $line.append($("<span>").text("Joined"), $value, stat.$toggle);
+            $line.attr("title", translate("player_profile.account_creation", "Account Creation"));
+
+            stat.renderers.push(() => {
+                $line.toggleClass("is-hidden", stat.hidden);
+                if (stat.showHidden()) {
+                    $value.empty().append(this.createHiddenText());
+                } else {
+                    $value.text(this.info.creationDate?.value ?? "-");
+                }
+            });
+            stat.render();
+            return $line;
+        }
+
+        buildBadgeRow() {
+            this.$badgeRow = $("<div>", { class: "appBadgeRow" });
+            this.$slots = {};
+
+            for (let slot = 1; slot <= 9; slot++) {
+                const $slot = $("<div>", { class: "appBadgeSlot" + (slot === 1 ? " is-main" : "") });
+                const $clear = $("<button>", {
+                    type: "button",
+                    class: "appBadgeSlotClear",
+                    title: "Remove badge",
+                    html: '<i class="fa fa-times" aria-hidden="true"></i>',
+                });
+                $clear.on("click", (event) => {
+                    event.stopPropagation();
+                    this.clearSlot(slot);
+                });
+                $slot.append($clear);
+                $slot.on("click", () => {
+                    if (!this.editing) return;
+                    this.selectSlot(slot);
+                    this.showTab("badges");
+                });
+                $slot.on("mouseenter", () => this.showSlotInfo(slot));
+                this.$slots[slot] = $slot;
+                this.$badgeRow.append($slot);
+            }
+
+            this.renderSlots();
+            return this.$badgeRow;
+        }
+
+        buildRoomRow() {
+            const { inRoom, entry, roomInfo, text } = this.presence;
+            if (!inRoom) return null;
+
+            const $label = $("<div>", { class: "appRowLabel" }).append(
+                $("<span>").text(`${text} `),
+                $("<strong>").text(getRoomDisplayName(entry, roomInfo)),
+            );
+            if (roomInfo.roomId != null) {
+                $label.append($("<span>", { class: "amqFriendPlusRoomId" }).text(` #${roomInfo.roomId}`));
+            }
+
+            const $buttons = $("<div>", { class: "appRoomButtons" });
+            if (roomInfo.privateRoom) {
+                $buttons.append($("<span>", { class: "amqFriendPlusLock", title: "Private room" }).html('<i class="fa fa-lock" aria-hidden="true"></i>'));
+            }
+            $buttons.append(...createRoomButtons(entry, roomInfo));
+
+            return $("<div>", { class: "appRow is-room" }).append(
+                $("<i>", { class: "fa fa-gamepad appRowIcon", "aria-hidden": "true" }),
+                $label,
+                $buttons,
+            );
+        }
+
+        buildStatRows() {
+            const createRow = (fieldName, icon, label, formatValue) => {
+                const field = this.info[fieldName];
+                const stat = this.createStatField(fieldName, field);
+                const $value = $("<div>", { class: "appRowValue" });
+                const $row = $("<div>", { class: "appRow" }).append(
+                    $("<i>", { class: `fa ${icon} appRowIcon`, "aria-hidden": "true" }),
+                    $("<div>", { class: "appRowLabel" }).text(label),
+                    $value,
+                    stat.$toggle,
+                );
+
+                stat.renderers.push(() => {
+                    $row.toggleClass("is-hidden", stat.hidden);
+                    if (stat.showHidden()) {
+                        $value.empty().append(this.createHiddenText());
+                    } else {
+                        $value.text(field?.value != null ? formatValue(field.value) : "-");
+                    }
+                });
+                stat.render();
+                return $row;
+            };
+
+            return [
+                createRow("songCount", "fa-music", translate("player_profile.songs_played", "Songs Played"), (value) => numberWithCommas(value) || String(value)),
+                createRow("guessPercent", "fa-bullseye", translate("player_profile.guess_rate", "Guess Rate"), (value) => `${value}%`),
+            ];
+        }
+
+        buildFooter() {
+            if (this.isSelf) return null;
+
+            const createButton = (icon, title, disabled, handler, className = "") => {
+                const $button = $("<button>", {
+                    type: "button",
+                    class: `appFooterButton ${className}`,
+                    title,
+                    disabled: !!disabled,
+                    html: `<i class="fa ${icon}" aria-hidden="true"></i>`,
+                });
+                $button.on("click", handler);
+                return $button;
+            };
+
+            const isFriend = socialTab.isFriend(this.name);
+            const isBlocked = socialTab.isBlocked(this.name);
+            const offlineSuffix = this.offline ? " (offline)" : "";
+
+            return $("<div>", { class: "appFooter" }).append(
+                createButton("fa-comment", translate("common.ui.chat", "Chat") + offlineSuffix, this.offline, () => socialTab.startChat(this.name)),
+                createButton("fa-gamepad", translate("common.ui.invite_to_game", "Invite to Game") + offlineSuffix, this.offline || this.inGame,
+                    () => socialTab.sendGameInvite(this.name)),
+                isFriend
+                    ? createButton("fa-user-times", `Remove ${this.name} from your friendlist`, false, () => confirmRemoveFriend(this.name), "is-danger")
+                    : createButton("fa-user-plus", translate("common.ui.send_friend_request", "Send Friend Request") + offlineSuffix, this.offline,
+                        () => socialTab.sendFriendRequest(this.name)),
+                createButton("fa-ban", isBlocked ? "Already blocked" : translate("common.ui.block", "Block"), isBlocked,
+                    () => socialTab.confirmBlockPlayer(this.name), "is-danger"),
+                createButton("fa-exclamation-triangle", translate("common.ui.report", "Report"), false, () => reportModal.show(this.name), "is-danger"),
+            );
+        }
+
+        // ---------- Shared rendering ----------
+
+        renderProfileImage() {
+            this.avatarDisplayHandler.clear();
+            const avatar = this.info.avatar || {};
+            let src;
+            let srcSet;
+
+            if (this.avatarImage) {
+                ({ src, srcSet } = getAvatarHeadSources(avatar));
+                if (avatar.animated) {
+                    const jsonSrc = cdnFormater.newAnimatedAvatarJsonSrc(avatar.avatarName, avatar.outfitName);
+                    const atlasSrc = cdnFormater.newAnimatedAvatarAtlasSrc(avatar.avatarName, avatar.outfitName);
+                    this.avatarDisplayHandler.displayAvatarAnimated(jsonSrc, atlasSrc, true, null, null, avatar.optionActive);
+                } else {
+                    this.avatarDisplayHandler.displayAvatarImage(src, srcSet, { triggerLoad: true, defaultSizes: "100px" });
+                }
+            } else {
+                const emote = storeWindow.getEmote(this.emoteId);
+                src = emote?.src || "";
+                srcSet = emote?.srcSet || "";
+                this.avatarDisplayHandler.displayAvatarImage(src, srcSet, { triggerLoad: true, defaultSizes: "100px" });
+            }
+
+            this.$headerArt.attr("src", src || null);
+            this.updateTint();
+        }
+
+        // Same color as this player's row in the friend list.
+        updateTint() {
+            const token = ++this.tintToken;
+            const avatarInfo = this.avatarImage ? { ...(this.info.avatar || {}), profileEmoteId: null } : { profileEmoteId: this.emoteId };
+            getProfileTintColor({ name: this.name, avatarInfo }).then((color) => {
+                if (token !== this.tintToken || !color) return;
+                applyProfileTint(this.$profile[0], color);
+            });
+        }
+
+        applyNameEffects() {
+            [this.$name, this.$chatPreviewName].forEach(($el) => {
+                if (!$el) return;
+                $el.removeClass($el.data("effectClasses") || "");
+                const classes = [this.nameColorClass, this.nameGlowClass].filter(Boolean).join(" ");
+                $el.addClass(classes).data("effectClasses", classes);
+            });
+        }
+
+        // Chat badges next to the name: your own from the profile data, others' from their last chat message.
+        getChatBadges() {
+            if (this.isSelf) {
+                return [...this.badges.values()]
+                    .filter((badge) => badge.showInChat)
+                    .sort((a, b) => (CHAT_BADGE_ORDER_WEIGHT[a.type] || 0) - (CHAT_BADGE_ORDER_WEIGHT[b.type] || 0));
+            }
+            return chatBadgesByPlayer.get(this.name) || [];
+        }
+
+        renderNameBadges() {
+            this.$nameBadges.empty();
+            this.getChatBadges().forEach((badge) => {
+                this.$nameBadges.append(createBadgeImage(badge.fileName, "20px").attr({ loading: null, title: translateInfo(badge.name) }));
+            });
+        }
+
+        renderSlots() {
+            const hasAny = Object.values(this.slotBadges).some((id) => id != null);
+            this.$badgeRow.toggle(hasAny || this.editing);
+
+            Object.entries(this.$slots).forEach(([slotKey, $slot]) => {
+                const slot = Number(slotKey);
+                const badge = this.badges.get(this.slotBadges[slot]);
+                $slot.find("img").remove();
+                $slot.toggleClass("is-empty", !badge);
+                $slot.toggleClass("is-selected", this.editing && this.selectedSlot === slot);
+                $slot.attr("title", badge && !this.editing ? translateInfo(badge.name) : null);
+                if (badge) {
+                    $slot.prepend(createBadgeImage(badge.fileName, "36px").attr("loading", null));
+                }
+            });
+        }
+
+        showSlotInfo(slot) {
+            if (!this.editing) return;
+            const badge = this.badges.get(this.slotBadges[slot]);
+            if (badge) {
+                this.setInfo(createBadgeImage(badge.fileName, "42px"), translateInfo(badge.name), translateInfo(badge.unlockDescription), `${BADGE_SLOT_LABELS[slot]}`);
+            } else {
+                this.setInfo(null, `${BADGE_SLOT_LABELS[slot]}`, "Empty. Click to select it, then pick a badge.", "");
+            }
+        }
+
+        // ---------- Edit mode ----------
+
+        toggleEdit(on) {
+            if (!this.isSelf || on === this.editing) return;
+            this.editing = on;
+            this.selectedSlot = on ? this.firstEmptySlot() ?? 1 : null;
+
+            if (on && !this.editorBuilt) {
+                this.buildEditor();
+                this.editorBuilt = true;
+            }
+
+            this.$profile.toggleClass("is-editing", on);
+            if (on) {
+                this.renderBadgeTiles();
+                this.showTab(getStoredProfileTab());
+                if (playerProfileController.editToggleOnListener) {
+                    playerProfileController.editToggleOnListener();
+                }
+            }
+            this.renderSlots();
+            this.resizeName();
+            if (!on) this.place();
+        }
+
+        buildEditor() {
+            const $top = $("<div>", { class: "appEditorTop" });
+            this.$tabs = $("<div>", { class: "appTabs" });
+            this.$panels = {};
+
+            const tabs = [
+                { id: "image", icon: "fa-picture-o", label: translate("player_profile.profile_image", "Profile Image"), build: () => this.buildImagePanel() },
+                { id: "badges", icon: "fa-certificate", label: "Badges", build: () => this.buildBadgePanel() },
+                { id: "chat", icon: "fa-comments", label: "Chat Badges", build: () => this.buildChatBadgePanel() },
+                { id: "name", icon: "fa-magic", label: translate("player_profile.name_effects", "Name Effects"), build: () => this.buildNamePanel() },
+            ];
+
+            const $panelWrap = $("<div>", { css: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } });
+            tabs.forEach(({ id, icon, label, build }) => {
+                const $tab = $("<button>", { type: "button", class: "appTab", "data-tab": id, html: `<i class="fa ${icon}" aria-hidden="true"></i>` })
+                    .append($("<span>").text(label));
+                $tab.on("click", () => this.showTab(id));
+                this.$tabs.append($tab);
+
+                const $panel = $("<div>", { class: "appPanel", "data-tab": id });
+                $panel.append(...build());
+                this.$panels[id] = $panel;
+                $panelWrap.append($panel);
+            });
+
+            const $done = $("<button>", { type: "button", class: "appButton is-primary appDone", html: '<i class="fa fa-check" aria-hidden="true"></i>' })
+                .append($("<span>").text("Done"));
+            $done.on("click", () => this.toggleEdit(false));
+            $top.append(this.$tabs, $done);
+
+            this.$infoBar = $("<div>", { class: "appInfoBar" });
+            this.$editor.append($top, $panelWrap, this.$infoBar);
+        }
+
+        showTab(tabId) {
+            if (!this.$panels?.[tabId]) tabId = "image";
+            this.activeTab = tabId;
+            setStoredProfileTab(tabId);
+            this.$tabs.children().each((_, el) => $(el).toggleClass("is-active", $(el).data("tab") === tabId));
+            Object.entries(this.$panels).forEach(([id, $panel]) => $panel.toggleClass("is-active", id === tabId));
+            this.setDefaultInfo();
+        }
+
+        setDefaultInfo() {
+            const hints = {
+                image: ["Profile Image", "Pick your avatar or any unlocked emote. It updates right away."],
+                badges: ["Badges", "Select a slot on the left (or use the highlighted one), then click a badge to place it there. Click a badge that's already shown to move it."],
+                chat: ["Chat Badges", "Badges shown next to your name in chat. Special badges stack; only one standard badge can be shown at a time."],
+                name: ["Name Effects", "Pick a color and a glow for your name. Hover locked effects to see how to unlock them."],
+            };
+            const [title, description] = hints[this.activeTab] || hints.image;
+            this.setInfo(null, title, description, "");
+        }
+
+        setInfo($image, title, description, status, locked = false) {
+            if (!this.$infoBar) return;
+            this.$infoBar.empty();
+            if ($image) this.$infoBar.append($image);
+            const $text = $("<div>", { class: "appInfoText" }).append(
+                $("<div>", { class: "appInfoTitle" }).text(title || ""),
+                $("<div>", { class: "appInfoDescription" }).text(description || ""),
+            );
+            this.$infoBar.append($text);
+            if (status) {
+                this.$infoBar.append($("<div>", { class: "appInfoStatus" + (locked ? " is-locked" : "") }).text(status));
+            }
+        }
+
+        // Search box + "unlocked only" toggle; calls onChange(searchText, unlockedOnly).
+        buildToolbar(placeholder, onChange) {
+            const $toolbar = $("<div>", { class: "appToolbar" });
+            const $search = $("<input>", { type: "text", class: "appSearch", placeholder });
+            const $toggleLabel = $("<label>", { class: "appUnlockedToggle" });
+            const $toggle = $("<input>", { type: "checkbox", class: "amqFriendPlusToggle" });
+            $toggleLabel.append($("<span>").text("Unlocked only"), $toggle);
+
+            const update = () => onChange(String($search.val() || "").trim().toLowerCase(), $toggle.is(":checked"));
+            $search.on("input", update);
+            $toggle.on("change", update);
+            $toolbar.append($search, $toggleLabel);
+            return $toolbar;
+        }
+
+        // Shows/hides tiles by their data-search text and lock state, plus an empty message per grid.
+        filterTiles($scroll, search, unlockedOnly) {
+            $scroll.find(".appTile").each((_, el) => {
+                const $tile = $(el);
+                const matches = (!search || String($tile.data("search") || "").includes(search)) && (!unlockedOnly || !$tile.hasClass("is-locked"));
+                $tile.toggle(matches);
+            });
+            $scroll.find(".appGrid").each((_, el) => {
+                const $grid = $(el);
+                const anyVisible = $grid.children(".appTile").filter((__, tile) => tile.style.display !== "none").length > 0;
+                $grid.prev(".appGroupTitle").toggle(anyVisible);
+                $grid.toggle(anyVisible);
+            });
+            const anyVisible = $scroll.find(".appTile").filter((_, tile) => tile.style.display !== "none").length > 0;
+            $scroll.find(".appEmpty").toggle(!anyVisible);
+        }
+
+        // ---------- Profile image tab ----------
+
+        buildImagePanel() {
+            const $scroll = $("<div>", { class: "appScroll" });
+            const $grid = $("<div>", { class: "appGrid is-images" });
+            this.$imageTiles = new Map();
+
+            const avatar = this.info.avatar || {};
+            const avatarSources = getAvatarHeadSources(avatar);
+            const $avatarTile = $("<div>", { class: "appTile is-avatar", "data-search": "avatar" })
+                .append(createLazyImage(avatarSources.src, avatarSources.srcSet, "76px"))
+                .append($("<div>", { class: "appTileCaption" }).text(translate("player_profile.avatar", "Avatar")));
+            $avatarTile.on("click", () => this.selectProfileImage(true, null));
+            $avatarTile.on("mouseenter", () => this.setInfo(null, translate("player_profile.avatar", "Avatar"), "Use your current avatar as profile image.", this.avatarImage ? "Selected" : ""));
+            this.$imageTiles.set("avatar", $avatarTile);
+            $grid.append($avatarTile);
+
+            const emotes = storeWindow.getAllEmotes().slice().sort((a, b) => (a.unlocked === b.unlocked ? 0 : a.unlocked ? -1 : 1));
+            emotes.forEach((emote) => {
+                const $tile = $("<div>", {
+                    class: "appTile" + (emote.unlocked ? "" : " is-locked"),
+                    "data-search": String(emote.name || "").toLowerCase(),
+                }).append(createLazyImage(emote.src, emote.srcSet, "76px"));
+                $tile.on("click", () => {
+                    if (emote.unlocked) this.selectProfileImage(false, emote.emoteId);
+                });
+                $tile.on("mouseenter", () => {
+                    const status = !emote.unlocked ? "Locked" : !this.avatarImage && this.emoteId === emote.emoteId ? "Selected" : "";
+                    this.setInfo(createLazyImage(emote.src, emote.srcSet, "42px"), emote.name, emote.unlocked ? "Click to use as profile image." : "Unlock this emote in the store to use it.", status, !emote.unlocked);
+                });
+                this.$imageTiles.set(emote.emoteId, $tile);
+                $grid.append($tile);
+            });
+
+            $scroll.append($grid, $("<div>", { class: "appEmpty" }).text("No emotes match your search.").hide());
+            const $toolbar = this.buildToolbar("Search emotes...", (search, unlockedOnly) => this.filterTiles($scroll, search, unlockedOnly));
+            $scroll.on("mouseleave", () => this.setDefaultInfo());
+
+            this.renderImageSelection();
+            return [$toolbar, $scroll];
+        }
+
+        renderImageSelection() {
+            if (!this.$imageTiles) return;
+            this.$imageTiles.forEach(($tile, key) => {
+                $tile.toggleClass("is-selected", key === "avatar" ? this.avatarImage : !this.avatarImage && key === this.emoteId);
+            });
+        }
+
+        selectProfileImage(avatarImage, emoteId) {
+            if (avatarImage && this.avatarImage) return;
+            if (!avatarImage && !this.avatarImage && emoteId === this.emoteId) return;
+
+            this.avatarImage = avatarImage;
+            if (!avatarImage) this.emoteId = emoteId;
+            this.renderProfileImage();
+            this.renderImageSelection();
+            sendProfileCommand("player profile set image", { avatarImage, emoteId });
+        }
+
+        // ---------- Badges tab ----------
+
+        buildBadgePanel() {
+            this.$badgeHint = $("<div>", { class: "appHint" });
+            const $scroll = $("<div>", { class: "appScroll" });
+            const $grid = $("<div>", { class: "appGrid is-badges" });
+            this.$badgeTiles = new Map();
+
+            sortBadges([...this.badges.values()].filter((badge) => PROFILE_BADGE_TYPES.includes(badge.type))).forEach((badge) => {
+                const $tile = $("<div>", {
+                    class: "appTile" + (badge.unlocked ? "" : " is-locked"),
+                    "data-search": `${translateInfo(badge.name)} ${translateInfo(badge.unlockDescription)}`.toLowerCase(),
+                }).append(createBadgeImage(badge.fileName, "58px"));
+                $tile.on("click", () => {
+                    if (badge.unlocked) this.placeBadge(badge.id);
+                });
+                $tile.on("mouseenter", () => {
+                    const slot = this.getBadgeSlot(badge.id);
+                    const status = !badge.unlocked ? "Locked" : slot != null ? `In ${BADGE_SLOT_LABELS[slot]}` : "";
+                    this.setInfo(createBadgeImage(badge.fileName, "42px"), translateInfo(badge.name), translateInfo(badge.unlockDescription), status, !badge.unlocked);
+                });
+                this.$badgeTiles.set(badge.id, $tile);
+                $grid.append($tile);
+            });
+
+            $scroll.append($grid, $("<div>", { class: "appEmpty" }).text("No badges match your search.").hide());
+            $scroll.on("mouseleave", () => this.setDefaultInfo());
+            const $toolbar = this.buildToolbar("Search badges...", (search, unlockedOnly) => this.filterTiles($scroll, search, unlockedOnly));
+
+            this.renderBadgeTiles();
+            return [$toolbar, this.$badgeHint, $scroll];
+        }
+
+        getBadgeSlot(badgeId) {
+            const entry = Object.entries(this.slotBadges).find(([, id]) => id === badgeId);
+            return entry ? Number(entry[0]) : null;
+        }
+
+        firstEmptySlot() {
+            const order = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            return order.find((slot) => this.slotBadges[slot] == null) ?? null;
+        }
+
+        selectSlot(slot) {
+            this.selectedSlot = slot;
+            this.renderSlots();
+            this.renderBadgeTiles();
+        }
+
+        renderBadgeTiles() {
+            if (this.$badgeHint) {
+                this.$badgeHint.text("Placing into: ").append($("<strong>").text(`${BADGE_SLOT_LABELS[this.selectedSlot] || "Main slot"}`));
+            }
+            if (!this.$badgeTiles) return;
+            this.$badgeTiles.forEach(($tile, badgeId) => {
+                const slot = this.getBadgeSlot(badgeId);
+                $tile.toggleClass("is-selected", slot != null && slot === this.selectedSlot);
+                $tile.find(".appTileTag").remove();
+                if (slot != null) {
+                    $tile.append($("<div>", { class: "appTileTag" }).text(slot === 1 ? "MAIN" : String(slot)));
+                }
+            });
+        }
+
+        // Puts a badge in the selected slot. A badge already shown elsewhere moves, swapping with what was there.
+        placeBadge(badgeId) {
+            const targetSlot = this.selectedSlot ?? this.firstEmptySlot() ?? 1;
+            const fromSlot = this.getBadgeSlot(badgeId);
+            if (fromSlot === targetSlot) return;
+
+            const displacedId = this.slotBadges[targetSlot];
+
+            if (fromSlot != null) {
+                sendProfileCommand("player profile clear badge", { slotNumber: fromSlot });
+                this.slotBadges[fromSlot] = null;
+            }
+            if (displacedId != null) {
+                sendProfileCommand("player profile clear badge", { slotNumber: targetSlot });
+            }
+            sendProfileCommand("player profile show badge", { slotNumber: targetSlot, badgeId });
+            this.slotBadges[targetSlot] = badgeId;
+
+            if (fromSlot != null && displacedId != null) {
+                sendProfileCommand("player profile show badge", { slotNumber: fromSlot, badgeId: displacedId });
+                this.slotBadges[fromSlot] = displacedId;
+            }
+
+            // Filling an empty slot moves on to the next empty one, so several badges can be placed in a row.
+            if (displacedId == null && fromSlot == null) {
+                this.selectedSlot = this.firstEmptySlot() ?? targetSlot;
+            }
+            this.renderSlots();
+            this.renderBadgeTiles();
+        }
+
+        clearSlot(slot) {
+            if (this.slotBadges[slot] == null) return;
+            sendProfileCommand("player profile clear badge", { slotNumber: slot });
+            this.slotBadges[slot] = null;
+            this.selectedSlot = slot;
+            this.renderSlots();
+            this.renderBadgeTiles();
+            this.showSlotInfo(slot);
+        }
+
+        // ---------- Chat badges tab ----------
+
+        buildChatBadgePanel() {
+            this.$chatPreview = $("<div>", { class: "appChatPreview" });
+            this.$chatPreviewBadges = $("<span>", { class: "appChatPreviewBadges" });
+            this.$chatPreviewName = $("<span>", { class: "appChatPreviewName" }).text(this.name);
+            this.$chatPreview.append(this.$chatPreviewBadges, this.$chatPreviewName);
+            this.applyNameEffects();
+
+            const $scroll = $("<div>", { class: "appScroll" });
+            const $specialGrid = $("<div>", { class: "appGrid is-badges" });
+            const $standardGrid = $("<div>", { class: "appGrid is-badges" });
+            this.$chatTiles = new Map();
+
+            sortBadges([...this.badges.values()]).forEach((badge) => {
+                const $tile = $("<div>", {
+                    class: "appTile" + (badge.unlocked ? "" : " is-locked"),
+                    "data-search": `${translateInfo(badge.name)} ${translateInfo(badge.unlockDescription)}`.toLowerCase(),
+                }).append(createBadgeImage(badge.fileName, "58px"));
+                $tile.on("click", () => {
+                    if (badge.unlocked) this.toggleChatBadge(badge.id);
+                });
+                $tile.on("mouseenter", () => {
+                    const status = !badge.unlocked ? "Locked" : badge.showInChat ? "Shown in chat" : badge.special ? "Special" : "Standard";
+                    this.setInfo(createBadgeImage(badge.fileName, "42px"), translateInfo(badge.name), translateInfo(badge.unlockDescription), status, !badge.unlocked);
+                });
+                this.$chatTiles.set(badge.id, $tile);
+                (badge.special ? $specialGrid : $standardGrid).append($tile);
+            });
+
+            $scroll.append(
+                $("<div>", { class: "appGroupTitle" }).text(translate("player_profile.special_badges", "Special Badges")),
+                $specialGrid,
+                $("<div>", { class: "appGroupTitle" }).text(translate("player_profile.standard_badges", "Standard Badges")),
+                $standardGrid,
+                $("<div>", { class: "appEmpty" }).text("No badges match your search.").hide(),
+            );
+            $scroll.on("mouseleave", () => this.setDefaultInfo());
+            const $toolbar = this.buildToolbar("Search badges...", (search, unlockedOnly) => this.filterTiles($scroll, search, unlockedOnly));
+
+            this.renderChatBadges();
+            return [$toolbar, this.$chatPreview, $scroll];
+        }
+
+        // Same rules as AMQ: special badges stack, only one standard badge at a time.
+        toggleChatBadge(badgeId) {
+            const badge = this.badges.get(badgeId);
+            if (!badge) return;
+
+            if (badge.showInChat) {
+                badge.showInChat = false;
+                sendProfileCommand("player profile clear chat badge", { badgeId });
+            } else {
+                if (!badge.special) {
+                    this.badges.forEach((other) => {
+                        if (other.showInChat && !other.special) other.showInChat = false;
+                    });
+                }
+                badge.showInChat = true;
+                sendProfileCommand("player profile set chat badge", { badgeId });
+            }
+            this.renderChatBadges();
+        }
+
+        renderChatBadges() {
+            this.renderNameBadges();
+            if (!this.$chatTiles) return;
+            this.$chatTiles.forEach(($tile, badgeId) => $tile.toggleClass("is-selected", !!this.badges.get(badgeId)?.showInChat));
+
+            this.$chatPreviewBadges.empty();
+            this.getChatBadges().forEach((badge) => this.$chatPreviewBadges.append(createBadgeImage(badge.fileName, "22px").attr("loading", null)));
+        }
+
+        // ---------- Name effects tab ----------
+
+        buildNamePanel() {
+            const $scroll = $("<div>", { class: "appScroll" });
+            const $colorGrid = $("<div>", { class: "appGrid is-names" });
+            const $glowGrid = $("<div>", { class: "appGrid is-names" });
+            this.nameTiles = { color: [], glow: [] };
+
+            const addTile = (kind, $grid, { id, name, className, unlocked, active, unlockDescription }) => {
+                const optionName = translate(name, name);
+                const $preview = $("<div>", { class: "appNamePreview" }).text(this.name);
+                const $tile = $("<div>", {
+                    class: "appTile is-name" + (unlocked ? "" : " is-locked"),
+                    "data-search": optionName.toLowerCase(),
+                }).append($preview, $("<div>", { class: "appNameOptionName" }).text(optionName));
+
+                const tile = { id, className, unlocked, $tile, $preview, kind };
+                $tile.on("click", () => {
+                    if (unlocked) this.selectNameOption(tile);
+                });
+                $tile.on("mouseenter", () => {
+                    const isActive = kind === "color" ? this.nameColorClass === className : this.nameGlowClass === className;
+                    this.setInfo(null, optionName, unlocked ? "Click to apply." : translate(unlockDescription, "Locked"), !unlocked ? "Locked" : isActive ? "Selected" : "", !unlocked);
+                });
+                if (active) {
+                    if (kind === "color") this.nameColorClass = className;
+                    else this.nameGlowClass = className;
+                }
+                this.nameTiles[kind].push(tile);
+                $grid.append($tile);
+            };
+
+            addTile("color", $colorGrid, { id: 0, name: "common.ui.default", className: null, unlocked: true, active: false });
+            sortNameOptions(this.info.nameColors || []).forEach(({ option, active, unlocked }) => {
+                addTile("color", $colorGrid, { id: option.id, name: option.name, className: option.className, unlocked, active, unlockDescription: option.unlockDescription });
+            });
+
+            addTile("glow", $glowGrid, { id: 0, name: "common.ui.none", className: null, unlocked: true, active: false });
+            sortNameOptions(this.info.nameGlows || []).forEach(({ option, active, unlocked }) => {
+                addTile("glow", $glowGrid, { id: option.id, name: option.name, className: option.className, unlocked, active, unlockDescription: option.unlockDescription });
+            });
+
+            $scroll.append(
+                $("<div>", { class: "appGroupTitle" }).text(translate("player_profile.name_color", "Name Color")),
+                $colorGrid,
+                $("<div>", { class: "appGroupTitle" }).text(translate("player_profile.name_glow", "Name Glow")),
+                $glowGrid,
+                $("<div>", { class: "appEmpty" }).text("No effects match your search.").hide(),
+            );
+            $scroll.on("mouseleave", () => this.setDefaultInfo());
+            const $toolbar = this.buildToolbar("Search name effects...", (search, unlockedOnly) => this.filterTiles($scroll, search, unlockedOnly));
+
+            this.renderNameTiles();
+            return [$toolbar, $scroll];
+        }
+
+        selectNameOption(tile) {
+            const current = tile.kind === "color" ? this.nameColorClass : this.nameGlowClass;
+            if (current === tile.className) return;
+
+            if (tile.kind === "color") {
+                this.nameColorClass = tile.className;
+                sendProfileCommand("update chat name color", { id: tile.id });
+            } else {
+                this.nameGlowClass = tile.className;
+                sendProfileCommand("update chat glow color", { id: tile.id });
+            }
+            this.applyNameEffects();
+            this.renderNameTiles();
+        }
+
+        // Color tiles preview with the current glow and glow tiles with the current color, so you see the combination.
+        renderNameTiles() {
+            if (!this.nameTiles) return;
+            const renderTile = (tile, colorClass, glowClass, selected) => {
+                tile.$preview.attr("class", ["appNamePreview", colorClass, glowClass].filter(Boolean).join(" "));
+                tile.$tile.toggleClass("is-selected", selected);
+            };
+            this.nameTiles.color.forEach((tile) => renderTile(tile, tile.className, this.nameGlowClass, tile.className === this.nameColorClass));
+            this.nameTiles.glow.forEach((tile) => renderTile(tile, this.nameColorClass, tile.className, tile.className === this.nameGlowClass));
+        }
+
+        // ---------- Controller interface ----------
+
+        resizeName() {
+            const nameEl = this.$name[0];
+            if (!nameEl) return;
+            let size = 20;
+            nameEl.style.fontSize = `${size}px`;
+            while (size > 13 && nameEl.scrollWidth > nameEl.clientWidth) {
+                size--;
+                nameEl.style.fontSize = `${size}px`;
+            }
+        }
+
+        // From the friend list the card docks right of the list, centered on the friend's row.
+        // Otherwise it sits beside whatever was clicked, measured with its real size.
+        place() {
+            if (this.editing) return;
+            const card = this.$profile[0];
+            const width = card.offsetWidth;
+            const height = card.offsetHeight;
+            const margin = 8;
+            let left = this.viewOffset.x;
+            let top = this.viewOffset.y;
+
+            const rowEl = this.dockToFriendList
+                ? $("#friendlist .amqFriendPlusRow").filter((_, row) => $(row).data("friendName") === this.name)[0]
+                : null;
+            const socialTabEl = document.getElementById("socialTab");
+            const rowRect = rowEl?.getBoundingClientRect();
+
+            if (rowRect?.height && socialTabEl) {
+                left = socialTabEl.getBoundingClientRect().right + 10;
+                top = rowRect.top + rowRect.height / 2 - height / 2;
+            } else if (this.anchorEl?.isConnected) {
+                const rect = this.anchorEl.getBoundingClientRect();
+                left = rect.left + rect.width / 2 < window.innerWidth / 2 ? rect.right + margin : rect.left - width - margin;
+                top = rect.top + rect.height / 2 < window.innerHeight / 2 ? rect.top : rect.bottom - height;
+            }
+
+            left = Math.min(Math.max(margin, left), window.innerWidth - width - margin);
+            top = Math.min(Math.max(margin, top), window.innerHeight - height - margin);
+
+            // Everything above is in screen coordinates; the card is positioned inside AMQ's profile layer,
+            // which moves with #mainContainer when that gets scrolled.
+            const layerRect = this.$profile[0].offsetParent?.getBoundingClientRect() ?? { left: 0, top: 0 };
+            this.$profile.css({ left: `${left - layerRect.left}px`, top: `${top - layerRect.top}px` });
+        }
+
+        close() {
+            if (this.onClose) this.onClose();
+            $(document).off("keydown.amqProfilePlus");
+            this.avatarDisplayHandler.clear();
+            this.$profile.remove();
+            markProfileOpenRow(null);
+        }
+    }
+
+    if (typeof PlayerProfileController !== "undefined" && !PlayerProfileController.prototype.__amqFriendPlusPatched) {
+        PlayerProfileController.prototype.__amqFriendPlusPatched = true;
+
+        const originalCalculateOffset = PlayerProfileController.prototype.calculateOffset;
+        const originalDisplayProfile = PlayerProfileController.prototype.displayProfile;
+        // AMQ's own sizes, set in its constructor, for when the legacy profile is used.
+        const legacySize = typeof playerProfileController !== "undefined"
+            ? { width: playerProfileController.PROFILE_WIDTH, height: playerProfileController.PROFILE_HEIGHT }
+            : { width: 300, height: 210.8 };
+
+        // AMQ uses these for its first placement guess, before our card is measured.
+        PlayerProfileController.prototype.calculateOffset = function ($requestObject) {
+            const legacy = isLegacyProfileEnabled();
+            this.PROFILE_WIDTH = legacy ? legacySize.width : PROFILE_CARD_WIDTH;
+            this.PROFILE_HEIGHT = legacy ? legacySize.height : 380;
+            lastProfileAnchorEl = $requestObject?.[0] || null;
+            return originalCalculateOffset.apply(this, arguments);
+        };
+
+        PlayerProfileController.prototype.displayProfile = function (profileInfo, offset, closeHandler, offline, inGame) {
+            if (isLegacyProfileEnabled()) {
+                profileDockName = null;
+                lastProfileAnchorEl = null;
+                return originalDisplayProfile.apply(this, arguments);
+            }
+
+            this.clearProfiles();
+            const placement = { anchorEl: lastProfileAnchorEl, dockToFriendList: profileDockName === profileInfo.name };
+            profileDockName = null;
+            lastProfileAnchorEl = null;
+
+            this.currentProfile = new PlayerProfilePlus(profileInfo, offset, closeHandler, offline, inGame, placement);
+            this.$PROFILE_LAYER.append(this.currentProfile.$profile);
+            this.currentProfile.resizeName();
+            this.currentProfile.place();
+            this.open = true;
+            markProfileOpenRow(profileInfo.name);
+        };
+    }
 })();
