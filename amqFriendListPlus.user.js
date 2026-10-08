@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AMQ Friend List Plus
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      1.4.0
+// @version      1.4.1
 // @description  Update the Friends List to provide more information and make friend interactions more accessible, and rework the player profile with a roomier, tabbed editor.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
@@ -2279,16 +2279,6 @@
     // The element AMQ positions the profile against, captured from calculateOffset.
     let lastProfileAnchorEl = null;
 
-    // The profile payload doesn't include another player's chat badges; their game chat messages do.
-    const chatBadgesByPlayer = new Map();
-    const rememberChatBadges = (message) => {
-        if (message?.sender && Array.isArray(message.badges)) {
-            chatBadgesByPlayer.set(message.sender, message.badges);
-        }
-    };
-    new Listener("Game Chat Message", rememberChatBadges).bindListener();
-    new Listener("game chat update", (payload) => (payload?.messages || []).forEach(rememberChatBadges)).bindListener();
-
     const translate = (key, fallback = "") => {
         if (!key) return fallback;
         try {
@@ -2554,16 +2544,14 @@
                 text-overflow: ellipsis;
                 min-width: 0;
             }
-            .amqProfilePlus .appNameBadges {
-                display: inline-flex;
-                align-items: center;
-                gap: 2px;
-                flex: 0 0 auto;
-            }
-            .amqProfilePlus .appNameBadges img {
-                width: 20px;
-                height: 20px;
-                object-fit: contain;
+            /* Pulled up against the name, since .appIdentity's gap would detach it. */
+            .amqProfilePlus .appOriginalName {
+                margin-top: -6px;
+                font-size: 11px;
+                color: rgba(217,217,217,0.5);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .amqProfilePlus .appIconButton.appNicknameButton {
                 display: none;
@@ -3276,7 +3264,6 @@
             this.$editor = $("<div>", { class: "appEditor" });
             this.$profile.append(this.$main, this.$editor);
             this.renderProfileImage();
-            this.renderNameBadges();
         }
 
         // Steam-style presence: status for anyone, and the room for friends in one.
@@ -3359,11 +3346,7 @@
             const $nameLine = $("<div>", { class: "appNameLine" });
             // ppPlayerName: the friend list uses it to tell whose profile is open.
             this.$name = $("<h3>", { class: "appName ppPlayerName" }).text(this.name);
-            if (this.info.originalName && this.info.originalName !== this.name) {
-                this.$name.attr("title", `Originally ${this.info.originalName}`);
-            }
-            this.$nameBadges = $("<span>", { class: "appNameBadges" });
-            $nameLine.append(this.$name, this.$nameBadges);
+            $nameLine.append(this.$name);
             if (this.isSelf) {
                 const $nicknameButton = $("<button>", {
                     type: "button",
@@ -3375,7 +3358,12 @@
                 $nameLine.append($nicknameButton);
             }
 
-            $identity.append($nameLine, this.buildListLine(), this.buildJoinedLine());
+            // AMQ's profile swaps in the first name on hover; a fixed line avoids the hover area changing size under the mouse.
+            const $originalName = this.info.originalName && this.info.originalName !== this.name
+                ? $("<div>", { class: "appOriginalName", title: "Original name" }).text(this.info.originalName)
+                : null;
+
+            $identity.append($nameLine, $originalName, this.buildListLine(), this.buildJoinedLine());
 
             const $buttons = $("<div>", { class: "appHeaderButtons" });
             if (this.isSelf) {
@@ -3633,23 +3621,6 @@
                 $el.removeClass($el.data("effectClasses") || "");
                 const classes = [this.nameColorClass, this.nameGlowClass].filter(Boolean).join(" ");
                 $el.addClass(classes).data("effectClasses", classes);
-            });
-        }
-
-        // Chat badges next to the name: your own from the profile data, others' from their last chat message.
-        getChatBadges() {
-            if (this.isSelf) {
-                return [...this.badges.values()]
-                    .filter((badge) => badge.showInChat)
-                    .sort((a, b) => (CHAT_BADGE_ORDER_WEIGHT[a.type] || 0) - (CHAT_BADGE_ORDER_WEIGHT[b.type] || 0));
-            }
-            return chatBadgesByPlayer.get(this.name) || [];
-        }
-
-        renderNameBadges() {
-            this.$nameBadges.empty();
-            this.getChatBadges().forEach((badge) => {
-                this.$nameBadges.append(createBadgeImage(badge.fileName, "20px").attr({ loading: null, title: translateInfo(badge.name) }));
             });
         }
 
@@ -4035,12 +4006,14 @@
         }
 
         renderChatBadges() {
-            this.renderNameBadges();
             if (!this.$chatTiles) return;
             this.$chatTiles.forEach(($tile, badgeId) => $tile.toggleClass("is-selected", !!this.badges.get(badgeId)?.showInChat));
 
             this.$chatPreviewBadges.empty();
-            this.getChatBadges().forEach((badge) => this.$chatPreviewBadges.append(createBadgeImage(badge.fileName, "22px").attr("loading", null)));
+            [...this.badges.values()]
+                .filter((badge) => badge.showInChat)
+                .sort((a, b) => (CHAT_BADGE_ORDER_WEIGHT[a.type] || 0) - (CHAT_BADGE_ORDER_WEIGHT[b.type] || 0))
+                .forEach((badge) => this.$chatPreviewBadges.append(createBadgeImage(badge.fileName, "22px").attr("loading", null)));
         }
 
         // ---------- Name effects tab ----------
