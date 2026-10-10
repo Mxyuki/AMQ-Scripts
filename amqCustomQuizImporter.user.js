@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         AMQ Custom Quiz Importer
 // @namespace    https://github.com/Mxyuki/AMQ-Scripts
-// @version      3.0
-// @description  Import songs from AnisongDB files, custom lists, ID lists or the Song Library into community quizzes, then bulk edit them.
+// @version      3.2
+// @description  Import songs from AnisongDB files, custom lists, ID lists, the Song Library or your Song History into community quizzes, then bulk edit them.
 // @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomQuizImporter.user.js
 // @updateURL    https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqCustomQuizImporter.user.js
+// @grant        none
 // ==/UserScript==
 
 "use strict";
@@ -61,10 +62,12 @@ const HELP = {
   settingModes:
     "Keep leaves every block as it is. Block default removes the block's own value so the rule block setting applies. Custom sets a new value.",
   fitSongsPlayed:
-    "Sets songs played to everything this rule block can give: 1 per song block, the songs per anime of anime blocks and the song count of algorithm blocks. Every block then plays once.",
+    "Sets this rule block's songs played to the number of songs in it, so every block is played once instead of AMQ picking only some of them.",
   simulation:
     "A sample run of the quiz from its settings. AMQ picks the real songs when the quiz starts, so every run differs and edge cases such as duplicate handling may not match exactly.",
   ruleBlockRandomOrder: "Plays the rule blocks in a random order during the quiz instead of from top to bottom.",
+  historyResults:
+    "Keeps only the songs you guessed right, got wrong, or did not answer (for example while spectating).",
   dubsAndRebroadcasts:
     "Dubs are songs from dubbed versions of an anime. Rebroadcasts are songs only used when an anime was re-aired.",
 };
@@ -413,10 +416,6 @@ class QuizDraft {
       description: this.description,
       tags: this.tags,
       ruleBlocks: this.blocks.map((block) => block.toSave()),
-      fitSongsPlayed:
-        "Sets songs played to everything this rule block can give: 1 per song block, the songs per anime of anime blocks and the song count of algorithm blocks. Every block then plays once.",
-      simulation:
-        "A sample run of the quiz from its settings. AMQ picks the real songs when the quiz starts, so every run differs and edge cases such as duplicate handling may not match exactly.",
       ruleBlockRandomOrder: this.randomOrder,
     };
   }
@@ -430,13 +429,13 @@ function buildEntries({ annSongIds, annIds }, { mode, songTypes, dubs, rebroadca
       .map((annId) => Entry.fromAnime(annId, includeSongTypes));
   }
 
-  const songs = [
-    ...annSongIds.map((id) => libraryCacheHandler.getCachedAnnSongEntry(id)),
-    ...annIds.flatMap((annId) => songsOfAnime(annId)),
-  ].filter(
-    (song) => song && songTypes[SONG_TYPES[song.type]] && (dubs || !song.dub) && (rebroadcasts || !song.rebroadcast),
-  );
-  return unique(songs.map((song) => song.annSongId)).map((annSongId) => Entry.fromSong(annSongId));
+  const listed = annSongIds.map((id) => libraryCacheHandler.getCachedAnnSongEntry(id)).filter(Boolean);
+  const listedIds = new Set(listed.map((song) => song.annSongId));
+  const fromAnime = annIds.flatMap((annId) => songsOfAnime(annId)).filter((song) => !listedIds.has(song.annSongId));
+  // Songs listed more than once (like a song played in several games) stay repeated; anime only add missing songs.
+  return [...listed, ...uniqueBy(fromAnime, (song) => song.annSongId)]
+    .filter((song) => songTypes[SONG_TYPES[song.type]] && (dubs || !song.dub) && (rebroadcasts || !song.rebroadcast))
+    .map((song) => Entry.fromSong(song.annSongId));
 }
 
 function countMissing({ annSongIds, annIds }) {
@@ -472,6 +471,24 @@ function findAnnSongId({ annId, amqSongId }) {
 
 function parseIdList(text) {
   return unique((text.match(/\d+/g) ?? []).map(Number));
+}
+
+function songHistoryGames() {
+  return Object.values(songHistoryWindow.gamesTab.gameMap)
+    .filter((game) => game.songLoad || game.songTable.rows.length)
+    .sort((a, b) => b.startTime - a.startTime)
+    .map((game) => ({
+      room: localizationHandler.translate(game.roomNameKey),
+      date: game.startTime.format("YYYY-MM-DD HH:mm"),
+      get loaded() {
+        return !game.songLoad;
+      },
+      rows: () => game.songTable.rows,
+      async load() {
+        game.triggerSongLoad();
+        await waitUntil(() => !game.$songContainer.hasClass("hide"));
+      },
+    }));
 }
 
 function librarySearchSongIds() {
@@ -1168,7 +1185,7 @@ function openMenu(anchor, items) {
   Object.assign(menu.style, { left: `${left}px`, top: `${Math.max(8, top)}px` });
 
   const dismiss = (event) => !menu.contains(event.target) && closeMenu();
-  setTimeout(() => document.addEventListener("mousedown", dismiss));
+  document.addEventListener("mousedown", dismiss);
   activeMenu = { menu, dismiss };
 }
 
@@ -1208,6 +1225,11 @@ function waitUntil(predicate, timeout = 30000) {
   });
 }
 
+function uniqueBy(items, key) {
+  const seen = new Set();
+  return items.filter((item) => !seen.has(key(item)) && seen.add(key(item)));
+}
+
 function unique(items) {
   return [...new Set(items.filter((item) => item !== undefined && item !== null))];
 }
@@ -1244,6 +1266,13 @@ const IMPORT_SOURCES = [
   { id: "songIds", label: "Song IDs", icon: "fa-music" },
   { id: "animeIds", label: "Anime IDs", icon: "fa-film" },
   { id: "library", label: "Song Library", icon: "fa-search" },
+  { id: "history", label: "Song History", icon: "fa-history" },
+];
+
+const HISTORY_RESULTS = [
+  { key: "correct", label: "Correct", matches: (row) => Boolean(row.correctGuess) },
+  { key: "wrong", label: "Wrong", matches: (row) => Boolean(row.wrongGuess) },
+  { key: "unanswered", label: "Not answered", matches: (row) => !row.correctGuess && !row.wrongGuess },
 ];
 
 class ImportDialog extends Overlay {
@@ -1253,6 +1282,7 @@ class ImportDialog extends Overlay {
     this.targets = targets;
     this.target = targets?.[0]?.value;
     this.ready = false;
+    this.pending = 0;
     this.selection = { annSongIds: [], annIds: [], name: "" };
     this.options = { mode: "songs", songTypes: { OP: true, ED: true, IN: true }, dubs: true, rebroadcasts: true };
 
@@ -1311,6 +1341,8 @@ class ImportDialog extends Overlay {
         return this.buildIdPanel("annSongIds", "Paste annSongIds separated by spaces, commas or new lines.");
       case "animeIds":
         return this.buildIdPanel("annIds", "Paste annIds separated by spaces, commas or new lines.");
+      case "history":
+        return this.buildHistoryPanel();
       default:
         return this.buildLibraryPanel();
     }
@@ -1426,6 +1458,78 @@ class ImportDialog extends Overlay {
     ];
   }
 
+  buildHistoryPanel() {
+    const games = songHistoryGames();
+    if (!games.length) return [el("p", { className: "cqiEmpty" }, "Your song history is empty. Play a game first.")];
+
+    this.history = { games: new Set(), results: new Set(HISTORY_RESULTS.map(({ key }) => key)) };
+    const resultToggles = HISTORY_RESULTS.map(({ key, label }) =>
+      toggleButton(label, true, (event) => {
+        event.currentTarget.classList.toggle("on");
+        this.history.results.has(key) ? this.history.results.delete(key) : this.history.results.add(key);
+        this.applyHistorySelection();
+      }),
+    );
+    return [
+      el(
+        "div",
+        { className: "cqiHistoryList" },
+        games.map((game) => {
+          const count = el("span", { className: "cqiMuted" }, game.loaded ? plural(game.rows().length, "song") : "");
+          return el(
+            "label",
+            { className: "cqiCheckbox cqiHistoryGame" },
+            el("input", {
+              type: "checkbox",
+              onchange: (event) => this.toggleHistoryGame(game, event.target.checked, count),
+            }),
+            el("span", { className: "cqiHistoryRoom" }, game.room),
+            el("span", { className: "cqiMuted" }, game.date),
+            count,
+          );
+        }),
+      ),
+      el(
+        "div",
+        { className: "cqiField" },
+        el("span", {}, "Your result", infoIcon(HELP.historyResults)),
+        el("div", { className: "cqiToggleGroup" }, resultToggles),
+      ),
+    ];
+  }
+
+  async toggleHistoryGame(game, selected, count) {
+    if (!selected) {
+      this.history.games.delete(game);
+      return this.applyHistorySelection();
+    }
+    this.history.games.add(game);
+    this.pending++;
+    this.update();
+    try {
+      await game.load();
+      setChildren(count, plural(game.rows().length, "song"));
+    } catch {
+      this.history.games.delete(game);
+      setChildren(count, el("span", { className: "cqiError" }, "AMQ did not send this game's songs"));
+    }
+    this.pending--;
+    if (this.source === "history") this.applyHistorySelection();
+  }
+
+  applyHistorySelection() {
+    const results = HISTORY_RESULTS.filter(({ key }) => this.history.results.has(key));
+    const games = [...this.history.games];
+    const rows = games.flatMap((game) => game.rows()).filter((row) => results.some(({ matches }) => matches(row)));
+    const name = games.length === 1 ? `${games[0].room} ${games[0].date}` : "Song history";
+    this.selection = {
+      annSongIds: rows.map((row) => row.annSongId),
+      annIds: [],
+      name: name.slice(0, NAME_MAX_LENGTH),
+    };
+    this.update();
+  }
+
   update() {
     this.renderOptions();
     this.renderSummary();
@@ -1507,6 +1611,8 @@ class ImportDialog extends Overlay {
       message = el("span", { className: "cqiError" }, this.loadError);
     } else if (!this.ready) {
       message = [icon("fa-spinner fa-spin"), " Loading the AMQ song list…"];
+    } else if (this.pending) {
+      message = [icon("fa-spinner fa-spin"), " Loading songs from your history…"];
     } else if (error) {
       message = el("span", { className: "cqiError" }, error);
     } else if (quizSave) {
@@ -2054,8 +2160,11 @@ class QuizEditor extends Overlay {
       el("div", { className: "cqiChips" }, ruleSettingChips(block.settings, true)),
       el("div", { className: "cqiSpacer" }),
       button(
-        "Fit songs played",
-        () => this.commit("Songs played now matches the block", () => block.fitSongCount(this.availableSongs(block))),
+        [icon("fa-check-square-o"), " Play every block"],
+        () =>
+          this.commit("Every block in this rule block now plays once", () =>
+            block.fitSongCount(this.availableSongs(block)),
+          ),
         { title: HELP.fitSongsPlayed },
       ),
       addButton,
@@ -3107,6 +3216,18 @@ const STYLE = `
 .cqiDropZone .fa { font-size: 34px; color: var(--cqi-accent); }
 .cqiDropZone.over, .cqiDropZone:hover { border-color: var(--cqi-accent); }
 .cqiOptions { display: flex; flex-direction: column; gap: 10px; }
+.cqiHistoryList {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  margin-bottom: 10px;
+  overflow-y: auto;
+  border-radius: 4px;
+  background: var(--cqi-bg);
+}
+.cqiHistoryGame { margin: 0; padding: 6px 10px; border-bottom: 1px solid var(--cqi-panel); }
+.cqiHistoryGame:hover { background: var(--cqi-panel); }
+.cqiHistoryRoom { flex: 1; }
 .cqiField { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: normal; margin: 0; }
 .cqiField > span:first-child { width: 110px; color: var(--cqi-muted); }
 .cqiSummary { flex: 1; }
