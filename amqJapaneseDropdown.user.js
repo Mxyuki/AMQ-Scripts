@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         AMQ Japanese Dropdown
-// @namespace    https://github.com/Mxyuki
+// @namespace    https://github.com/Mxyuki/AMQ-Scripts
 // @version      1.2.0
 // @description  Shows anime titles in Japanese (kanji / kana) in the AMQ answer dropdown, answers and song info.
-// @author       Mxyuki
+// @author       Myuki
 // @match        https://animemusicquiz.com/*
 // @grant        none
 // @downloadURL  https://github.com/Mxyuki/AMQ-Scripts/raw/main/amqJapaneseDropdown.user.js
